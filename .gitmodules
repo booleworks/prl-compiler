@@ -1,0 +1,6 @@
+[submodule "test-files"]
+	path = test-files
+	url = ../prl-testfiles.git
+[submodule "proto"]
+	path = proto
+	url = ../boolerules-protobufs.git
