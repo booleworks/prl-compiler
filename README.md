@@ -172,6 +172,9 @@ store it as a serialized Protocol Buffer.  If you want to see a use case for the
 [BooleRules](https://github.com/booleworks/boolerules) is a rune engine which provides algorithms to compute with
 such rule sets.
 
+An IntelliJ Plugin for some syntax highlighting and refactoring functionality can be found 
+[here](https://github.com/booleworks/prl-intellij-plugin).
+
 ## Funding
 
 PRL and BooleRules development is funded by the [SofDCar project](https://sofdcar.de/):
