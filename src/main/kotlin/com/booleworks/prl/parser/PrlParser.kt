@@ -6,10 +6,10 @@ package com.booleworks.prl.parser
 import com.booleworks.prl.parser.internal.FeatureFactory
 import com.booleworks.prl.parser.internal.PragmaticRuleLanguageLexer
 import com.booleworks.prl.parser.internal.PragmaticRuleLanguageParser
-import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.BaseErrorListener
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.DefaultErrorStrategy
 import org.antlr.v4.runtime.LexerNoViableAltException
 import org.antlr.v4.runtime.RecognitionException
 import org.antlr.v4.runtime.Recognizer
@@ -24,7 +24,7 @@ object PrlParser {
         val parser = PragmaticRuleLanguageParser(tokens)
         parser.removeErrorListeners()
         parser.addErrorListener(ExtendedErrorListener.get())
-        parser.errorHandler = BailErrorStrategy()
+        parser.errorHandler = DefaultErrorStrategy()
         parser.buildParseTree = false
         parser.setFeatureFactory(FeatureFactory())
         return parser
