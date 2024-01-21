@@ -4,6 +4,7 @@
 package com.booleworks.prl.model
 
 import com.booleworks.prl.compiler.FeatureStore
+import com.booleworks.prl.compiler.IntegerStore
 import com.booleworks.prl.compiler.PropertyStore
 import com.booleworks.prl.model.constraints.Amo
 import com.booleworks.prl.model.constraints.And
@@ -239,6 +240,7 @@ fun deserialize(bin: PbModel): PrlModel {
         deserialize(bin.header),
         deserialize(bin.moduleHierarchy),
         deserialize(bin.featureStore, featureMap),
+        IntegerStore(), //TODO
         bin.ruleList.map { deserialize(it, featureMap) },
         deserialize(bin.propertyStore)
     )

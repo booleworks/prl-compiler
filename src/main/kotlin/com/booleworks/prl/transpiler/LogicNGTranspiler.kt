@@ -94,6 +94,7 @@ fun mergeSlices(f: FormulaFactory, slices: List<SliceTranslation>): MergedSliceT
     val sliceSelectors = mutableMapOf<String, SliceTranslation>()
     val propositions = mutableListOf<PrlProposition>()
     val enumMapping = mutableMapOf<String, MutableMap<String, Variable>>()
+    val intMapping = mutableMapOf<String, MutableMap<Int, Variable>>()
     val unknownFeatures = slices[0].unknownFeatures.toMutableSet()
     val booleanVariables = mutableSetOf<Variable>()
 
@@ -130,7 +131,7 @@ fun mergeSlices(f: FormulaFactory, slices: List<SliceTranslation>): MergedSliceT
     }
     return MergedSliceTranslation(
         sliceSelectors,
-        TranslationInfo(propositions, knownVariables, booleanVariables, enumMapping, unknownFeatures)
+        TranslationInfo(propositions, knownVariables, booleanVariables, enumMapping, intMapping, unknownFeatures)
     )
 }
 
@@ -143,6 +144,7 @@ fun transpileSliceSet(f: FormulaFactory, sliceSet: SliceSet): SliceTranslation {
             f.exo(it.values)
         )
     }
+    //TODO int constraints
     return SliceTranslation(sliceSet, state.toTranslationInfo(propositions))
 }
 
@@ -208,15 +210,18 @@ private fun filterFeatures(f: FormulaFactory, fs: Collection<BooleanFeature>, in
  * @property booleanVariables the boolean variables with their original name
  * @property enumMapping a mapping from enum feature to its values mapped to
  *                       their respective variable
+ * @property intMapping a mapping from int feature to its values mapped to
+ *                       their respective variable
  */
 data class TranspilerState(
     val featureMap: MutableMap<String, AnyFeatureDef> = mutableMapOf(),
     override val unknownFeatures: MutableSet<Feature> = mutableSetOf(),
     override val booleanVariables: MutableSet<Variable> = mutableSetOf(),
-    override val enumMapping: MutableMap<String, Map<String, Variable>> = mutableMapOf()
+    override val enumMapping: MutableMap<String, Map<String, Variable>> = mutableMapOf(),
+    override val intMapping: MutableMap<String, Map<Int, Variable>> = mutableMapOf()
 ) : TranspilerCoreInfo {
     private fun knownVariables() = (booleanVariables + enumMapping.values.flatMap { it.values }).toSortedSet()
     fun toTranslationInfo(propositions: List<PrlProposition>) =
-        TranslationInfo(propositions, knownVariables(), booleanVariables, enumMapping, unknownFeatures)
+        TranslationInfo(propositions, knownVariables(), booleanVariables, enumMapping, intMapping, unknownFeatures)
 }
 

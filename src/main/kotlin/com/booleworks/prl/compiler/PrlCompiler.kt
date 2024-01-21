@@ -85,7 +85,8 @@ class PrlCompiler {
             )
         }
 
-        return PrlModel(header, moduleHierarchy, featureStore, rules, propertyStore)
+        //TODO integer store
+        return PrlModel(header, moduleHierarchy, featureStore, IntegerStore(), rules, propertyStore)
     }
 
     fun errors() = state.errors

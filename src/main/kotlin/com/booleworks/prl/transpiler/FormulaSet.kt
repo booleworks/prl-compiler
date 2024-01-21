@@ -88,6 +88,7 @@ interface TranspilerCoreInfo {
     val unknownFeatures: Set<Feature>
     val booleanVariables: Set<Variable>
     val enumMapping: Map<String, Map<String, Variable>>
+    val intMapping: Map<String, Map<Int, Variable>>
 
     fun translateEnumIn(f: FormulaFactory, constraint: EnumInPredicate): Formula =
         enumMapping[constraint.feature.fullName].let { enumMap ->
@@ -110,10 +111,13 @@ data class TranslationInfo(
     val knownVariables: Set<Variable>,
     override val booleanVariables: Set<Variable>,
     override val enumMapping: Map<String, Map<String, Variable>>,
+    override val intMapping: Map<String, Map<Int, Variable>>,
     override val unknownFeatures: Set<Feature>,
 ) : TranspilerCoreInfo {
     val enumVariables: Set<Variable> = enumMapping.values.flatMap { it.values }.toSet()
+    val intVariables: Set<Variable> = intMapping.values.flatMap { it.values }.toSet()
     private val var2enum = mutableMapOf<Variable, Pair<String, String>>()
+    private val var2int = mutableMapOf<Variable, Pair<String, Int>>()
 
     init {
         enumMapping.forEach { (feature, vs) ->
@@ -121,7 +125,13 @@ data class TranslationInfo(
                 var2enum[variable] = Pair(feature, value)
             }
         }
+        intMapping.forEach { (feature, vs) ->
+            vs.forEach { (value, variable) ->
+                var2int[variable] = Pair(feature, value)
+            }
+        }
     }
 
     fun getFeatureAndValue(v: Variable) = var2enum[v]
+    fun getFeatureAndInt(v: Variable) = var2int[v]
 }
