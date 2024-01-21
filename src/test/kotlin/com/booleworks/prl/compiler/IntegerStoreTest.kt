@@ -26,13 +26,13 @@ class IntegerStoreTest {
         store.addUsage(intIn(x, IntRange.list(1, 2, 3)))
         store.addUsage(intIn(y, IntRange.interval(-3, 3)))
         assertThat(store.usedValues).hasSize(2)
-        assertThat(store.usedValues[x]).isEqualTo(UsageInfo(values = sortedSetOf(IntRange.list(1, 2, 3))))
-        assertThat(store.usedValues[y]).isEqualTo(UsageInfo(values = sortedSetOf(IntRange.interval(-3, 3))))
+        assertThat(store.usedValues[x]).isEqualTo(IntegerUsage(values = sortedSetOf(IntRange.list(1, 2, 3))))
+        assertThat(store.usedValues[y]).isEqualTo(IntegerUsage(values = sortedSetOf(IntRange.interval(-3, 3))))
 
         store.addUsage(intIn(x, IntRange.list(4, 5, 6)))
         assertThat(store.usedValues).hasSize(2)
         assertThat(store.usedValues[x]).isEqualTo(
-            UsageInfo(
+            IntegerUsage(
                 values = sortedSetOf(
                     IntRange.list(1, 2, 3),
                     IntRange.list(4, 5, 6)
@@ -42,7 +42,7 @@ class IntegerStoreTest {
         store.addUsage(intIn(x, IntRange.list(4, 5, 6)))
         assertThat(store.usedValues).hasSize(2)
         assertThat(store.usedValues[x]).isEqualTo(
-            UsageInfo(
+            IntegerUsage(
                 values = sortedSetOf(
                     IntRange.list(1, 2, 3),
                     IntRange.list(4, 5, 6)
@@ -55,7 +55,7 @@ class IntegerStoreTest {
 
         store.addUsage(intIn(intMul(2, z), IntRange.list(4, 5, 6)))
         assertThat(store.usedValues).hasSize(3)
-        assertThat(store.usedValues[z]).isEqualTo(UsageInfo(usedInArEx = true))
+        assertThat(store.usedValues[z]).isEqualTo(IntegerUsage(usedInArEx = true))
     }
 
     @Test
@@ -64,16 +64,23 @@ class IntegerStoreTest {
 
         store.addUsage(intEq(x, intVal(7)))
         assertThat(store.usedValues).hasSize(1)
-        assertThat(store.usedValues[x]).isEqualTo(UsageInfo(values = sortedSetOf(IntRange.list(7))))
+        assertThat(store.usedValues[x]).isEqualTo(IntegerUsage(values = sortedSetOf(IntRange.list(7))))
 
         store.addUsage(intLe(intVal(3), x))
         assertThat(store.usedValues).hasSize(1)
-        assertThat(store.usedValues[x]).isEqualTo(UsageInfo(values = sortedSetOf(IntRange.list(7), IntRange.list(3))))
+        assertThat(store.usedValues[x]).isEqualTo(
+            IntegerUsage(
+                values = sortedSetOf(
+                    IntRange.list(7),
+                    IntRange.list(3)
+                )
+            )
+        )
 
         store.addUsage(intLe(intVal(4), intMul(1, x)))
         assertThat(store.usedValues).hasSize(1)
         assertThat(store.usedValues[x]).isEqualTo(
-            UsageInfo(
+            IntegerUsage(
                 values = sortedSetOf(
                     IntRange.list(7),
                     IntRange.list(3),
@@ -84,13 +91,12 @@ class IntegerStoreTest {
 
         store.addUsage(intLe(intMul(4, z), intMul(2, y)))
         assertThat(store.usedValues).hasSize(3)
-        assertThat(store.usedValues[y]).isEqualTo(UsageInfo(usedInArEx = true))
-        assertThat(store.usedValues[z]).isEqualTo(UsageInfo(usedInArEx = true))
+        assertThat(store.usedValues[y]).isEqualTo(IntegerUsage(usedInArEx = true))
+        assertThat(store.usedValues[z]).isEqualTo(IntegerUsage(usedInArEx = true))
 
         store.addUsage(intGt(intSum(intMul(1, p)), q))
         assertThat(store.usedValues).hasSize(5)
-        assertThat(store.usedValues[p]).isEqualTo(UsageInfo(otherFeatures = sortedSetOf(q)))
-        assertThat(store.usedValues[q]).isEqualTo(UsageInfo(otherFeatures = sortedSetOf(p)))
+        assertThat(store.usedValues[p]).isEqualTo(IntegerUsage(otherFeatures = sortedSetOf(q)))
+        assertThat(store.usedValues[q]).isEqualTo(IntegerUsage(otherFeatures = sortedSetOf(p)))
     }
 }
-

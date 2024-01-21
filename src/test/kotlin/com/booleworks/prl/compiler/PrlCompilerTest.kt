@@ -76,8 +76,7 @@ class PrlCompilerTest {
         )[0].feature as IntFeature
 
         assertThat(compiler.errors()).containsExactly(
-            "Currently integer and versioned Boolean features are not " +
-                    "supported. Support will be added in future releases."
+            "Currently linear arithmetic expressions over int features are not supported. Support will be added infuture releases"
         )
         assertThat(model.moduleHierarchy.modules()).containsExactly(module)
         assertThat(model.featureStore.allDefinitions(module).map { it.feature }).containsExactly(i1, i2, i3, i4, sum)
@@ -133,7 +132,6 @@ class PrlCompilerTest {
         assertThat(compiler.errors()).containsExactly(
             "[module=boolerules, feature=com.x1, lineNumber=8] Feature name invalid: com.x1",
             "[module=boolerules, feature=invalid.name, lineNumber=12] Rule name invalid: invalid.name",
-            "Currently integer and versioned Boolean features are not supported. Support will be added in future releases."
         )
         assertThat(model.moduleHierarchy.modules()).containsExactly(module)
         assertThat(model.featureStore.allDefinitions(module).map { it.feature }).containsExactly(f1, i1)

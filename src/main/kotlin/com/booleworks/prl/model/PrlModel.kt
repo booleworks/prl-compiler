@@ -19,7 +19,7 @@ data class PrlModel(
     val header: PrlModelHeader,
     val moduleHierarchy: ModuleHierarchy,
     val featureStore: FeatureStore,
-    val integerStore: IntegerStore,
+    val intStore: IntegerStore,
     val rules: List<AnyRule>,
     val propertyStore: PropertyStore
 ) {

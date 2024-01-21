@@ -13,6 +13,7 @@ import com.booleworks.prl.model.PrlModel
 import com.booleworks.prl.model.PrlModelHeader
 import com.booleworks.prl.model.compileProperties
 import com.booleworks.prl.model.compilePropertiesToMap
+import com.booleworks.prl.model.constraints.IntFeature
 import com.booleworks.prl.model.rules.AnyRule
 import com.booleworks.prl.model.rules.ConstraintRule
 import com.booleworks.prl.model.rules.DefinitionRule
@@ -57,7 +58,8 @@ class PrlCompiler {
         val t3 = System.currentTimeMillis()
         val featureStore = compileFeaturesIntoStore(ruleFile, propertyStore, moduleHierarchy)
         val t4 = System.currentTimeMillis()
-        val rules = compileRules(ruleFile, moduleHierarchy, propertyStore, featureStore)
+        val intStore = IntegerStore()
+        val rules = compileRules(ruleFile, moduleHierarchy, propertyStore, featureStore, intStore)
         val t5 = System.currentTimeMillis()
         val numDefs = featureStore.size()
         state.addInfo(
@@ -78,15 +80,19 @@ class PrlCompiler {
                         "added in future releases."
             )
         }
-        if (featureStore.containsIntFeatures() || featureStore.containsVersionedBooleanFeatures()) {
+        if (intStore.hasArithmeticExpressions()) {
             state.addError(
-                "Currently integer and versioned Boolean features are not supported. Support will be added in future " +
-                        "releases."
+                "Currently linear arithmetic expressions over int features are not supported. Support will be added in" +
+                        "future releases"
+            )
+        }
+        if (featureStore.containsVersionedBooleanFeatures()) {
+            state.addError(
+                "Currently versioned Boolean features are not supported. Support will be added in future releases."
             )
         }
 
-        //TODO integer store
-        return PrlModel(header, moduleHierarchy, featureStore, IntegerStore(), rules, propertyStore)
+        return PrlModel(header, moduleHierarchy, featureStore, intStore, rules, propertyStore)
     }
 
     fun errors() = state.errors
@@ -238,7 +244,8 @@ class PrlCompiler {
         ruleFile: PrlRuleFile,
         moduleHierarchy: ModuleHierarchy,
         propertyStore: PropertyStore,
-        featureStore: FeatureStore
+        featureStore: FeatureStore,
+        intStore: IntegerStore
     ) =
         if (!state.hasErrors()) {
             mutableListOf<AnyRule>().apply {
@@ -248,7 +255,8 @@ class PrlCompiler {
                             it,
                             moduleHierarchy,
                             propertyStore,
-                            featureStore
+                            featureStore,
+                            intStore
                         )
                     )
                 }
@@ -263,7 +271,8 @@ class PrlCompiler {
         ruleSet: PrlRuleSet,
         mh: ModuleHierarchy,
         propertyStore: PropertyStore,
-        featureStore: FeatureStore
+        featureStore: FeatureStore,
+        intStore: IntegerStore
     ): List<AnyRule> {
         val module = mh.moduleForName(ruleSet.module.fullName)!!
         state.context.module = module.fullName
@@ -276,33 +285,33 @@ class PrlCompiler {
                 null
             } else {
                 state.context.lineNumber = it.lineNumber
-                compileRule(it, module, featureMap)
+                compileRule(it, module, featureMap, intStore)
             }
         }
     }
 
-    internal fun compileRule(prlRule: PrlRule, module: Module, map: Map<PrlFeature, AnyFeatureDef>): AnyRule? {
+    internal fun compileRule(prlRule: PrlRule, module: Module, map: Fmap, intStore: IntegerStore): AnyRule? {
         return try {
             when (prlRule) {
-                is PrlConstraintRule -> rule(prlRule, module, map)
-                is PrlDefinitionRule -> rule(prlRule, module, map)
-                is PrlExclusionRule -> rule(prlRule, module, map)
-                is PrlForbiddenFeatureRule -> rule(prlRule, module, map)
+                is PrlConstraintRule -> rule(prlRule, module, map, intStore)
+                is PrlDefinitionRule -> rule(prlRule, module, map, intStore)
+                is PrlExclusionRule -> rule(prlRule, module, map, intStore)
+                is PrlForbiddenFeatureRule -> rule(prlRule, module, map, intStore)
                 is PrlGroupRule -> rule(prlRule, module, map)
-                is PrlIfThenElseRule -> rule(prlRule, module, map)
-                is PrlInclusionRule -> rule(prlRule, module, map)
-                is PrlMandatoryFeatureRule -> rule(prlRule, module, map)
-                is PrlFeatureRule -> rule(prlRule, module, map)
+                is PrlIfThenElseRule -> rule(prlRule, module, map, intStore)
+                is PrlInclusionRule -> rule(prlRule, module, map, intStore)
+                is PrlMandatoryFeatureRule -> rule(prlRule, module, map, intStore)
+                is PrlFeatureRule -> rule(prlRule, module, map, intStore)
             }
-        } catch (e: com.booleworks.prl.compiler.CoCoException) {
+        } catch (e: CoCoException) {
             state.addError(e.message!!)
             null
         }
     }
 
-    private fun rule(prl: PrlConstraintRule, module: Module, map: Map<PrlFeature, AnyFeatureDef>) =
+    private fun rule(prl: PrlConstraintRule, module: Module, map: Fmap, intStore: IntegerStore) =
         ConstraintRule(
-            cc.compileConstraint(prl.constraint, map),
+            cc.compileConstraint(prl.constraint, map, intStore),
             module,
             prl.id,
             prl.description,
@@ -310,9 +319,9 @@ class PrlCompiler {
             prl.lineNumber
         )
 
-    private fun rule(prl: PrlInclusionRule, module: Module, map: Map<PrlFeature, AnyFeatureDef>) = InclusionRule(
-        cc.compileConstraint(prl.ifPart, map),
-        cc.compileConstraint(prl.thenPart, map),
+    private fun rule(prl: PrlInclusionRule, module: Module, map: Fmap, intStore: IntegerStore) = InclusionRule(
+        cc.compileConstraint(prl.ifPart, map, intStore),
+        cc.compileConstraint(prl.thenPart, map, intStore),
         module,
         prl.id,
         prl.description,
@@ -320,9 +329,9 @@ class PrlCompiler {
         prl.lineNumber
     )
 
-    private fun rule(prl: PrlExclusionRule, module: Module, map: Map<PrlFeature, AnyFeatureDef>) = ExclusionRule(
-        cc.compileConstraint(prl.ifPart, map),
-        cc.compileConstraint(prl.thenNotPart, map),
+    private fun rule(prl: PrlExclusionRule, module: Module, map: Fmap, intStore: IntegerStore) = ExclusionRule(
+        cc.compileConstraint(prl.ifPart, map, intStore),
+        cc.compileConstraint(prl.thenNotPart, map, intStore),
         module,
         prl.id,
         prl.description,
@@ -330,9 +339,9 @@ class PrlCompiler {
         prl.lineNumber
     )
 
-    private fun rule(prl: PrlDefinitionRule, module: Module, map: Map<PrlFeature, AnyFeatureDef>) = DefinitionRule(
+    private fun rule(prl: PrlDefinitionRule, module: Module, map: Fmap, intStore: IntegerStore) = DefinitionRule(
         cc.compileUnversionedBooleanFeature(prl.feature, map),
-        cc.compileConstraint(prl.definition, map),
+        cc.compileConstraint(prl.definition, map, intStore),
         module,
         prl.id,
         prl.description,
@@ -340,10 +349,10 @@ class PrlCompiler {
         prl.lineNumber
     )
 
-    private fun rule(prl: PrlIfThenElseRule, module: Module, map: Map<PrlFeature, AnyFeatureDef>) = IfThenElseRule(
-        cc.compileConstraint(prl.ifPart, map),
-        cc.compileConstraint(prl.thenPart, map),
-        cc.compileConstraint(prl.elsePart, map),
+    private fun rule(prl: PrlIfThenElseRule, module: Module, map: Fmap, intStore: IntegerStore) = IfThenElseRule(
+        cc.compileConstraint(prl.ifPart, map, intStore),
+        cc.compileConstraint(prl.thenPart, map, intStore),
+        cc.compileConstraint(prl.elsePart, map, intStore),
         module,
         prl.id,
         prl.description,
@@ -351,7 +360,7 @@ class PrlCompiler {
         prl.lineNumber
     )
 
-    private fun rule(prl: PrlGroupRule, module: Module, map: Map<PrlFeature, AnyFeatureDef>) = GroupRule(
+    private fun rule(prl: PrlGroupRule, module: Module, map: Fmap) = GroupRule(
         prl.type,
         cc.compileUnversionedBooleanFeature(prl.group, map),
         cc.compileBooleanFeatures(prl.content, map).toSet(),
@@ -363,10 +372,11 @@ class PrlCompiler {
         prl.lineNumber
     )
 
-    private fun rule(prl: PrlFeatureRule, module: Module, map: Map<PrlFeature, AnyFeatureDef>) =
-        if (prl is PrlForbiddenFeatureRule) {
+    private fun rule(prl: PrlFeatureRule, module: Module, map: Fmap, intStore: IntegerStore): AnyRule {
+        val feature = validateFeature(prl, map)
+        val rule = if (prl is PrlForbiddenFeatureRule) {
             ForbiddenFeatureRule(
-                validateFeature(prl, map),
+                feature,
                 prl.enumValue,
                 prl.intValueOrVersion,
                 module,
@@ -377,7 +387,7 @@ class PrlCompiler {
             )
         } else {
             MandatoryFeatureRule(
-                validateFeature(prl, map),
+                feature,
                 prl.enumValue,
                 prl.intValueOrVersion,
                 module,
@@ -387,8 +397,13 @@ class PrlCompiler {
                 prl.lineNumber
             )
         }
+        if (feature is IntFeature && prl.intValueOrVersion != null) {
+            intStore.addValue(feature, prl.intValueOrVersion!!)
+        }
+        return rule
+    }
 
-    private fun validateFeature(prl: PrlFeatureRule, map: Map<PrlFeature, AnyFeatureDef>) =
+    private fun validateFeature(prl: PrlFeatureRule, map: Fmap) =
         when (val def = map[prl.feature]) {
             is BooleanFeatureDefinition ->
                 if (!def.versioned && (prl.enumValue != null || prl.intValueOrVersion != null)) {
@@ -453,3 +468,6 @@ internal class CompilerContext(
         return listOfNotNull(moduleString, featureString, ruleIdString, lineNumberString).joinToString(", ", "[", "]")
     }
 }
+
+typealias Fmap = Map<PrlFeature, AnyFeatureDef>
+
