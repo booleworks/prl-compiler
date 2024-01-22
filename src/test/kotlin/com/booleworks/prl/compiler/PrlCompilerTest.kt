@@ -336,6 +336,8 @@ class PrlCompilerTest {
 
         assertThat(compiler.errors()).isEmpty()
         assertThat(model.intStore.hasArithmeticExpressions()).isFalse()
+        assertThat(model.intStore.getSimpleFeatures()).hasSize(4)
+        assertThat(model.intStore.getArithFeatures()).hasSize(0)
 
         val istore = model.intStore.usedValues
         assertThat(istore).hasSize(4)
@@ -349,6 +351,7 @@ class PrlCompilerTest {
                 )
             )
         )
+        assertThat(model.intStore.relevantValues(i1)).containsExactly(10, 20, 50)
         assertThat(istore[i2]).isEqualTo(
             IntegerUsage(
                 i2,
@@ -359,6 +362,7 @@ class PrlCompilerTest {
                 )
             )
         )
+        assertThat(model.intStore.relevantValues(i2)).containsExactly(0, 10, 30)
         assertThat(istore[i3]).isEqualTo(
             IntegerUsage(
                 i3,
@@ -369,6 +373,7 @@ class PrlCompilerTest {
                 otherFeatures = sortedSetOf(i4)
             )
         )
+        assertThat(model.intStore.relevantValues(i3)).containsExactly(-40, -20, 0, 10, 20, 40)
         assertThat(istore[i4]).isEqualTo(
             IntegerUsage(
                 i4,
@@ -380,5 +385,6 @@ class PrlCompilerTest {
                 otherFeatures = sortedSetOf(i3)
             )
         )
+        assertThat(model.intStore.relevantValues(i4)).containsExactly(-40, -20, 0, 10, 20, 40)
     }
 }

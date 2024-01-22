@@ -31,17 +31,39 @@ data class IntegerStore internal constructor(
         }
     }
 
-    fun getSimpleFeatures() = usedValues.filter { !isUsedInArithmeticExpressions(it.key) }.map { it.value }
-    fun getArithFeatures() = usedValues.filter { isUsedInArithmeticExpressions(it.key) }.map { it.value }
+    fun getSimpleFeatures() = usedValues.filter { !isUsedInArEx(it.key, sortedSetOf()) }.map { it.value }
 
-    private fun isUsedInArithmeticExpressions(feature: IntFeature): Boolean {
+    fun getArithFeatures() = usedValues.filter { isUsedInArEx(it.key, sortedSetOf()) }.map { it.value }
+
+    fun relevantValues(feature: IntFeature): SortedSet<Int> {
+        return relevantValues(feature, sortedSetOf())
+    }
+
+    private fun relevantValues(feature: IntFeature, seen: SortedSet<IntFeature>): SortedSet<Int> {
+        val result = TreeSet<Int>()
+        val usage = usedValues[feature] ?: return sortedSetOf()
+        usage.values.forEach {
+            if (it.isDiscrete()) {
+                result.addAll(it.allValues())
+            } else {
+                result.add(it.first())
+                result.add(it.last())
+            }
+        }
+        seen.add(feature)
+        usage.otherFeatures.filter { it !in seen }.forEach { result.addAll(relevantValues(it, seen)) }
+        return result
+    }
+
+    private fun isUsedInArEx(feature: IntFeature, seen: SortedSet<IntFeature>): Boolean {
         val usage = usedValues[feature]
-        return if (usage == null) {
+        return if (usage == null || feature in seen) {
             false
         } else if (usage.usedInArEx) {
             true
         } else {
-            usage.otherFeatures.any { isUsedInArithmeticExpressions(it) }
+            seen.add(feature)
+            usage.otherFeatures.any { isUsedInArEx(it, seen) }
         }
     }
 
@@ -88,4 +110,5 @@ data class IntegerUsage(
     val values: SortedSet<IntRange> = TreeSet(),
     val otherFeatures: SortedSet<IntFeature> = TreeSet(),
     var usedInArEx: Boolean = false
-)
+) {
+}
