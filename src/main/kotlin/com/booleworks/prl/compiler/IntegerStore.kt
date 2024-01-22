@@ -61,7 +61,9 @@ data class IntegerStore internal constructor(
 
     private fun addArithmeticExpression(term: IntTerm) {
         term.features().forEach { feature ->
-            usedValues.computeIfAbsent(feature) { IntegerUsage() }.usedInArEx = true
+            val entry = usedValues.computeIfAbsent(feature) { IntegerUsage() }
+            entry.usedInArEx = true
+            entry.values.clear()
         }
     }
 }

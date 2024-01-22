@@ -86,6 +86,7 @@ class IntFeature internal constructor(
         if (module != other.module) return false
         return domain == other.domain
     }
+
 }
 
 data class IntValue internal constructor(val value: Int) : IntTerm {

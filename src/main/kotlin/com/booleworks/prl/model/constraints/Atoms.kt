@@ -36,6 +36,7 @@ sealed class Feature(open val featureCode: String, open val module: Module) : Co
 
     override fun compareTo(other: Feature) = compareValuesBy(this, other, { it.fullName }, { it.fullName })
 
+    override fun toString() = fullName
     override fun hashCode() = fullName.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
