@@ -283,11 +283,12 @@ fun deserialize(bin: PbFeatureStore, featureMap: Map<Int, Feature>) = FeatureSto
 )
 
 fun deserialize(bin: PbIntStore, featureMap: Map<Int, Feature>) = IntegerStore(
-    bin.usedValuesMap.map { featureMap[it.key]!! as IntFeature to deserialize(it.value, featureMap) }.toMap()
+    bin.usedValuesMap.map { featureMap[it.key]!! as IntFeature to deserialize(it.key, it.value, featureMap) }.toMap()
         .toMutableMap()
 )
 
-fun deserialize(bin: PbIntegerUsage, featureMap: Map<Int, Feature>) = IntegerUsage(
+fun deserialize(key: Int, bin: PbIntegerUsage, featureMap: Map<Int, Feature>) = IntegerUsage(
+    feature = featureMap[key]!! as IntFeature,
     usedInArEx = bin.usedInArEx,
     otherFeatures = bin.otherFeaturesList.map { featureMap[it]!! as IntFeature }.toSortedSet(),
     values = bin.valuesList.map { deserialize(it) }.toSortedSet()

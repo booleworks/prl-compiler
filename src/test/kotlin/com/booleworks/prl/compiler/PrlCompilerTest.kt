@@ -103,15 +103,17 @@ class PrlCompilerTest {
         assertThat(model.intStore.usedValues).hasSize(5)
         assertThat(model.intStore.usedValues[i1]).isEqualTo(
             IntegerUsage(
+                i1,
                 usedInArEx = true,
                 otherFeatures = sortedSetOf(sum)
             )
         )
-        assertThat(model.intStore.usedValues[i2]).isEqualTo(IntegerUsage(usedInArEx = true))
-        assertThat(model.intStore.usedValues[i3]).isEqualTo(IntegerUsage(usedInArEx = true))
-        assertThat(model.intStore.usedValues[i3]).isEqualTo(IntegerUsage(usedInArEx = true))
+        assertThat(model.intStore.usedValues[i2]).isEqualTo(IntegerUsage(i2, usedInArEx = true))
+        assertThat(model.intStore.usedValues[i3]).isEqualTo(IntegerUsage(i3, usedInArEx = true))
+        assertThat(model.intStore.usedValues[i4]).isEqualTo(IntegerUsage(i4, usedInArEx = true))
         assertThat(model.intStore.usedValues[sum]).isEqualTo(
             IntegerUsage(
+                sum,
                 usedInArEx = true,
                 otherFeatures = sortedSetOf(i1)
             )
@@ -339,6 +341,7 @@ class PrlCompilerTest {
         assertThat(istore).hasSize(4)
         assertThat(istore[i1]).isEqualTo(
             IntegerUsage(
+                i1,
                 values = sortedSetOf(
                     IntRange.list(10),
                     IntRange.list(20),
@@ -348,6 +351,7 @@ class PrlCompilerTest {
         )
         assertThat(istore[i2]).isEqualTo(
             IntegerUsage(
+                i2,
                 values = sortedSetOf(
                     IntRange.list(0),
                     IntRange.list(10),
@@ -357,6 +361,7 @@ class PrlCompilerTest {
         )
         assertThat(istore[i3]).isEqualTo(
             IntegerUsage(
+                i3,
                 values = sortedSetOf(
                     IntRange.list(0),
                     IntRange.list(0, 10, 20),
@@ -366,6 +371,7 @@ class PrlCompilerTest {
         )
         assertThat(istore[i4]).isEqualTo(
             IntegerUsage(
+                i4,
                 values = sortedSetOf(
                     IntRange.list(0),
                     IntRange.list(20, 40),
