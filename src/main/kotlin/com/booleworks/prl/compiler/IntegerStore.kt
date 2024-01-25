@@ -41,7 +41,16 @@ data class IntegerStore internal constructor(
 
     private fun relevantValues(feature: IntFeature, seen: SortedSet<IntFeature>): SortedSet<Int> {
         val result = TreeSet<Int>()
-        val usage = usedValues[feature] ?: return sortedSetOf()
+        val usage = usedValues[feature]
+        if (feature in seen || usage == null) {
+            return sortedSetOf()
+        }
+        if (feature.domain.isDiscrete()) {
+            result.addAll(feature.domain.allValues())
+        } else {
+            result.add(feature.domain.first())
+            result.add(feature.domain.last())
+        }
         usage.values.forEach {
             if (it.isDiscrete()) {
                 result.addAll(it.allValues())
@@ -68,11 +77,11 @@ data class IntegerStore internal constructor(
     }
 
     private fun addComparisonPredicate(predicate: IntComparisonPredicate) {
-        if (predicate.left is IntValue && predicate.right is IntValue) {
-            return // constant statement, nothing to do
-        }
         val left = predicate.left.normalize()
         val right = predicate.right.normalize()
+        if (left is IntValue && right is IntValue) {
+            return // constant statement, nothing to do
+        }
         if (left is IntMul || left is IntSum || right is IntMul || right is IntSum) {
             addArithmeticExpression(left)
             addArithmeticExpression(right)
@@ -110,5 +119,4 @@ data class IntegerUsage(
     val values: SortedSet<IntRange> = TreeSet(),
     val otherFeatures: SortedSet<IntFeature> = TreeSet(),
     var usedInArEx: Boolean = false
-) {
-}
+)

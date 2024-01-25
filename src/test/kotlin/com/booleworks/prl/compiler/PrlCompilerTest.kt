@@ -351,7 +351,7 @@ class PrlCompilerTest {
                 )
             )
         )
-        assertThat(model.intStore.relevantValues(i1)).containsExactly(10, 20, 50)
+        assertThat(model.intStore.relevantValues(i1)).containsExactly(0, 10, 20, 50, 100)
         assertThat(istore[i2]).isEqualTo(
             IntegerUsage(
                 i2,
@@ -362,7 +362,7 @@ class PrlCompilerTest {
                 )
             )
         )
-        assertThat(model.intStore.relevantValues(i2)).containsExactly(0, 10, 30)
+        assertThat(model.intStore.relevantValues(i2)).containsExactly(0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 30)
         assertThat(istore[i3]).isEqualTo(
             IntegerUsage(
                 i3,
@@ -373,7 +373,7 @@ class PrlCompilerTest {
                 otherFeatures = sortedSetOf(i4)
             )
         )
-        assertThat(model.intStore.relevantValues(i3)).containsExactly(-40, -20, 0, 10, 20, 40)
+        assertThat(model.intStore.relevantValues(i3)).containsExactly(-100, -40, -20, 0, 10, 20, 40, 100)
         assertThat(istore[i4]).isEqualTo(
             IntegerUsage(
                 i4,
@@ -385,6 +385,6 @@ class PrlCompilerTest {
                 otherFeatures = sortedSetOf(i3)
             )
         )
-        assertThat(model.intStore.relevantValues(i4)).containsExactly(-40, -20, 0, 10, 20, 40)
+        assertThat(model.intStore.relevantValues(i4)).containsExactly(-100, -40, -20, 0, 10, 20, 40, 100)
     }
 }

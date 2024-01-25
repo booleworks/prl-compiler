@@ -7,9 +7,11 @@ import com.booleworks.logicng.datastructures.Substitution
 import com.booleworks.logicng.formulas.Formula
 import com.booleworks.logicng.formulas.FormulaFactory
 import com.booleworks.logicng.formulas.Variable
+import com.booleworks.prl.compiler.IntegerStore
 import com.booleworks.prl.model.AnyFeatureDef
 import com.booleworks.prl.model.BooleanFeatureDefinition
 import com.booleworks.prl.model.EnumFeatureDefinition
+import com.booleworks.prl.model.IntFeatureDefinition
 import com.booleworks.prl.model.PrlModel
 import com.booleworks.prl.model.constraints.Amo
 import com.booleworks.prl.model.constraints.And
@@ -43,10 +45,14 @@ import com.booleworks.prl.model.slices.SliceSet
 import com.booleworks.prl.model.slices.computeAllSlices
 import com.booleworks.prl.model.slices.computeSliceSets
 import com.booleworks.prl.transpiler.RuleType.ENUM_FEATURE_CONSTRAINT
+import com.booleworks.prl.transpiler.RuleType.INT_FEATURE_CONSTRAINT
+import com.booleworks.prl.transpiler.RuleType.INT_OUT_OF_BOUNDS_CONSTRAINT
+import kotlin.math.abs
 
 const val S = "_"
 const val SLICE_SELECTOR_PREFIX = "@SL"
 const val ENUM_FEATURE_PREFIX = "@ENUM"
+const val INT_FEATURE_PREFIX = "@INT"
 
 fun transpileModel(
     f: FormulaFactory,
@@ -83,8 +89,8 @@ fun transpileConstraint(f: FormulaFactory, constraint: Constraint, info: Transpi
         is Exo -> f.exo(filterFeatures(f, constraint.features, info))
         is EnumComparisonPredicate -> info.translateEnumComparison(f, constraint)
         is EnumInPredicate -> info.translateEnumIn(f, constraint)
-        is IntComparisonPredicate -> TODO()
-        is IntInPredicate -> TODO()
+        is IntComparisonPredicate -> info.translateIntComparison(f, constraint)
+        is IntInPredicate -> info.translateIntIn(f, constraint)
         is VersionPredicate -> TODO()
     }
 
@@ -136,19 +142,48 @@ fun mergeSlices(f: FormulaFactory, slices: List<SliceTranslation>): MergedSliceT
 }
 
 fun transpileSliceSet(f: FormulaFactory, sliceSet: SliceSet): SliceTranslation {
-    val state = initState(f, sliceSet)
+    val intStore = if (sliceSet.hasIntFeatures()) initIntegerStore(sliceSet.rules) else null
+    val state = initState(f, sliceSet, intStore)
     val propositions = sliceSet.rules.map { transpileRule(f, it, sliceSet, state) }.toMutableList()
-    propositions += state.enumMapping.values.map {
+    propositions += enumPropositions(f, state, sliceSet)
+    propositions += intPropositions(f, state, sliceSet)
+    return SliceTranslation(sliceSet, state.toTranslationInfo(propositions))
+}
+
+private fun enumPropositions(f: FormulaFactory, state: TranspilerState, sliceSet: SliceSet) =
+    state.enumMapping.values.map {
         PrlProposition(
             RuleInformation(ENUM_FEATURE_CONSTRAINT, sliceSet),
             f.exo(it.values)
         )
     }
-    //TODO int constraints
-    return SliceTranslation(sliceSet, state.toTranslationInfo(propositions))
+
+private fun intPropositions(f: FormulaFactory, state: TranspilerState, sliceSet: SliceSet): List<PrlProposition> {
+    val props = mutableListOf<PrlProposition>()
+    sliceSet.definitions
+        .filterIsInstance<IntFeatureDefinition>()
+        .forEach { ft ->
+            val range = ft.feature.domain
+            val validFeatures = mutableListOf<Variable>()
+            //TODO feature kommt nicht vor
+            state.intMapping[ft.feature.fullName]!!.forEach { (value, variable) ->
+                if (range.contains(value)) {
+                    validFeatures.add(variable)
+                } else {
+                    props.add(
+                        PrlProposition(
+                            RuleInformation(INT_OUT_OF_BOUNDS_CONSTRAINT, sliceSet),
+                            variable.negate(f)
+                        )
+                    )
+                }
+            }
+            props.add(PrlProposition(RuleInformation(INT_FEATURE_CONSTRAINT, sliceSet), f.exo(validFeatures)))
+        }
+    return props
 }
 
-private fun initState(f: FormulaFactory, sliceSet: SliceSet) = TranspilerState().apply {
+private fun initState(f: FormulaFactory, sliceSet: SliceSet, intStore: IntegerStore?) = TranspilerState().apply {
     val allDefinitions = sliceSet.definitions.associateBy { it.feature.featureCode }
     allDefinitions.values.forEach { featureMap[it.feature.fullName] = it }
     sliceSet.rules.flatMap { it.features() }.filter { allDefinitions[it.featureCode] == null }
@@ -157,15 +192,30 @@ private fun initState(f: FormulaFactory, sliceSet: SliceSet) = TranspilerState()
         featureMap.values.filterIsInstance<BooleanFeatureDefinition>().map { f.variable(it.feature.fullName) })
     featureMap.values.filterIsInstance<EnumFeatureDefinition>()
         .forEach { def ->
-            enumMapping[def.feature.fullName] = def.values.associateWith { enumFeature(f, def.feature.fullName, it) }
+            enumMapping[def.feature.fullName] =
+                def.values.associateWith { enumFeature(f, def.feature.fullName, it) }
         }
+    intStore?.getSimpleFeatures()?.forEach { usage ->
+        intMapping[usage.feature.fullName] =
+            intStore.relevantValues(usage.feature).associateWith { intFeature(f, usage.feature.fullName, it) }
+    }
 }
 
 private fun enumFeature(f: FormulaFactory, feature: String, value: String) = f.variable(
     "$ENUM_FEATURE_PREFIX$S${feature.replace(" ", S).replace(".", "#")}" + "$S${value.replace(" ", S)}"
 )
 
-private fun transpileRule(f: FormulaFactory, r: AnyRule, sliceSet: SliceSet, state: TranspilerState): PrlProposition =
+private fun intFeature(f: FormulaFactory, feature: String, value: Int): Variable {
+    val valueString = if (value >= 0) "$value" else "m${abs(value)}"
+    return f.variable("$INT_FEATURE_PREFIX$S${feature.replace(" ", S).replace(".", "#")}" + "$S${valueString}")
+}
+
+private fun transpileRule(
+    f: FormulaFactory,
+    r: AnyRule,
+    sliceSet: SliceSet,
+    state: TranspilerState
+): PrlProposition =
     when (r) {
         is ConstraintRule -> transpileConstraint(f, r.constraint, state)
         is DefinitionRule -> f.equivalence(
@@ -193,13 +243,52 @@ private fun transpileRule(f: FormulaFactory, r: AnyRule, sliceSet: SliceSet, sta
 
 private fun transpileGroupRule(f: FormulaFactory, rule: GroupRule, state: TranspilerState): Formula {
     val content = filterFeatures(f, rule.content, state)
-    val group = if (state.featureMap.containsKey(rule.group.fullName)) f.variable(rule.group.fullName) else f.falsum()
+    val group =
+        if (state.featureMap.containsKey(rule.group.fullName)) f.variable(rule.group.fullName) else f.falsum()
     val cc = if (rule.type == GroupType.MANDATORY) f.exo(content) else f.amo(content)
     return f.and(cc, f.equivalence(group, f.or(content)))
 }
 
 private fun filterFeatures(f: FormulaFactory, fs: Collection<BooleanFeature>, info: TranspilerCoreInfo) =
     fs.filter { info.booleanVariables.contains(f.variable(it.fullName)) }.map { f.variable(it.fullName) }
+
+private fun initIntegerStore(rules: List<AnyRule>): IntegerStore {
+    val intStore = IntegerStore()
+    rules.forEach { addRuleToIntStore(it, intStore) }
+    return intStore
+}
+
+fun addRuleToIntStore(rule: AnyRule, intStore: IntegerStore) {
+    when (rule) {
+        is ConstraintRule -> addContraintsToIntStore(intStore, rule.constraint)
+        is DefinitionRule -> addContraintsToIntStore(intStore, rule.definition)
+        is ExclusionRule -> addContraintsToIntStore(intStore, rule.ifConstraint, rule.thenNotConstraint)
+        is ForbiddenFeatureRule -> addContraintsToIntStore(intStore, rule.constraint)
+        is MandatoryFeatureRule -> addContraintsToIntStore(intStore, rule.constraint)
+        is IfThenElseRule -> addContraintsToIntStore(
+            intStore, rule.ifConstraint, rule.thenConstraint, rule.elseConstraint
+        )
+        is InclusionRule -> addContraintsToIntStore(intStore, rule.ifConstraint, rule.thenConstraint)
+        is GroupRule -> {}
+    }
+}
+
+fun addContraintsToIntStore(intStore: IntegerStore, vararg constraints: Constraint) {
+    constraints.forEach { addContraintToIntStore(intStore, it) }
+}
+
+fun addContraintToIntStore(intStore: IntegerStore, constraint: Constraint) {
+    when (constraint) {
+        is Not -> addContraintsToIntStore(intStore, constraint.operand)
+        is Equivalence -> addContraintsToIntStore(intStore, constraint.left, constraint.right)
+        is Implication -> addContraintsToIntStore(intStore, constraint.left, constraint.right)
+        is And -> addContraintsToIntStore(intStore, *constraint.operands.toTypedArray())
+        is Or -> addContraintsToIntStore(intStore, *constraint.operands.toTypedArray())
+        is IntComparisonPredicate -> intStore.addUsage(constraint)
+        is IntInPredicate -> intStore.addUsage(constraint)
+        else -> {}
+    }
+}
 
 /**
  * Internal transpiler state for a single slice.
