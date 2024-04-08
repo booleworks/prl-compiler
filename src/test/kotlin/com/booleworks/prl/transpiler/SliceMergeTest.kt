@@ -1,5 +1,6 @@
 package com.booleworks.prl.transpiler
 
+import com.booleworks.logicng.csp.CspFactory
 import com.booleworks.logicng.datastructures.Tristate
 import com.booleworks.logicng.formulas.FormulaFactory
 import com.booleworks.logicng.solvers.MiniSat
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test
 
 class SliceMergeTest {
     private val f = FormulaFactory.caching()
+    private val cf = CspFactory(f)
 
     private val a = f.variable("test.a")
     private val b = f.variable("test.b")
@@ -25,7 +27,7 @@ class SliceMergeTest {
     @Test
     fun testModel1() {
         val model = PrlCompiler().compile(parseRuleFile("test-files/prl/transpiler/merge1.prl"))
-        val modelTranslation = transpileModel(f, model, listOf())
+        val modelTranslation = transpileModel(cf, model, listOf())
         assertThat(modelTranslation).hasSize(3)
         assertThat(modelTranslation.computations[0].knownVariables).containsExactly(a, b, c, x)
         assertThat(modelTranslation.computations[1].knownVariables).containsExactly(a, b, c, x)
@@ -35,7 +37,7 @@ class SliceMergeTest {
     @Test
     fun testModel2() {
         val model = PrlCompiler().compile(parseRuleFile("test-files/prl/transpiler/merge2.prl"))
-        val modelTranslation = transpileModel(f, model, listOf())
+        val modelTranslation = transpileModel(cf, model, listOf())
         assertThat(modelTranslation).hasSize(9)
         assertThat(modelTranslation.computations[0].knownVariables).containsExactly(a, b, c, p, x)
         assertThat(modelTranslation.computations[1].knownVariables).containsExactly(a, b, c, q, x)
@@ -51,7 +53,7 @@ class SliceMergeTest {
     @Test
     fun testSimpleSliceMerge1() {
         val model = PrlCompiler().compile(parseRuleFile("test-files/prl/transpiler/merge1.prl"))
-        val modelTranslation = transpileModel(f, model, listOf())
+        val modelTranslation = transpileModel(cf, model, listOf())
         val merged = mergeSlices(f, modelTranslation.computations)
         assertThat(merged.sliceSelectors).hasSize(3)
         assertThat(merged.knownVariables).containsExactly(a, b, c, x)
@@ -72,7 +74,7 @@ class SliceMergeTest {
     @Test
     fun testSimpleSliceMerge2() {
         val model = PrlCompiler().compile(parseRuleFile("test-files/prl/transpiler/merge2.prl"))
-        val modelTranslation = transpileModel(f, model, listOf())
+        val modelTranslation = transpileModel(cf, model, listOf())
         val merged = mergeSlices(f, modelTranslation.computations)
         assertThat(merged.sliceSelectors).hasSize(9)
         assertThat(merged.knownVariables).containsExactly(a, b, c, p, q, r, x, y, z)
@@ -106,7 +108,7 @@ class SliceMergeTest {
     @Test
     fun testSimpleSliceMerge3() {
         val model = PrlCompiler().compile(parseRuleFile("test-files/prl/transpiler/merge3.prl"))
-        val modelTranslation = transpileModel(f, model, listOf())
+        val modelTranslation = transpileModel(cf, model, listOf())
         val merged = mergeSlices(f, modelTranslation.computations)
 
         val allVariables = f.variables(

@@ -3,6 +3,8 @@
 
 package com.booleworks.prl.transpiler
 
+import com.booleworks.logicng.csp.encodings.CspEncodingContext
+import com.booleworks.logicng.csp.terms.IntegerVariable
 import com.booleworks.logicng.datastructures.Substitution
 import com.booleworks.logicng.formulas.Formula
 import com.booleworks.logicng.formulas.FormulaFactory
@@ -15,6 +17,7 @@ import com.booleworks.prl.model.constraints.Constraint
 import com.booleworks.prl.model.constraints.EnumComparisonPredicate
 import com.booleworks.prl.model.constraints.EnumInPredicate
 import com.booleworks.prl.model.constraints.Feature
+import com.booleworks.prl.model.constraints.IntPredicate
 import com.booleworks.prl.model.rules.AnyRule
 import com.booleworks.prl.model.rules.ConstraintRule
 import com.booleworks.prl.model.slices.Slice
@@ -30,7 +33,8 @@ enum class RuleType(val description: String) {
     UNKNOWN_FEATURE_IN_SLICE("Unknown feature in this slice"),
     FEATURE_EQUIVALENCE_OVER_SLICES("Feature equivalence for slice"),
     ENUM_FEATURE_CONSTRAINT("EXO constraint for enum feature values"),
-    ADDITIONAL_RESTRICTION("Additional user-provided restriction")
+    ADDITIONAL_RESTRICTION("Additional user-provided restriction"),
+    PREDICATE_DEFINITION("Definition of predicate auxiliary variable")
 }
 
 data class RuleInformation(val ruleType: RuleType, val rule: AnyRule?, val sliceSet: SliceSet?) : PropositionBackpack {
@@ -87,7 +91,10 @@ data class ModelTranslation(val computations: List<SliceTranslation>) : Iterable
 interface TranspilerCoreInfo {
     val unknownFeatures: Set<Feature>
     val booleanVariables: Set<Variable>
+    val integerVariables: Set<IntegerVariable>
     val enumMapping: Map<String, Map<String, Variable>>
+    val intPredicateMapping: Map<IntPredicate, Pair<Variable, Int>>
+    val encodingContext: CspEncodingContext
 
     fun translateEnumIn(f: FormulaFactory, constraint: EnumInPredicate): Formula =
         enumMapping[constraint.feature.fullName].let { enumMap ->
@@ -109,8 +116,11 @@ data class TranslationInfo(
     val propositions: List<PrlProposition>,
     val knownVariables: Set<Variable>,
     override val booleanVariables: Set<Variable>,
+    override val integerVariables: Set<IntegerVariable>,
     override val enumMapping: Map<String, Map<String, Variable>>,
     override val unknownFeatures: Set<Feature>,
+    override val intPredicateMapping: Map<IntPredicate, Pair<Variable, Int>>,
+    override val encodingContext: CspEncodingContext
 ) : TranspilerCoreInfo {
     val enumVariables: Set<Variable> = enumMapping.values.flatMap { it.values }.toSet()
     private val var2enum = mutableMapOf<Variable, Pair<String, String>>()

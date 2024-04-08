@@ -62,11 +62,11 @@ class PrlCompiler {
         val numDefs = featureStore.size()
         state.addInfo(
             "Compiled ${moduleHierarchy.numberOfModules()} " +
-                    "module${if (moduleHierarchy.numberOfModules() != 1) "s" else ""} in ${t2 - t1} ms."
+                "module${if (moduleHierarchy.numberOfModules() != 1) "s" else ""} in ${t2 - t1} ms."
         )
         state.addInfo(
             "Compiled ${propertyStore.slicingPropertyDefinitions.size} slicing property definition " +
-                    "${if (propertyStore.slicingPropertyDefinitions.size != 1) "s" else ""} in ${t3 - t2} ms."
+                "${if (propertyStore.slicingPropertyDefinitions.size != 1) "s" else ""} in ${t3 - t2} ms."
         )
         state.addInfo("Compiled $numDefs feature definition${if (numDefs != 1) "s" else ""} in ${t4 - t3} ms.")
         state.addInfo("Compiled ${rules.size} rule${if (rules.size != 1) "s" else ""} in ${t5 - t4} ms.")
@@ -75,13 +75,12 @@ class PrlCompiler {
         if (moduleHierarchy.numberOfModules() > 1) {
             state.addError(
                 "Currently only PRL files with one module are supported. Multi-Module support will be " +
-                        "added in future releases."
+                    "added in future releases."
             )
         }
-        if (featureStore.containsIntFeatures() || featureStore.containsVersionedBooleanFeatures()) {
+        if (featureStore.containsVersionedBooleanFeatures()) {
             state.addError(
-                "Currently integer and versioned Boolean features are not supported. Support will be added in future " +
-                        "releases."
+                "Currently versioned Boolean features are not supported. Support will be added in future releases."
             )
         }
 
