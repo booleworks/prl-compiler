@@ -34,6 +34,7 @@ enum class RuleType(val description: String) {
     FEATURE_EQUIVALENCE_OVER_SLICES("Feature equivalence for slice"),
     ENUM_FEATURE_CONSTRAINT("EXO constraint for enum feature values"),
     ADDITIONAL_RESTRICTION("Additional user-provided restriction"),
+    INTEGER_VARIABLE("Definition of a int feature"),
     PREDICATE_DEFINITION("Definition of predicate auxiliary variable")
 }
 
@@ -56,6 +57,7 @@ data class SliceTranslation(val sliceSet: SliceSet, val info: TranslationInfo) {
     val knownVariables = info.knownVariables
     val booleanVariables = info.booleanVariables
     val enumVariables = info.enumVariables
+    val integerVariables = info.integerVariables
     val enumMapping = info.enumMapping
     val unknownFeatures = info.unknownFeatures
 }
@@ -65,6 +67,7 @@ data class MergedSliceTranslation(val sliceSelectors: Map<String, SliceTranslati
     val knownVariables = info.knownVariables
     val booleanVariables = info.booleanVariables
     val enumVariables = info.enumVariables
+    val integerVariables = info.integerVariables
     val enumMapping = info.enumMapping
     val unknownFeatures = info.unknownFeatures
 }
@@ -115,6 +118,7 @@ interface TranspilerCoreInfo {
 data class TranslationInfo(
     val propositions: List<PrlProposition>,
     val knownVariables: Set<Variable>,
+    val intVarDefinitions: Map<IntegerVariable, Formula>,
     override val booleanVariables: Set<Variable>,
     override val integerVariables: Set<IntegerVariable>,
     override val enumMapping: Map<String, Map<String, Variable>>,

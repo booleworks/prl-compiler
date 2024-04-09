@@ -1,6 +1,7 @@
 package com.booleworks.prl.transpiler
 
 import com.booleworks.logicng.csp.CspFactory
+import com.booleworks.logicng.csp.encodings.CspEncodingContext
 import com.booleworks.logicng.formulas.FormulaFactory
 import com.booleworks.prl.compiler.PrlCompiler
 import com.booleworks.prl.model.BooleanProperty
@@ -20,8 +21,10 @@ class LogicNGTranspilerBooleanTest {
     private val ss2 = sliceSets[1]
     private val f = FormulaFactory.caching()
     private val cf = CspFactory(f)
-    private val translation1 = transpileSliceSet(cf, ss1)
-    private val translation2 = transpileSliceSet(cf, ss2)
+    private val context = CspEncodingContext(cf)
+    private val varDef = encodeIntFeatures(context, model.intFeatures())
+    private val translation1 = transpileSliceSet(context, varDef, ss1)
+    private val translation2 = transpileSliceSet(context, varDef, ss2)
     private val modelTranslation = transpileModel(cf, model, listOf(BooleanSliceSelection("active", BooleanRange.list(true))))
 
     private val f1 = f.variable("top.f1")
