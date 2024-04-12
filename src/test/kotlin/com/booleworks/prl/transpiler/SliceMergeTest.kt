@@ -54,7 +54,7 @@ class SliceMergeTest {
     fun testSimpleSliceMerge1() {
         val model = PrlCompiler().compile(parseRuleFile("test-files/prl/transpiler/merge1.prl"))
         val modelTranslation = transpileModel(cf, model, listOf())
-        val merged = mergeSlices(f, modelTranslation.computations)
+        val merged = mergeSlices(cf, modelTranslation.computations)
         assertThat(merged.sliceSelectors).hasSize(3)
         assertThat(merged.knownVariables).containsExactly(a, b, c, x)
         assertThat(merged.propositions).hasSize(16)
@@ -75,7 +75,7 @@ class SliceMergeTest {
     fun testSimpleSliceMerge2() {
         val model = PrlCompiler().compile(parseRuleFile("test-files/prl/transpiler/merge2.prl"))
         val modelTranslation = transpileModel(cf, model, listOf())
-        val merged = mergeSlices(f, modelTranslation.computations)
+        val merged = mergeSlices(cf, modelTranslation.computations)
         assertThat(merged.sliceSelectors).hasSize(9)
         assertThat(merged.knownVariables).containsExactly(a, b, c, p, q, r, x, y, z)
         assertThat(filter(merged.propositions, "@SL0")).hasSize(9 + 4 + 4)
@@ -109,7 +109,7 @@ class SliceMergeTest {
     fun testSimpleSliceMerge3() {
         val model = PrlCompiler().compile(parseRuleFile("test-files/prl/transpiler/merge3.prl"))
         val modelTranslation = transpileModel(cf, model, listOf())
-        val merged = mergeSlices(f, modelTranslation.computations)
+        val merged = mergeSlices(cf, modelTranslation.computations)
 
         val allVariables = f.variables(
             "@ENUM_test#a_a1", "@ENUM_test#a_a2",

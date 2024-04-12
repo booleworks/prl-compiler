@@ -94,9 +94,9 @@ data class ModelTranslation(val computations: List<SliceTranslation>) : Iterable
 interface TranspilerCoreInfo {
     val unknownFeatures: Set<Feature>
     val booleanVariables: Set<Variable>
-    val integerVariables: Set<IntegerVariable>
+    val integerVariables: Set<LngIntVariable>
     val enumMapping: Map<String, Map<String, Variable>>
-    val intPredicateMapping: Map<IntPredicate, Pair<Variable, Int>>
+    val intPredicateMapping: Map<IntPredicate, Variable>
     val encodingContext: CspEncodingContext
 
     fun translateEnumIn(f: FormulaFactory, constraint: EnumInPredicate): Formula =
@@ -118,12 +118,12 @@ interface TranspilerCoreInfo {
 data class TranslationInfo(
     val propositions: List<PrlProposition>,
     val knownVariables: Set<Variable>,
-    val intVarDefinitions: Map<IntegerVariable, Formula>,
+    val integerEncodings: IntFeatureEncodingStore,
     override val booleanVariables: Set<Variable>,
-    override val integerVariables: Set<IntegerVariable>,
+    override val integerVariables: Set<LngIntVariable>,
     override val enumMapping: Map<String, Map<String, Variable>>,
     override val unknownFeatures: Set<Feature>,
-    override val intPredicateMapping: Map<IntPredicate, Pair<Variable, Int>>,
+    override val intPredicateMapping: Map<IntPredicate, Variable>,
     override val encodingContext: CspEncodingContext
 ) : TranspilerCoreInfo {
     val enumVariables: Set<Variable> = enumMapping.values.flatMap { it.values }.toSet()
