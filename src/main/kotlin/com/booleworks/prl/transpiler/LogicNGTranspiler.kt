@@ -110,7 +110,7 @@ fun encodeIntFeatures(
     val map2 = map1.values.associateBy(LngIntVariable::variable) { v ->
         val clauses = context.factory().encodeVariable(v.variable, context, Algorithm.Order)
         context.factory().formulaFactory.and(clauses)
-    }
+    }.toMutableMap()
     Pair(name, IntFeatureEncodingInfo(map1, map2))
 })
 
@@ -175,16 +175,14 @@ fun mergeSlices(cf: CspFactory, slices: List<SliceTranslation>): MergedSliceTran
     val encodingContext = slices[0].info.encodingContext
     val integerEncodings = slices[0].info.integerEncodings
 
-    val mostGeneralIntVariables = TreeMap<String, LngIntVariable>();
-    slices
-        .flatMap { it.integerVariables.map { v -> v.feature } }
-        .distinct()
-        .forEach {
-            val (variable, encoded) = integerEncodings.getInfo(it)!!.getMostGeneralVariable(it, encodingContext)
-            mostGeneralIntVariables[it] = variable;
-            propositions.add(PrlProposition(RuleInformation(INTEGER_VARIABLE), encoded))
-        }
-    val integerVariables = mostGeneralIntVariables.values.toSet()
+    val mergedVarMap = slices
+        .flatMap { it.integerVariables }
+        .groupBy({ it.feature }, { it })
+        .mapValues { (k, v) -> integerEncodings.getInfo(k)!!.getMergedVariable(k, v, encodingContext) }
+    val integerVariables = mergedVarMap.values.toSet()
+    integerVariables.forEach {
+        propositions.add(PrlProposition(RuleInformation(INTEGER_VARIABLE), integerEncodings.getEncoding(it)!!))
+    }
 
     var count = 0
     slices.forEach { slice ->
@@ -212,8 +210,8 @@ fun mergeSlices(cf: CspFactory, slices: List<SliceTranslation>): MergedSliceTran
         }
         slice.integerVariables.forEach { v ->
             val constraints = ArrayList<Formula>()
-            val generalVar = mostGeneralIntVariables[v.feature]!!.variable
-            val generalDomain = generalVar.domain;
+            val mergedVar = mergedVarMap[v.feature]!!.variable
+            val generalDomain = mergedVar.domain;
             val vDomain = v.variable.domain;
             var generalCounter = 0
             var vCounter = 0
@@ -227,7 +225,7 @@ fun mergeSlices(cf: CspFactory, slices: List<SliceTranslation>): MergedSliceTran
                     } else if (c >= generalDomain.ub()) {
                         constraints.add(vEncodedVar)
                     } else if (generalDomain.contains(c)) {
-                        val generalEncodedVar = encodingContext.variableMap[generalVar]!![generalCounter]!!
+                        val generalEncodedVar = encodingContext.variableMap[mergedVar]!![generalCounter]!!
                         constraints.add(f.equivalence(generalEncodedVar, vEncodedVar))
                         lastGeneralVar = generalEncodedVar
                         ++generalCounter
@@ -480,20 +478,26 @@ data class IntFeatureEncodingStore(val store: Map<String, IntFeatureEncodingInfo
 
 data class IntFeatureEncodingInfo(
     val featureToVar: Map<IntFeature, LngIntVariable>,
-    val encodedVars: Map<IntegerVariable, Formula>,
+    val encodedVars: MutableMap<IntegerVariable, Formula>,
 ) {
-    var mostGeneralVariable: Pair<LngIntVariable, Formula>? = null
+    private var mergedVariables: MutableMap<String, LngIntVariable> = TreeMap()
     fun contains(variable: IntegerVariable) = encodedVars.containsKey(variable)
 
-    fun getMostGeneralVariable(name: String, encodingContext: CspEncodingContext): Pair<LngIntVariable, Formula> {
-        if (mostGeneralVariable == null) {
-            val domain = encodedVars.keys.map { it.domain }.reduce { a, b -> a.cap(b) }
-            val v = LngIntVariable(name, encodingContext.factory().variable(name, domain))
+    fun getMergedVariable(name: String, variables: Collection<LngIntVariable>, encodingContext: CspEncodingContext): LngIntVariable {
+        val mergedName = FEATURE_DEF_PREFIX + variables
+            .map { it.variable.name.substring(FEATURE_DEF_PREFIX.length, it.variable.name.indexOf(S)).toInt() }
+            .sorted()
+            .distinct()
+            .joinToString(",") + S + name
+        if (!mergedVariables.contains(mergedName)) {
+            val domain = variables.map { it.variable.domain }.reduce { a, b -> a.cap(b) }
+            val v = LngIntVariable(name, encodingContext.factory().variable(mergedName, domain))
             val clauses = encodingContext.factory().encodeVariable(v.variable, encodingContext, Algorithm.Order)
             val formula = encodingContext.factory().formulaFactory.and(clauses)
-            mostGeneralVariable = Pair(v, formula)
+            encodedVars[v.variable] = formula
+            mergedVariables[mergedName] = v
         }
-        return mostGeneralVariable!!
+        return mergedVariables[mergedName]!!
     }
 }
 
