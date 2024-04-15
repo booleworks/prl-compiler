@@ -4,8 +4,6 @@
 package com.booleworks.prl.model
 
 import com.booleworks.prl.compiler.FeatureStore
-import com.booleworks.prl.compiler.IntegerStore
-import com.booleworks.prl.compiler.IntegerUsage
 import com.booleworks.prl.compiler.PropertyStore
 import com.booleworks.prl.model.constraints.Amo
 import com.booleworks.prl.model.constraints.And
@@ -48,8 +46,6 @@ import com.booleworks.prl.model.protobuf.ProtoBufConstraints.PbIntTerm
 import com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFeatureDefinition
 import com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFeatureDefinitionList
 import com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFeatureStore
-import com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbIntStore
-import com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbIntegerUsage
 import com.booleworks.prl.model.protobuf.ProtoBufModel.PbHeader
 import com.booleworks.prl.model.protobuf.ProtoBufModel.PbModel
 import com.booleworks.prl.model.protobuf.ProtoBufModules.PbModule
@@ -76,9 +72,7 @@ import com.booleworks.prl.model.protobuf.pbHeader
 import com.booleworks.prl.model.protobuf.pbIntMul
 import com.booleworks.prl.model.protobuf.pbIntPredicate
 import com.booleworks.prl.model.protobuf.pbIntRange
-import com.booleworks.prl.model.protobuf.pbIntStore
 import com.booleworks.prl.model.protobuf.pbIntTerm
-import com.booleworks.prl.model.protobuf.pbIntegerUsage
 import com.booleworks.prl.model.protobuf.pbModel
 import com.booleworks.prl.model.protobuf.pbModule
 import com.booleworks.prl.model.protobuf.pbModuleHierarchy
@@ -122,7 +116,6 @@ fun serialize(model: PrlModel) = pbModel {
         featureMap[it] = featureId
     }
     featureStore = serialize(model.featureStore, featureMap)
-    intStore = serialize(model.intStore, featureMap)
     propertyStore = serialize(model.propertyStore)
     rule += model.rules.map { serialize(it, featureMap) }
 }
@@ -137,18 +130,6 @@ fun serialize(fs: FeatureStore, featureMap: Map<Feature, Int>) = pbFeatureStore 
     enumFeatures.putAll(fs.enumFeatures.map { it.key to serialize(it.value) }.toMap())
     group.addAll(fs.groups.map { pbFeature { id = featureMap[it]!! } })
     nonUniqueFeatures.addAll(fs.nonUniqueFeatures)
-}
-
-fun serialize(intStore: IntegerStore, featureMap: Map<Feature, Int>) = pbIntStore {
-    intStore.usedValues.forEach { (k, v) ->
-        usedValues.put(featureMap[k]!!, serialize(v, featureMap))
-    }
-}
-
-fun serialize(us: IntegerUsage, featureMap: Map<Feature, Int>) = pbIntegerUsage {
-    usedInArEx = us.usedInArEx
-    otherFeatures.addAll(us.otherFeatures.map { featureMap[it]!! })
-    values.addAll(us.values.map { range(it) })
 }
 
 fun serialize(ps: PropertyStore) = pbPropertyStore {
@@ -258,7 +239,6 @@ fun deserialize(bin: PbModel): PrlModel {
         deserialize(bin.header),
         deserialize(bin.moduleHierarchy),
         deserialize(bin.featureStore, featureMap),
-        deserialize(bin.intStore, featureMap),
         bin.ruleList.map { deserialize(it, featureMap) },
         deserialize(bin.propertyStore)
     )
@@ -280,18 +260,6 @@ fun deserialize(bin: PbFeatureStore, featureMap: Map<Int, Feature>) = FeatureSto
     bin.enumFeaturesMap.map { it.key to deserialize(it.value) }.toMap().toMutableMap(),
     bin.groupList.map { featureMap[it.id] as BooleanFeature }.toMutableList(),
     bin.nonUniqueFeaturesList.toMutableSet()
-)
-
-fun deserialize(bin: PbIntStore, featureMap: Map<Int, Feature>) = IntegerStore(
-    bin.usedValuesMap.map { featureMap[it.key]!! as IntFeature to deserialize(it.key, it.value, featureMap) }.toMap()
-        .toMutableMap()
-)
-
-fun deserialize(key: Int, bin: PbIntegerUsage, featureMap: Map<Int, Feature>) = IntegerUsage(
-    feature = featureMap[key]!! as IntFeature,
-    usedInArEx = bin.usedInArEx,
-    otherFeatures = bin.otherFeaturesList.map { featureMap[it]!! as IntFeature }.toSortedSet(),
-    values = bin.valuesList.map { deserialize(it) }.toSortedSet()
 )
 
 fun deserialize(bin: PbConstraint, fm: Map<Int, Feature>): Constraint = when {

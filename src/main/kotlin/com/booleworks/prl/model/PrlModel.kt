@@ -4,7 +4,6 @@
 package com.booleworks.prl.model
 
 import com.booleworks.prl.compiler.FeatureStore
-import com.booleworks.prl.compiler.IntegerStore
 import com.booleworks.prl.compiler.PropertyStore
 import com.booleworks.prl.model.constraints.Feature
 import com.booleworks.prl.model.datastructures.FeatureAssignment
@@ -19,7 +18,6 @@ data class PrlModel(
     val header: PrlModelHeader,
     val moduleHierarchy: ModuleHierarchy,
     val featureStore: FeatureStore,
-    val intStore: IntegerStore,
     val rules: List<AnyRule>,
     val propertyStore: PropertyStore
 ) {

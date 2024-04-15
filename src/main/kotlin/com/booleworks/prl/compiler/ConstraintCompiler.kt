@@ -56,26 +56,26 @@ import com.booleworks.prl.parser.PrlTerm
 class CoCoException(message: String) : Exception(message)
 
 class ConstraintCompiler {
-    fun compileConstraint(constraint: PrlConstraint, featureMap: Fmap, intStore: IntegerStore): Constraint =
+    fun compileConstraint(constraint: PrlConstraint, featureMap: Fmap): Constraint =
         when (constraint) {
             is PrlConstant -> constant(constraint.value)
             is PrlAmo -> amo(compileBooleanFeatures(constraint.features, featureMap))
-            is PrlAnd -> and(constraint.operands.map { compileConstraint(it, featureMap, intStore) })
-            is PrlComparisonPredicate -> compileComparison(constraint, featureMap, intStore)
+            is PrlAnd -> and(constraint.operands.map { compileConstraint(it, featureMap) })
+            is PrlComparisonPredicate -> compileComparison(constraint, featureMap)
             is PrlEquivalence -> equiv(
-                compileConstraint(constraint.left, featureMap, intStore),
-                compileConstraint(constraint.right, featureMap, intStore)
+                compileConstraint(constraint.left, featureMap),
+                compileConstraint(constraint.right, featureMap)
             )
             is PrlExo -> exo(compileBooleanFeatures(constraint.features, featureMap))
             is PrlFeature -> compileBooleanFeature(constraint, featureMap)
             is PrlImplication -> impl(
-                compileConstraint(constraint.left, featureMap, intStore),
-                compileConstraint(constraint.right, featureMap, intStore)
+                compileConstraint(constraint.left, featureMap),
+                compileConstraint(constraint.right, featureMap)
             )
             is PrlInEnumsPredicate -> compileEnumInPredicate(constraint, featureMap)
-            is PrlInIntRangePredicate -> compileIntInPredicate(constraint, featureMap, intStore)
-            is PrlNot -> not(compileConstraint(constraint.operand, featureMap, intStore))
-            is PrlOr -> or(constraint.operands.map { compileConstraint(it, featureMap, intStore) })
+            is PrlInIntRangePredicate -> compileIntInPredicate(constraint, featureMap)
+            is PrlNot -> not(compileConstraint(constraint.operand, featureMap))
+            is PrlOr -> or(constraint.operands.map { compileConstraint(it, featureMap) })
         }
 
     internal fun compileUnversionedBooleanFeature(feature: PrlFeature, featureMap: Fmap) =
@@ -133,16 +133,9 @@ class ConstraintCompiler {
         return enumIn(compileEnumFeature(predicate.term, featureMap), predicate.values)
     }
 
-    private fun compileIntInPredicate(
-        predicate: PrlInIntRangePredicate,
-        featureMap: Fmap,
-        intStore: IntegerStore
-    ): Constraint {
-        val pred = intIn(compileIntTerm(predicate.term, featureMap), predicate.range)
-        intStore.addUsage(pred)
-        return pred
+    private fun compileIntInPredicate(predicate: PrlInIntRangePredicate, featureMap: Fmap): Constraint {
+        return intIn(compileIntTerm(predicate.term, featureMap), predicate.range)
     }
-
 
     internal fun compileIntTerm(term: PrlTerm, featureMap: Fmap): IntTerm = when (term) {
         is PrlFeature -> compileIntFeature(term, featureMap)
@@ -186,19 +179,16 @@ class ConstraintCompiler {
     private fun compileComparison(
         predicate: PrlComparisonPredicate,
         featureMap: Fmap,
-        intStore: IntegerStore
     ): Constraint =
         when (determineType(predicate, featureMap)) {
             BOOLEAN -> compileVersionPredicate(predicate, featureMap)
             ENUM -> compileEnumComparison(predicate, featureMap)
             INT -> {
-                val comp = intComparison(
+                intComparison(
                     compileIntTerm(predicate.left, featureMap),
                     compileIntTerm(predicate.right, featureMap),
                     predicate.comparison
                 )
-                intStore.addUsage(comp)
-                comp
             }
         }
 

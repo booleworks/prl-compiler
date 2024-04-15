@@ -266,30 +266,6 @@ public object PbModelKt {
       _builder.clearFeature()
     }
 
-
-    /**
-     * `.boolerules.features.PbIntStore intStore = 7;`
-     */
-    public var intStore: com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbIntStore
-      @JvmName("getIntStore")
-      get() = _builder.getIntStore()
-      @JvmName("setIntStore")
-      set(value) {
-        _builder.setIntStore(value)
-      }
-    /**
-     * `.boolerules.features.PbIntStore intStore = 7;`
-     */
-    public fun clearIntStore() {
-      _builder.clearIntStore()
-    }
-    /**
-     * `.boolerules.features.PbIntStore intStore = 7;`
-     * @return Whether the intStore field is set.
-     */
-    public fun hasIntStore(): kotlin.Boolean {
-      return _builder.hasIntStore()
-    }
   }
 }
 @kotlin.jvm.JvmSynthetic
@@ -307,7 +283,4 @@ public val com.booleworks.prl.model.protobuf.ProtoBufModel.PbModelOrBuilder.feat
 
 public val com.booleworks.prl.model.protobuf.ProtoBufModel.PbModelOrBuilder.propertyStoreOrNull: com.booleworks.prl.model.protobuf.ProtoBufProperties.PbPropertyStore?
   get() = if (hasPropertyStore()) getPropertyStore() else null
-
-public val com.booleworks.prl.model.protobuf.ProtoBufModel.PbModelOrBuilder.intStoreOrNull: com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbIntStore?
-  get() = if (hasIntStore()) getIntStore() else null
 

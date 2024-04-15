@@ -1,6 +1,5 @@
 package com.booleworks.prl.compiler
 
-import com.booleworks.prl.model.IntRange
 import com.booleworks.prl.model.Module
 import com.booleworks.prl.model.ModuleHierarchy
 import com.booleworks.prl.model.SlicingBooleanPropertyDefinition
@@ -77,7 +76,8 @@ class PrlCompilerTest {
         )[0].feature as IntFeature
 
         assertThat(compiler.errors()).containsExactly(
-            "Currently linear arithmetic expressions over int features are not supported. Support will be added infuture releases"
+            "Currently integer and versioned Boolean features are not " +
+                    "supported. Support will be added in future releases."
         )
         assertThat(model.moduleHierarchy.modules()).containsExactly(module)
         assertThat(model.featureStore.allDefinitions(module).map { it.feature }).containsExactly(i1, i2, i3, i4, sum)
@@ -99,25 +99,6 @@ class PrlCompilerTest {
         )
 
         assertThat(deserialize(serialize(model))).isEqualTo(model)
-
-        assertThat(model.intStore.usedValues).hasSize(5)
-        assertThat(model.intStore.usedValues[i1]).isEqualTo(
-            IntegerUsage(
-                i1,
-                usedInArEx = true,
-                otherFeatures = sortedSetOf(sum)
-            )
-        )
-        assertThat(model.intStore.usedValues[i2]).isEqualTo(IntegerUsage(i2, usedInArEx = true))
-        assertThat(model.intStore.usedValues[i3]).isEqualTo(IntegerUsage(i3, usedInArEx = true))
-        assertThat(model.intStore.usedValues[i4]).isEqualTo(IntegerUsage(i4, usedInArEx = true))
-        assertThat(model.intStore.usedValues[sum]).isEqualTo(
-            IntegerUsage(
-                sum,
-                usedInArEx = true,
-                otherFeatures = sortedSetOf(i1)
-            )
-        )
     }
 
     @Test
@@ -152,6 +133,7 @@ class PrlCompilerTest {
         assertThat(compiler.errors()).containsExactly(
             "[module=boolerules, feature=com.x1, lineNumber=8] Feature name invalid: com.x1",
             "[module=boolerules, feature=invalid.name, lineNumber=12] Rule name invalid: invalid.name",
+            "Currently integer and versioned Boolean features are not supported. Support will be added in future releases."
         )
         assertThat(model.moduleHierarchy.modules()).containsExactly(module)
         assertThat(model.featureStore.allDefinitions(module).map { it.feature }).containsExactly(f1, i1)
@@ -290,101 +272,5 @@ class PrlCompilerTest {
         Files.deleteIfExists(tempFile)
         assertThat(parsedModel).isEqualTo(model)
         assertThat(deserialize(serialize(model))).isEqualTo(model)
-    }
-
-    @Test
-    fun testSimpleIntExampleSerialize() {
-        val parsed = parseRuleFile("test-files/prl/compiler/simple_int.prl")
-        val compiler = PrlCompiler()
-        val model = compiler.compile(parsed)
-        assertThat(compiler.errors()).isEmpty()
-        val tempFile = Files.createTempFile("temp", "prl")
-        tempFile.toFile().writeText(model.toRuleFile().toString())
-        val parsedModel = compiler.compile(parseRuleFile(tempFile))
-        Files.deleteIfExists(tempFile)
-        assertThat(parsedModel).isEqualTo(model)
-        assertThat(deserialize(serialize(model))).isEqualTo(model)
-    }
-
-    @Test
-    fun testSimpleIntExampleIntStore() {
-        val parsed = parseRuleFile("test-files/prl/compiler/simple_int.prl")
-        val compiler = PrlCompiler()
-        val model = compiler.compile(parsed)
-
-        val module = Module("ints", lineNumber = 5)
-        val i1 = model.featureStore.findMatchingDefinitions(
-            module,
-            PrlFeature("i1"),
-            ModuleHierarchy(mapOf())
-        )[0].feature as IntFeature
-        val i2 = model.featureStore.findMatchingDefinitions(
-            module,
-            PrlFeature("i2"),
-            ModuleHierarchy(mapOf())
-        )[0].feature as IntFeature
-        val i3 = model.featureStore.findMatchingDefinitions(
-            module,
-            PrlFeature("i3"),
-            ModuleHierarchy(mapOf())
-        )[0].feature as IntFeature
-        val i4 = model.featureStore.findMatchingDefinitions(
-            module,
-            PrlFeature("i4"),
-            ModuleHierarchy(mapOf())
-        )[0].feature as IntFeature
-
-        assertThat(compiler.errors()).isEmpty()
-        assertThat(model.intStore.hasArithmeticExpressions()).isFalse()
-        assertThat(model.intStore.getSimpleFeatures()).hasSize(4)
-        assertThat(model.intStore.getArithFeatures()).hasSize(0)
-
-        val istore = model.intStore.usedValues
-        assertThat(istore).hasSize(4)
-        assertThat(istore[i1]).isEqualTo(
-            IntegerUsage(
-                i1,
-                values = sortedSetOf(
-                    IntRange.list(10),
-                    IntRange.list(20),
-                    IntRange.list(50)
-                )
-            )
-        )
-        assertThat(model.intStore.relevantValues(i1)).containsExactly(0, 10, 20, 50, 100)
-        assertThat(istore[i2]).isEqualTo(
-            IntegerUsage(
-                i2,
-                values = sortedSetOf(
-                    IntRange.list(0),
-                    IntRange.list(10),
-                    IntRange.list(30)
-                )
-            )
-        )
-        assertThat(model.intStore.relevantValues(i2)).containsExactly(0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 30)
-        assertThat(istore[i3]).isEqualTo(
-            IntegerUsage(
-                i3,
-                values = sortedSetOf(
-                    IntRange.list(0),
-                    IntRange.list(0, 10, 20),
-                ),
-                otherFeatures = sortedSetOf(i4)
-            )
-        )
-        assertThat(model.intStore.relevantValues(i3)).containsExactly(-100, -40, -20, 0, 10, 20, 40, 100)
-        assertThat(istore[i4]).isEqualTo(
-            IntegerUsage(
-                i4,
-                values = sortedSetOf(
-                    IntRange.list(0),
-                    IntRange.list(20, 40),
-                    IntRange.interval(-40, -20),
-                ),
-                otherFeatures = sortedSetOf(i3)
-            )
-        )
-        assertThat(model.intStore.relevantValues(i4)).containsExactly(-100, -40, -20, 0, 10, 20, 40, 100)
     }
 }

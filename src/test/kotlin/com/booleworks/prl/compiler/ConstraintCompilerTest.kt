@@ -38,93 +38,81 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
 class ConstraintCompilerTest {
-    private val cc = ConstraintCompiler()
+    val cc = ConstraintCompiler()
 
     @Test
     fun testCompileConstant() {
-        val intStore = IntegerStore()
-        assertThat(cc.compileConstraint(PrlConstant(true), featureMap, intStore)).isEqualTo(TRUE)
-        assertThat(cc.compileConstraint(PrlConstant(false), featureMap, intStore)).isEqualTo(FALSE)
+        assertThat(cc.compileConstraint(PrlConstant(true), featureMap)).isEqualTo(TRUE)
+        assertThat(cc.compileConstraint(PrlConstant(false), featureMap)).isEqualTo(FALSE)
     }
 
     @Test
     fun testCompileBooleanFeature() {
-        val intStore = IntegerStore()
-        assertThat(cc.compileConstraint(PrlFeature("b1"), featureMap, intStore)).isEqualTo(b1Definition.feature)
-        assertThat(cc.compileConstraint(PrlFeature("v"), featureMap, intStore)).isEqualTo(vDefinition.feature)
-        assertThatThrownBy { cc.compileConstraint(PrlFeature("x"), featureMap, intStore) }
+        assertThat(cc.compileConstraint(PrlFeature("b1"), featureMap)).isEqualTo(b1Definition.feature)
+        assertThat(cc.compileConstraint(PrlFeature("v"), featureMap)).isEqualTo(vDefinition.feature)
+        assertThatThrownBy { cc.compileConstraint(PrlFeature("x"), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Unknown feature: 'x'")
-        assertThatThrownBy { cc.compileConstraint(PrlFeature("e1"), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(PrlFeature("e1"), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Enum feature 'e1' is used as boolean feature")
-        assertThatThrownBy { cc.compileConstraint(PrlFeature("i1"), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(PrlFeature("i1"), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Int feature 'i1' is used as boolean feature")
     }
 
     @Test
     fun testCompileAmo() {
-        val intStore = IntegerStore()
-        assertThat(cc.compileConstraint(PrlAmo(), featureMap, intStore)).isEqualTo(amo())
-        assertThat(cc.compileConstraint(PrlAmo(PrlFeature("b1")), featureMap, intStore)).isEqualTo(amo(b1))
+        assertThat(cc.compileConstraint(PrlAmo(), featureMap)).isEqualTo(amo())
+        assertThat(cc.compileConstraint(PrlAmo(PrlFeature("b1")), featureMap)).isEqualTo(amo(b1))
         assertThat(
             cc.compileConstraint(
                 PrlAmo(PrlFeature("b1"), PrlFeature("b2"), PrlFeature("b3")),
-                featureMap,
-                intStore
+                featureMap
             )
         ).isEqualTo(amo(b1, b2, b3))
-        assertThatThrownBy { cc.compileConstraint(PrlAmo(PrlFeature("b1"), PrlFeature("x")), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(PrlAmo(PrlFeature("b1"), PrlFeature("x")), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Unknown feature: 'x'")
-        assertThatThrownBy { cc.compileConstraint(PrlAmo(PrlFeature("b1"), PrlFeature("e1")), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(PrlAmo(PrlFeature("b1"), PrlFeature("e1")), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Enum feature 'e1' is used as boolean feature")
-        assertThatThrownBy { cc.compileConstraint(PrlAmo(PrlFeature("b1"), PrlFeature("i1")), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(PrlAmo(PrlFeature("b1"), PrlFeature("i1")), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Int feature 'i1' is used as boolean feature")
-        assertThatThrownBy { cc.compileConstraint(PrlAmo(PrlFeature("b1"), PrlFeature("v")), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(PrlAmo(PrlFeature("b1"), PrlFeature("v")), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Versioned boolean feature 'v' is used as boolean feature")
     }
 
     @Test
     fun testCompileExo() {
-        val intStore = IntegerStore()
-        assertThat(cc.compileConstraint(PrlExo(), featureMap, intStore)).isEqualTo(exo())
-        assertThat(cc.compileConstraint(PrlExo(PrlFeature("b1")), featureMap, intStore)).isEqualTo(exo(b1))
+        assertThat(cc.compileConstraint(PrlExo(), featureMap)).isEqualTo(exo())
+        assertThat(cc.compileConstraint(PrlExo(PrlFeature("b1")), featureMap)).isEqualTo(exo(b1))
         assertThat(
             cc.compileConstraint(
                 PrlExo(PrlFeature("b1"), PrlFeature("b2"), PrlFeature("b3")),
-                featureMap,
-                intStore
+                featureMap
             )
         ).isEqualTo(exo(b1, b2, b3))
-        assertThatThrownBy { cc.compileConstraint(PrlExo(PrlFeature("b1"), PrlFeature("x")), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(PrlExo(PrlFeature("b1"), PrlFeature("x")), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Unknown feature: 'x'")
-        assertThatThrownBy { cc.compileConstraint(PrlExo(PrlFeature("b1"), PrlFeature("e1")), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(PrlExo(PrlFeature("b1"), PrlFeature("e1")), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Enum feature 'e1' is used as boolean feature")
-        assertThatThrownBy { cc.compileConstraint(PrlExo(PrlFeature("b1"), PrlFeature("i1")), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(PrlExo(PrlFeature("b1"), PrlFeature("i1")), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Int feature 'i1' is used as boolean feature")
-        assertThatThrownBy { cc.compileConstraint(PrlExo(PrlFeature("b1"), PrlFeature("v")), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(PrlExo(PrlFeature("b1"), PrlFeature("v")), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Versioned boolean feature 'v' is used as boolean feature")
     }
 
     @Test
     fun testImplication() {
-        val intStore = IntegerStore()
-        assertThat(cc.compileConstraint(parseConstraint("b1 => b2/b3"), featureMap, intStore)).isEqualTo(
-            impl(
-                b1,
-                or(b2, b3)
-            )
-        )
-        assertThat(cc.compileConstraint(parseConstraint("-(b1&b2) => true"), featureMap, intStore)).isEqualTo(
+        assertThat(cc.compileConstraint(parseConstraint("b1 => b2/b3"), featureMap)).isEqualTo(impl(b1, or(b2, b3)))
+        assertThat(cc.compileConstraint(parseConstraint("-(b1&b2) => true"), featureMap)).isEqualTo(
             impl(
                 not(
                     and(
@@ -134,24 +122,18 @@ class ConstraintCompilerTest {
                 ), TRUE
             )
         )
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("b1 => x"), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("b1 => x"), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Unknown feature: 'x'")
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("x => b2"), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("x => b2"), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Unknown feature: 'x'")
     }
 
     @Test
     fun testEquivalence() {
-        val intStore = IntegerStore()
-        assertThat(cc.compileConstraint(parseConstraint("b1 <=> b2/b3"), featureMap, intStore)).isEqualTo(
-            equiv(
-                b1,
-                or(b2, b3)
-            )
-        )
-        assertThat(cc.compileConstraint(parseConstraint("-(b1&b2) <=> true"), featureMap, intStore)).isEqualTo(
+        assertThat(cc.compileConstraint(parseConstraint("b1 <=> b2/b3"), featureMap)).isEqualTo(equiv(b1, or(b2, b3)))
+        assertThat(cc.compileConstraint(parseConstraint("-(b1&b2) <=> true"), featureMap)).isEqualTo(
             equiv(
                 not(
                     and(
@@ -161,51 +143,48 @@ class ConstraintCompilerTest {
                 ), TRUE
             )
         )
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("b1 <=> x"), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("b1 <=> x"), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Unknown feature: 'x'")
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("x <=> b2"), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("x <=> b2"), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Unknown feature: 'x'")
     }
 
     @Test
     fun testAnd() {
-        val intStore = IntegerStore()
-        assertThat(cc.compileConstraint(parseConstraint("b1 & b2"), featureMap, intStore)).isEqualTo(and(b1, b2))
-        assertThat(cc.compileConstraint(parseConstraint("b1 & (b2/b3) & -b2"), featureMap, intStore)).isEqualTo(
+        assertThat(cc.compileConstraint(parseConstraint("b1 & b2"), featureMap)).isEqualTo(and(b1, b2))
+        assertThat(cc.compileConstraint(parseConstraint("b1 & (b2/b3) & -b2"), featureMap)).isEqualTo(
             and(
                 b1,
                 or(b2, b3),
                 not(b2)
             )
         )
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("true & x"), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("true & x"), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Unknown feature: 'x'")
     }
 
     @Test
     fun testOr() {
-        val intStore = IntegerStore()
-        assertThat(cc.compileConstraint(parseConstraint("b1 / b2"), featureMap, intStore)).isEqualTo(or(b1, b2))
-        assertThat(cc.compileConstraint(parseConstraint("b1 / b2 & b3 / -b2"), featureMap, intStore)).isEqualTo(
+        assertThat(cc.compileConstraint(parseConstraint("b1 / b2"), featureMap)).isEqualTo(or(b1, b2))
+        assertThat(cc.compileConstraint(parseConstraint("b1 / b2 & b3 / -b2"), featureMap)).isEqualTo(
             or(
                 b1,
                 and(b2, b3),
                 not(b2)
             )
         )
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("true / x"), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("true / x"), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Unknown feature: 'x'")
     }
 
     @Test
     fun testNot() {
-        val intStore = IntegerStore()
-        assertThat(cc.compileConstraint(parseConstraint("-(b1 / b2)"), featureMap, intStore)).isEqualTo(not(or(b1, b2)))
-        assertThat(cc.compileConstraint(parseConstraint("-(b1 / b2 & b3 / -b2)"), featureMap, intStore)).isEqualTo(
+        assertThat(cc.compileConstraint(parseConstraint("-(b1 / b2)"), featureMap)).isEqualTo(not(or(b1, b2)))
+        assertThat(cc.compileConstraint(parseConstraint("-(b1 / b2 & b3 / -b2)"), featureMap)).isEqualTo(
             not(
                 or(
                     b1,
@@ -214,15 +193,14 @@ class ConstraintCompilerTest {
                 )
             )
         )
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("-x"), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("-x"), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Unknown feature: 'x'")
     }
 
     @Test
     fun testEnumInPredicate() {
-        val intStore = IntegerStore()
-        assertThat(cc.compileConstraint(parseConstraint("""[e1 in ["a"]]"""), featureMap, intStore)).isEqualTo(
+        assertThat(cc.compileConstraint(parseConstraint("""[e1 in ["a"]]"""), featureMap)).isEqualTo(
             enumIn(
                 e1,
                 listOf("a")
@@ -231,14 +209,13 @@ class ConstraintCompilerTest {
         assertThat(
             cc.compileConstraint(
                 parseConstraint("""[e1 in ["a", "b", "c"]]"""),
-                featureMap,
-                intStore
+                featureMap
             )
         ).isEqualTo(enumIn(e1, listOf("a", "b", "c")))
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("""[x in ["a", "b"]]"""), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("""[x in ["a", "b"]]"""), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Unknown feature: 'x'")
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("""[b1 in ["a", "b"]]"""), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("""[b1 in ["a", "b"]]"""), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Boolean feature 'b1' is used as enum feature")
     }
@@ -336,14 +313,13 @@ class ConstraintCompilerTest {
 
     @Test
     fun testIntInPredicate() {
-        val intStore = IntegerStore()
-        assertThat(cc.compileConstraint(parseConstraint("[i1 in [-1 - 7]]"), featureMap, intStore)).isEqualTo(
+        assertThat(cc.compileConstraint(parseConstraint("[i1 in [-1 - 7]]"), featureMap)).isEqualTo(
             intIn(
                 i1,
                 IntRange.interval(-1, 7)
             )
         )
-        assertThat(cc.compileConstraint(parseConstraint("[i2*3 in [-1 - 7]]"), featureMap, intStore)).isEqualTo(
+        assertThat(cc.compileConstraint(parseConstraint("[i2*3 in [-1 - 7]]"), featureMap)).isEqualTo(
             intIn(
                 intMul(
                     3,
@@ -351,102 +327,83 @@ class ConstraintCompilerTest {
                 ), IntRange.interval(-1, 7)
             )
         )
-        assertThat(cc.compileConstraint(parseConstraint("[i3*3 + 4 in [-1, 1, 10]]"), featureMap, intStore))
+        assertThat(cc.compileConstraint(parseConstraint("[i3*3 + 4 in [-1, 1, 10]]"), featureMap))
             .isEqualTo(intIn(intSum(4, intMul(3, i3)), IntRange.list(-1, 1, 10)))
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("[x in [1-5]]"), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("[x in [1-5]]"), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Unknown feature: 'x'")
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("[e1 in [1-5]]"), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("[e1 in [1-5]]"), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Enum feature 'e1' is used as int feature")
     }
 
     @Test
     fun testComparisonErrors() {
-        val intStore = IntegerStore()
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("""[e1 = i1]"""), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("""[e1 = i1]"""), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Cannot determine type of predicate, mixed features of type ENUM and INT")
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("""[i1 = "text"]"""), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("""[i1 = "text"]"""), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Unknown integer term type: PrlEnumValue")
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("""[e1 = 7]"""), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("""[e1 = 7]"""), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Enum comparison must compare an enum feature with an enum value")
     }
 
     @Test
     fun testEnumComparisonPredicate() {
-        val intStore = IntegerStore()
-        assertThat(
-            cc.compileConstraint(
-                parseConstraint("""[e1 = "text"]"""),
-                featureMap,
-                intStore
-            )
-        ).isEqualTo(enumEq(e1, "text"))
-        assertThat(cc.compileConstraint(parseConstraint("""["text" != e2]"""), featureMap, intStore)).isEqualTo(
+        assertThat(cc.compileConstraint(parseConstraint("""[e1 = "text"]"""), featureMap)).isEqualTo(enumEq(e1, "text"))
+        assertThat(cc.compileConstraint(parseConstraint("""["text" != e2]"""), featureMap)).isEqualTo(
             enumNe(
                 e2,
                 "text"
             )
         )
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("""[e1 = e2]"""), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("""[e1 = e2]"""), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Enum comparison must compare an enum feature with an enum value")
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("""["t" = "p"]"""), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("""["t" = "p"]"""), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Enum comparison must compare an enum feature with an enum value")
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("""[e1 > "p"]"""), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("""[e1 > "p"]"""), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Only comparisons with = and != are allowed for enums")
     }
 
     @Test
     fun testIntComparisonPredicate() {
-        val intStore = IntegerStore()
-        assertThat(cc.compileConstraint(parseConstraint("[i1 = 7]"), featureMap, intStore)).isEqualTo(intEq(i1, 7))
-        assertThat(
-            cc.compileConstraint(
-                parseConstraint("[7 = i1]"),
-                featureMap,
-                intStore
-            )
-        ).isEqualTo(intEq(7.toIntValue(), i1))
-        assertThat(cc.compileConstraint(parseConstraint("[7 = 7]"), featureMap, intStore)).isEqualTo(
+        assertThat(cc.compileConstraint(parseConstraint("[i1 = 7]"), featureMap)).isEqualTo(intEq(i1, 7))
+        assertThat(cc.compileConstraint(parseConstraint("[7 = i1]"), featureMap)).isEqualTo(intEq(7.toIntValue(), i1))
+        assertThat(cc.compileConstraint(parseConstraint("[7 = 7]"), featureMap)).isEqualTo(
             intEq(
                 7.toIntValue(),
                 7.toIntValue()
             )
         )
-        assertThat(cc.compileConstraint(parseConstraint("[i3*3 + 47 > 8*i1 + -2*i2]"), featureMap, intStore))
+        assertThat(cc.compileConstraint(parseConstraint("[i3*3 + 47 > 8*i1 + -2*i2]"), featureMap))
             .isEqualTo(intGt(intSum(47, intMul(3, i3)), intSum(intMul(8, i1), intMul(-2, i2))))
-        assertThat(cc.compileConstraint(parseConstraint("[i1 = i2]"), featureMap, intStore)).isEqualTo(intEq(i1, i2))
+        assertThat(cc.compileConstraint(parseConstraint("[i1 = i2]"), featureMap)).isEqualTo(intEq(i1, i2))
     }
 
     @Test
     fun testVersionPredicate() {
-        val intStore = IntegerStore()
-        assertThat(cc.compileConstraint(parseConstraint("v[>=7]"), featureMap, intStore)).isEqualTo(versionGe(v, 7))
+        assertThat(cc.compileConstraint(parseConstraint("v[>=7]"), featureMap)).isEqualTo(versionGe(v, 7))
         assertThat(
             cc.compileConstraint(
                 PrlComparisonPredicate(EQ, PrlIntValue(4), PrlFeature("v")),
-                featureMap,
-                intStore
+                featureMap
             )
         ).isEqualTo(versionEq(v, 4))
         assertThat(
             cc.compileConstraint(
                 PrlComparisonPredicate(EQ, PrlIntValue(4), PrlFeature("v")),
-                featureMap,
-                intStore
+                featureMap
             )
         ).isEqualTo(versionEq(v, 4))
         assertThatThrownBy {
             cc.compileConstraint(
                 PrlComparisonPredicate(EQ, PrlIntValue(-4), PrlFeature("v")),
-                featureMap,
-                intStore
+                featureMap
             )
         }
             .isInstanceOf(CoCoException::class.java)
@@ -454,25 +411,21 @@ class ConstraintCompilerTest {
         assertThatThrownBy {
             cc.compileConstraint(
                 PrlComparisonPredicate(EQ, PrlFeature("v"), PrlFeature("v")),
-                featureMap,
-                intStore
+                featureMap
             )
         }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Version predicate must compare a versioned boolean feature with a fixed version")
-        assertThatThrownBy { cc.compileConstraint(parseConstraint("[b1 >= 7]"), featureMap, intStore) }
+        assertThatThrownBy { cc.compileConstraint(parseConstraint("[b1 >= 7]"), featureMap) }
             .isInstanceOf(CoCoException::class.java)
             .hasMessage("Unversioned feature in version predicate: b1")
     }
 
     @Test
     fun testLargeExample() {
-        val intStore = IntegerStore()
         val formula =
             """b1 => ([e1 in ["a", "b", "c"]] / -b2) & -(v[>=7] <=> [3*i3 + 47 > 8*i1 + -2*i2] / [-2*i2 + 4 in [-1, 1, 10]])"""
-        assertThat(
-            cc.compileConstraint(parseConstraint(formula), featureMap, intStore).toString(DEFAULT_MODULE)
-        ).isEqualTo(
+        assertThat(cc.compileConstraint(parseConstraint(formula), featureMap).toString(DEFAULT_MODULE)).isEqualTo(
             formula
         )
     }

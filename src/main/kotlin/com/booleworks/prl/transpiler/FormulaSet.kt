@@ -9,19 +9,13 @@ import com.booleworks.logicng.formulas.FormulaFactory
 import com.booleworks.logicng.formulas.Variable
 import com.booleworks.logicng.propositions.ExtendedProposition
 import com.booleworks.logicng.propositions.PropositionBackpack
-import com.booleworks.prl.model.IntRange
 import com.booleworks.prl.model.Module
 import com.booleworks.prl.model.constraints.ComparisonOperator
 import com.booleworks.prl.model.constraints.Constraint
 import com.booleworks.prl.model.constraints.EnumComparisonPredicate
 import com.booleworks.prl.model.constraints.EnumInPredicate
 import com.booleworks.prl.model.constraints.Feature
-import com.booleworks.prl.model.constraints.IntComparisonPredicate
-import com.booleworks.prl.model.constraints.IntFeature
-import com.booleworks.prl.model.constraints.IntInPredicate
-import com.booleworks.prl.model.constraints.IntMul
-import com.booleworks.prl.model.constraints.IntSum
-import com.booleworks.prl.model.constraints.IntValue
+import com.booleworks.prl.model.constraints.VersionPredicate
 import com.booleworks.prl.model.rules.AnyRule
 import com.booleworks.prl.model.rules.ConstraintRule
 import com.booleworks.prl.model.slices.Slice
@@ -37,8 +31,7 @@ enum class RuleType(val description: String) {
     UNKNOWN_FEATURE_IN_SLICE("Unknown feature in this slice"),
     FEATURE_EQUIVALENCE_OVER_SLICES("Feature equivalence for slice"),
     ENUM_FEATURE_CONSTRAINT("EXO constraint for enum feature values"),
-    INT_FEATURE_CONSTRAINT("EXO constraint for int feature values"),
-    INT_OUT_OF_BOUNDS_CONSTRAINT("Out-of-bounds constraint for int feature values"),
+    VERSION_FEATURE_CONSTRAINT("EXO constraint for version feature values"),
     ADDITIONAL_RESTRICTION("Additional user-provided restriction")
 }
 
@@ -61,9 +54,9 @@ data class SliceTranslation(val sliceSet: SliceSet, val info: TranslationInfo) {
     val knownVariables = info.knownVariables
     val booleanVariables = info.booleanVariables
     val enumVariables = info.enumVariables
-    val intVariables = info.intVariables
+    val versionVariables = info.versionVariables
     val enumMapping = info.enumMapping
-    val intMapping = info.intMapping
+    val versionMapping = info.versionMapping
     val unknownFeatures = info.unknownFeatures
 }
 
@@ -99,7 +92,7 @@ interface TranspilerCoreInfo {
     val unknownFeatures: Set<Feature>
     val booleanVariables: Set<Variable>
     val enumMapping: Map<String, Map<String, Variable>>
-    val intMapping: Map<String, Map<Int, Variable>>
+    val versionMapping: Map<String, Map<Int, Variable>>
 
     fun translateEnumIn(f: FormulaFactory, constraint: EnumInPredicate): Formula =
         enumMapping[constraint.feature.fullName].let { enumMap ->
@@ -116,76 +109,12 @@ interface TranspilerCoreInfo {
             }
         }
 
-    fun translateIntIn(f: FormulaFactory, constraint: IntInPredicate): Formula = when (constraint.term) {
-        is IntValue -> f.constant(constraint.range.contains(constraint.term.value))
-        is IntFeature -> translateSimpleIntIn(f, constraint.term, constraint.range)
-        is IntMul -> TODO()
-        is IntSum -> TODO()
-    }
-
-    fun translateIntComparison(f: FormulaFactory, constraint: IntComparisonPredicate): Formula {
-        val left = constraint.left.normalize()
-        val right = constraint.right.normalize()
-        if (left is IntValue && right is IntValue) {
-            return f.constant(constraint.comparison.evaluate(left.value, right.value))
-        }
-        if (left is IntMul || left is IntSum || right is IntMul || right is IntSum) {
-            TODO()
-        } else if (left is IntFeature && right is IntFeature) {
-            return translateSimpleFtFtComp(f, left, right, constraint.comparison)
-        } else {
-            val feature: IntFeature
-            val value: Int
-            val comp: ComparisonOperator
-            if (left is IntFeature) {
-                feature = left
-                value = (right as IntValue).value
-                comp = constraint.comparison
-            } else {
-                feature = right as IntFeature
-                value = (left as IntValue).value
-                comp = constraint.comparison.reverse()
-            }
-            return translateSimpleFtIntComp(f, feature, value, comp)
-        }
-    }
-
-    private fun translateSimpleFtFtComp(
-        f: FormulaFactory,
-        ft1: IntFeature,
-        ft2: IntFeature,
-        comp: ComparisonOperator
-    ): Formula {
-        val validPairs = mutableListOf<Formula>()
-        intMapping[ft1.fullName]!!
-            .filter { ft1.domain.contains(it.key) }
-            .forEach { (i1, v1) ->
-                intMapping[ft2.fullName]!!
-                    .filter { ft2.domain.contains(it.key) }
-                    .filter { comp.evaluate(i1, it.key) }
-                    .forEach { (_, v2) -> validPairs.add(f.and(v1, v2)) }
-            }
-        return f.or(validPairs)
-    }
-
-    private fun translateSimpleFtIntComp(
-        f: FormulaFactory,
-        feature: IntFeature,
-        value: Int,
-        comp: ComparisonOperator
-    ): Formula {
-        val range = feature.domain
-        val relevantValues = intMapping[feature.fullName]!!
-            .filter { range.contains(it.key) && comp.evaluate(it.key, value) }
+    fun translateVersionComparison(f: FormulaFactory, constraint: VersionPredicate): Formula {
+        val feature = constraint.feature
+        val relevantValues = versionMapping[feature.fullName]!!
+            .filter { constraint.comparison.evaluate(it.key, constraint.version) }
             .map { it.value }
         return f.or(relevantValues)
-    }
-
-    private fun translateSimpleIntIn(f: FormulaFactory, ft: IntFeature, range: IntRange): Formula {
-        val relevantVars = intMapping[ft.fullName]!!
-            .filter { ft.domain.contains(it.key) && range.contains(it.key) }
-            .map { it.value }
-        return f.or(relevantVars)
     }
 }
 
@@ -194,13 +123,13 @@ data class TranslationInfo(
     val knownVariables: Set<Variable>,
     override val booleanVariables: Set<Variable>,
     override val enumMapping: Map<String, Map<String, Variable>>,
-    override val intMapping: Map<String, Map<Int, Variable>>,
+    override val versionMapping: Map<String, Map<Int, Variable>>,
     override val unknownFeatures: Set<Feature>,
 ) : TranspilerCoreInfo {
     val enumVariables: Set<Variable> = enumMapping.values.flatMap { it.values }.toSet()
-    val intVariables: Set<Variable> = intMapping.values.flatMap { it.values }.toSet()
+    val versionVariables: Set<Variable> = versionMapping.values.flatMap { it.values }.toSet()
     private val var2enum = mutableMapOf<Variable, Pair<String, String>>()
-    private val var2int = mutableMapOf<Variable, Pair<String, Int>>()
+    private val var2version = mutableMapOf<Variable, Pair<String, Int>>()
 
     init {
         enumMapping.forEach { (feature, vs) ->
@@ -208,13 +137,13 @@ data class TranslationInfo(
                 var2enum[variable] = Pair(feature, value)
             }
         }
-        intMapping.forEach { (feature, vs) ->
+        versionMapping.forEach { (feature, vs) ->
             vs.forEach { (value, variable) ->
-                var2int[variable] = Pair(feature, value)
+                var2version[variable] = Pair(feature, value)
             }
         }
     }
 
     fun getFeatureAndValue(v: Variable) = var2enum[v]
-    fun getFeatureAndInt(v: Variable) = var2int[v]
+    fun getFeatureAndVersion(v: Variable) = var2version[v]
 }
