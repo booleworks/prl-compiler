@@ -29,6 +29,11 @@ sealed class Feature(open val featureCode: String, open val module: Module) : Co
                 featureCode
             }
         }
+
+        fun featureCodeOfFullName(fullName: String): String {
+            val tokens = fullName.split(Module.MODULE_SEPARATOR)
+            return tokens[tokens.size - 1]
+        }
     }
 
     fun toString(currentModule: Module) =
