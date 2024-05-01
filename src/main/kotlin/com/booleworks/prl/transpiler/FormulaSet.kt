@@ -4,7 +4,6 @@
 package com.booleworks.prl.transpiler
 
 import com.booleworks.logicng.csp.encodings.CspEncodingContext
-import com.booleworks.logicng.csp.terms.IntegerVariable
 import com.booleworks.logicng.datastructures.Substitution
 import com.booleworks.logicng.formulas.Formula
 import com.booleworks.logicng.formulas.FormulaFactory

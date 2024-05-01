@@ -21,10 +21,10 @@ class LogicNGTranspilerBooleanTest {
     private val ss2 = sliceSets[1]
     private val f = FormulaFactory.caching()
     private val cf = CspFactory(f)
-    private val context = CspEncodingContext(cf)
-    private val varDef = encodeIntFeatures(context, model.featureStore)
-    private val translation1 = transpileSliceSet(context, varDef, ss1)
-    private val translation2 = transpileSliceSet(context, varDef, ss2)
+    private val context = CspEncodingContext()
+    private val varDef = encodeIntFeatures(context, cf, model.featureStore)
+    private val translation1 = transpileSliceSet(context, cf, varDef, ss1)
+    private val translation2 = transpileSliceSet(context, cf, varDef, ss2)
     private val modelTranslation = transpileModel(cf, model, listOf(BooleanSliceSelection("active", BooleanRange.list(true))))
 
     private val f1 = f.variable("top.f1")
