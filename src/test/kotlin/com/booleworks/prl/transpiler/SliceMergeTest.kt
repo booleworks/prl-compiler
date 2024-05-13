@@ -2,8 +2,8 @@ package com.booleworks.prl.transpiler
 
 import com.booleworks.logicng.datastructures.Tristate
 import com.booleworks.logicng.formulas.FormulaFactory
-import com.booleworks.logicng.solvers.MiniSat
-import com.booleworks.logicng.solvers.sat.MiniSatConfig
+import com.booleworks.logicng.solvers.SATSolver
+import com.booleworks.logicng.solvers.sat.SATSolverConfig
 import com.booleworks.prl.compiler.PrlCompiler
 import com.booleworks.prl.parser.parseRuleFile
 import org.assertj.core.api.Assertions.assertThat
@@ -59,7 +59,7 @@ class SliceMergeTest {
         assertThat(merged.booleanVariables).containsExactly(a, b, c, x)
         assertThat(merged.enumVariables).isEmpty()
         assertThat(merged.enumMapping).isEmpty()
-        val solver = MiniSat.miniSat(f)
+        val solver = SATSolver.newSolver(f)
         solver.addPropositions(merged.propositions)
         val models = solver.enumerateAllModels(listOf(a, b, c))
         assertThat(models).hasSize(2)
@@ -86,7 +86,7 @@ class SliceMergeTest {
         assertThat(filter(merged.propositions, "@SL7")).hasSize(9 + 4 + 4)
         assertThat(filter(merged.propositions, "@SL8")).hasSize(9 + 4 + 3)
         assertThat(merged.propositions).hasSize(166)
-        val solver = MiniSat.miniSat(f, MiniSatConfig.builder().proofGeneration(true).build())
+        val solver = SATSolver.newSolver(f, SATSolverConfig.builder().proofGeneration(true).build())
         solver.addPropositions(merged.propositions)
         assertThat(solver.sat()).isEqualTo(Tristate.TRUE)
         val models = solver.enumerateAllModels(listOf(a, b, c, p, q, r, x, y, z))
@@ -129,7 +129,7 @@ class SliceMergeTest {
         assertThat(filter(merged.propositions, "@SL2")).hasSize(13 + 3 + 7)
         assertThat(filter(merged.propositions, "@SL3")).hasSize(13 + 1 + 9)
         assertThat(merged.propositions).hasSize(94)
-        val solver = MiniSat.miniSat(f, MiniSatConfig.builder().proofGeneration(true).build())
+        val solver = SATSolver.newSolver(f, SATSolverConfig.builder().proofGeneration(true).build())
         solver.addPropositions(merged.propositions)
         assertThat(solver.sat()).isEqualTo(Tristate.FALSE)
     }
