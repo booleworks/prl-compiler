@@ -424,7 +424,7 @@ private fun deserialize(bin: PbFeatureDefinition): AnyFeatureDef =
             else -> EnumFeatureDefinition(
                 deserialize(bin.module),
                 bin.code,
-                bin.enumValuesList,
+                bin.enumValuesList.toSet(),
                 deserialize(bin.visibility),
                 bin.description,
                 props,
@@ -461,7 +461,7 @@ private fun deserialize(bin: PbIntTerm, fm: Map<Int, Feature>): IntTerm = when {
 
 private fun range(range: BooleanRange) = pbBooleanRange { values += range.allValues() }
 
-private fun range(range: IntRange) = when (range) {
+private fun range(range: PropertyRange<Int>) = when (range as IntRange) {
     is IntInterval -> pbIntRange { lowerBound = range.first(); upperBound = range.last() }
     is IntList -> pbIntRange { values += range.allValues() }
     is EmptyIntRange -> pbIntRange { }

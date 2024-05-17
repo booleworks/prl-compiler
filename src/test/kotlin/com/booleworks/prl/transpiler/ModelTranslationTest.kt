@@ -65,20 +65,20 @@ class ModelTranslationTest {
 
     private val st1 = SliceTranslation(
         SliceSet(mutableListOf(s1), listOf(), listOf()), TranslationInfo(
-            listOf(), setOf(), IntFeatureEncodingStore(mapOf()), setOf(), setOf(), mapOf(), setOf(), mapOf(),
-            CspEncodingContext()
+            listOf(), setOf(), IntFeatureEncodingStore.empty(), FeatureInstantiation.empty(),
+            setOf(), setOf(), mapOf(), setOf(), mapOf(), CspEncodingContext()
         )
     )
     private val st2 = SliceTranslation(
         SliceSet(mutableListOf(s2, s3), listOf(), listOf()), TranslationInfo(
-            listOf(), setOf(), IntFeatureEncodingStore(mapOf()), setOf(), setOf(), mapOf(), setOf(), mapOf(),
-            CspEncodingContext()
+            listOf(), setOf(), IntFeatureEncodingStore.empty(), FeatureInstantiation.empty(),
+            setOf(), setOf(), mapOf(), setOf(), mapOf(), CspEncodingContext()
         )
     )
     private val st3 = SliceTranslation(
         SliceSet(mutableListOf(s4), listOf(), listOf()), TranslationInfo(
-            listOf(), setOf(), IntFeatureEncodingStore(mapOf()), setOf(), setOf(), mapOf(), setOf(), mapOf(),
-            CspEncodingContext()
+            listOf(), setOf(), IntFeatureEncodingStore.empty(), FeatureInstantiation.empty(),
+            setOf(), setOf(), mapOf(), setOf(), mapOf(), CspEncodingContext()
         )
     )
 

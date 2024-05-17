@@ -10,12 +10,19 @@ import com.booleworks.logicng.formulas.FormulaFactory
 import com.booleworks.logicng.formulas.Variable
 import com.booleworks.logicng.propositions.ExtendedProposition
 import com.booleworks.logicng.propositions.PropositionBackpack
+import com.booleworks.prl.model.BooleanFeatureDefinition
+import com.booleworks.prl.model.EnumFeatureDefinition
+import com.booleworks.prl.model.FeatureReference
+import com.booleworks.prl.model.IntFeatureDefinition
 import com.booleworks.prl.model.Module
+import com.booleworks.prl.model.constraints.BooleanFeature
 import com.booleworks.prl.model.constraints.ComparisonOperator
 import com.booleworks.prl.model.constraints.Constraint
 import com.booleworks.prl.model.constraints.EnumComparisonPredicate
+import com.booleworks.prl.model.constraints.EnumFeature
 import com.booleworks.prl.model.constraints.EnumInPredicate
 import com.booleworks.prl.model.constraints.Feature
+import com.booleworks.prl.model.constraints.IntFeature
 import com.booleworks.prl.model.constraints.IntPredicate
 import com.booleworks.prl.model.rules.AnyRule
 import com.booleworks.prl.model.rules.ConstraintRule
@@ -90,7 +97,28 @@ data class ModelTranslation(val computations: List<SliceTranslation>) : Iterable
     override fun iterator() = computations.iterator()
 }
 
+data class FeatureInstantiation(
+    val booleanFeatures: Map<FeatureReference, BooleanFeatureDefinition>,
+    val enumFeatures: Map<FeatureReference, EnumFeatureDefinition>,
+    val integerFeatures: Map<FeatureReference, IntFeatureDefinition>,
+) {
+    operator fun get(feature: Feature) = when (feature) {
+        is BooleanFeature -> booleanFeatures[feature.reference]
+        is EnumFeature -> enumFeatures[feature.reference]
+        is IntFeature -> integerFeatures[feature.reference]
+    }
+
+    operator fun get(feature: BooleanFeature) = booleanFeatures[feature.reference]
+    operator fun get(feature: EnumFeature) = enumFeatures[feature.reference]
+    operator fun get(feature: IntFeature) = integerFeatures[feature.reference]
+
+    companion object {
+        fun empty() = FeatureInstantiation(mapOf(), mapOf(), mapOf())
+    }
+}
+
 interface TranspilerCoreInfo {
+    val featureInstantiations: FeatureInstantiation
     val unknownFeatures: Set<Feature>
     val booleanVariables: Set<Variable>
     val integerVariables: Set<LngIntVariable>
@@ -118,6 +146,7 @@ data class TranslationInfo(
     val propositions: List<PrlProposition>,
     val knownVariables: Set<Variable>,
     val integerEncodings: IntFeatureEncodingStore,
+    override val featureInstantiations: FeatureInstantiation,
     override val booleanVariables: Set<Variable>,
     override val integerVariables: Set<LngIntVariable>,
     override val enumMapping: Map<String, Map<String, Variable>>,

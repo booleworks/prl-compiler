@@ -9,8 +9,8 @@ import com.booleworks.prl.model.Module
 val DEFAULT_MODULE: Module = Module("com.booleworks")
 
 fun boolFt(featureCode: String) = BooleanFeatureDefinition(DEFAULT_MODULE, featureCode, false).feature
-fun enumFt(featureCode: String) = EnumFeatureDefinition(DEFAULT_MODULE, featureCode, listOf()).feature
-fun enumFt(featureCode: String, values: Collection<String>): EnumFeature = EnumFeatureDefinition(DEFAULT_MODULE, featureCode, values.toList()).feature
+fun enumFt(featureCode: String) = EnumFeatureDefinition(DEFAULT_MODULE, featureCode, setOf()).feature
+fun enumFt(featureCode: String, values: Collection<String>): EnumFeature = EnumFeatureDefinition(DEFAULT_MODULE, featureCode, values.toSet()).feature
 fun intFt(featureCode: String) = IntFeatureDefinition(DEFAULT_MODULE, featureCode, IntRange.interval(Int.MIN_VALUE, Int.MAX_VALUE)).feature
 fun versionFt(featureCode: String) = BooleanFeatureDefinition(DEFAULT_MODULE, featureCode, true).feature
 

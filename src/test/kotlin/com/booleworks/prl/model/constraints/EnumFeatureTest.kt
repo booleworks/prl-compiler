@@ -12,7 +12,7 @@ class EnumFeatureTest {
     @Test
     fun testCreation() {
         val module = Module("module")
-        val f1Def = EnumFeatureDefinition(module, "f1", listOf("a", "b", "c"))
+        val f1Def = EnumFeatureDefinition(module, "f1", setOf("a", "b", "c"))
         val f1 = f1Def.feature
         val f2 = enumFt("f2")
         assertThat(f1.featureCode).isEqualTo("f1")

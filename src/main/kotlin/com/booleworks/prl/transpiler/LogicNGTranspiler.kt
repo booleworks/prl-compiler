@@ -16,15 +16,15 @@ import com.booleworks.logicng.formulas.Formula
 import com.booleworks.logicng.formulas.FormulaFactory
 import com.booleworks.logicng.formulas.Variable
 import com.booleworks.prl.compiler.FeatureStore
-import com.booleworks.prl.model.AnyFeatureDef
 import com.booleworks.prl.model.BooleanFeatureDefinition
 import com.booleworks.prl.model.EmptyIntRange
 import com.booleworks.prl.model.EnumFeatureDefinition
+import com.booleworks.prl.model.FeatureReference
 import com.booleworks.prl.model.IntFeatureDefinition
 import com.booleworks.prl.model.IntInterval
 import com.booleworks.prl.model.IntList
-import com.booleworks.prl.model.IntRange
 import com.booleworks.prl.model.PrlModel
+import com.booleworks.prl.model.PropertyRange
 import com.booleworks.prl.model.constraints.Amo
 import com.booleworks.prl.model.constraints.And
 import com.booleworks.prl.model.constraints.BooleanFeature
@@ -67,7 +67,6 @@ import com.booleworks.prl.transpiler.RuleType.ENUM_FEATURE_CONSTRAINT
 import com.booleworks.prl.transpiler.RuleType.FEATURE_EQUIVALENCE_OVER_SLICES
 import com.booleworks.prl.transpiler.RuleType.INTEGER_VARIABLE
 import com.booleworks.prl.transpiler.RuleType.PREDICATE_DEFINITION
-import java.util.TreeMap
 
 const val S = "_"
 const val SLICE_SELECTOR_PREFIX = "@SL"
@@ -84,7 +83,7 @@ fun transpileModel(
     val allSlices = computeAllSlices(selectors, model.propertyStore.allDefinitions(), maxNumberOfSlices)
     val sliceSets = computeSliceSets(allSlices, model)
     val context = CspEncodingContext()
-    val intVarDefinitions = encodeIntFeatures(context, cf, model.featureStore);
+    val intVarDefinitions = encodeIntFeatures(context, cf, model.featureStore)
     return ModelTranslation(sliceSets.map { transpileSliceSet(context, cf, intVarDefinitions, it) })
 }
 
@@ -93,25 +92,25 @@ fun encodeIntFeatures(
     cf: CspFactory,
     store: FeatureStore
 ): IntFeatureEncodingStore = IntFeatureEncodingStore(store.intFeatures.values.associate { defs ->
-    val name = defs.first().feature.fullName
+    val reference = defs.first().reference
     val map1 = defs.mapIndexed { index, d ->
         val def = (d as IntFeatureDefinition)
         Pair(
-            def.feature,
+            def,
             LngIntVariable(
-                def.feature.fullName,
+                def.feature.reference,
                 cf.variable(
                     "$FEATURE_DEF_PREFIX$index$S${def.feature.fullName}",
                     transpileDomain(def.feature.domain)
                 )
             )
         )
-    }.toMap()
+    }.toMap().toMutableMap()
     val map2 = map1.values.associateBy(LngIntVariable::variable) { v ->
         val clauses = cf.encodeVariable(v.variable, context)
         cf.formulaFactory().and(clauses)
     }.toMutableMap()
-    Pair(name, IntFeatureEncodingInfo(map1, map2))
+    Pair(reference, IntFeatureEncodingInfo(map1, map2))
 })
 
 fun transpileConstraint(cf: CspFactory, constraint: Constraint, info: TranspilerCoreInfo, integerEncodings: IntFeatureEncodingStore): Formula =
@@ -141,14 +140,14 @@ fun transpileConstraint(cf: CspFactory, constraint: Constraint, info: Transpiler
         is IntComparisonPredicate -> info.intPredicateMapping[constraint]
             ?: cf.formulaFactory().and(
                 cf.encodeConstraint(
-                    transpileIntComparisonPredicate(cf, integerEncodings, constraint),
+                    transpileIntComparisonPredicate(cf, integerEncodings, info.featureInstantiations, constraint),
                     info.encodingContext
                 )
             )
         is IntInPredicate -> info.intPredicateMapping[constraint]
             ?: cf.formulaFactory().and(
                 cf.encodeConstraint(
-                    transpileIntInPredicate(cf, integerEncodings, constraint),
+                    transpileIntInPredicate(cf, integerEncodings, info.featureInstantiations, constraint),
                     info.encodingContext,
                 )
             )
@@ -165,13 +164,12 @@ fun mergeSlices(cf: CspFactory, slices: List<SliceTranslation>): MergedSliceTran
     val unknownFeatures = slices[0].unknownFeatures.toMutableSet()
     val booleanVariables = mutableSetOf<Variable>()
     val intPredicateMapping = mutableMapOf<IntPredicate, Variable>()
-    val encodingContext = slices[0].info.encodingContext
-    val integerEncodings = slices[0].info.integerEncodings
+    val encodingContext = CspEncodingContext(slices[0].info.encodingContext)
+    val integerEncodings = slices[0].info.integerEncodings.clone()
 
-    val mergedVarMap = slices
-        .flatMap { it.integerVariables }
-        .groupBy({ it.feature }, { it })
-        .mapValues { (k, v) -> integerEncodings.getInfo(k)!!.getMergedVariable(k, v, encodingContext, cf) }
+    val instantiation = mergeFeatureInstantiations(slices)
+    instantiation.integerFeatures.values.forEach { integerEncodings.getInfo(it.reference)!!.addDefinition(it, encodingContext, cf) }
+    val mergedVarMap = instantiation.integerFeatures.mapValues { (_, v) -> integerEncodings.getVariable(v)!! }
     val integerVariables = mergedVarMap.values.toSet()
     integerVariables.forEach {
         propositions.add(PrlProposition(RuleInformation(INTEGER_VARIABLE), integerEncodings.getEncoding(it)!!))
@@ -201,40 +199,7 @@ fun mergeSlices(cf: CspFactory, slices: List<SliceTranslation>): MergedSliceTran
                 )
             }
         }
-        slice.integerVariables.forEach { v ->
-            val constraints = ArrayList<Formula>()
-            val mergedVar = mergedVarMap[v.feature]!!.variable
-            val generalDomain = mergedVar.domain;
-            val vDomain = v.variable.domain;
-            var generalCounter = 0
-            var vCounter = 0
-            var c = vDomain.lb();
-            var lastGeneralVar: Variable? = null;
-            while (c < vDomain.ub()) {
-                if (vDomain.contains(c)) {
-                    val vEncodedVar = encodingContext.variableMap[v.variable]!![vCounter]!!
-                    if (c < generalDomain.lb()) {
-                        constraints.add(vEncodedVar.negate(f))
-                    } else if (c >= generalDomain.ub()) {
-                        constraints.add(vEncodedVar)
-                    } else if (generalDomain.contains(c)) {
-                        val generalEncodedVar = encodingContext.variableMap[mergedVar]!![generalCounter]!!
-                        constraints.add(f.equivalence(generalEncodedVar, vEncodedVar))
-                        lastGeneralVar = generalEncodedVar
-                        ++generalCounter
-                    } else {
-                        if (lastGeneralVar == null) {
-                            constraints.add(vEncodedVar.negate(f))
-                        } else {
-                            constraints.add(f.implication(vEncodedVar, lastGeneralVar))
-                        }
-                    }
-                    ++vCounter
-                }
-                ++c
-            }
-            propositions.add(PrlProposition(RuleInformation(FEATURE_EQUIVALENCE_OVER_SLICES), f.and(constraints)))
-        }
+        propositions += slice.integerVariables.map { createIntVariableEquivalence(it.variable, mergedVarMap[it.feature]!!.variable, encodingContext, f) }
         slice.info.intPredicateMapping.forEach { (predicate, variable) ->
             val newVar = intPredicateMapping.computeIfAbsent(predicate) {
                 variable
@@ -253,13 +218,74 @@ fun mergeSlices(cf: CspFactory, slices: List<SliceTranslation>): MergedSliceTran
 
     return MergedSliceTranslation(
         sliceSelectors,
-        TranslationInfo(propositions, knownVariables, integerEncodings, booleanVariables, integerVariables, enumMapping, unknownFeatures, intPredicateMapping, encodingContext)
+        TranslationInfo(
+            propositions,
+            knownVariables,
+            integerEncodings,
+            instantiation,
+            booleanVariables,
+            integerVariables,
+            enumMapping,
+            unknownFeatures,
+            intPredicateMapping,
+            encodingContext
+        )
     )
+}
+
+fun mergeFeatureInstantiations(slices: List<SliceTranslation>): FeatureInstantiation {
+    val booleanFeatureDefs = mutableMapOf<FeatureReference, MutableList<BooleanFeatureDefinition>>()
+    slices.flatMap { it.info.featureInstantiations.booleanFeatures.entries }.groupByTo(booleanFeatureDefs, { it.key }, { it.value })
+    val booleanFeatureInstantiations = booleanFeatureDefs.mapValues { (_, v) -> BooleanFeatureDefinition.merge(v) }.toMutableMap()
+
+    val enumFeatureDefs = mutableMapOf<FeatureReference, MutableList<EnumFeatureDefinition>>()
+    slices.flatMap { it.info.featureInstantiations.enumFeatures.entries }.groupByTo(enumFeatureDefs, { it.key }, { it.value })
+    val enumFeatureInstantiations = enumFeatureDefs.mapValues { (_, v) -> EnumFeatureDefinition.merge(v) }.toMutableMap()
+
+    val intFeatureDefs = mutableMapOf<FeatureReference, MutableList<IntFeatureDefinition>>()
+    slices.flatMap { it.info.featureInstantiations.integerFeatures.entries }.groupByTo(intFeatureDefs, { it.key }, { it.value })
+    val intFeatureInstantiations = intFeatureDefs.mapValues { (_, v) -> IntFeatureDefinition.merge(v) }.toMutableMap()
+
+    return FeatureInstantiation(booleanFeatureInstantiations, enumFeatureInstantiations, intFeatureInstantiations)
+}
+
+fun createIntVariableEquivalence(sliceVariable: IntegerVariable, mergedVar: IntegerVariable, encodingContext: CspEncodingContext, f: FormulaFactory): PrlProposition {
+    val constraints = mutableListOf<Formula>();
+    val mergedDomain = mergedVar.domain;
+    val sliceDomain = sliceVariable.domain;
+    var mergedCounter = 0
+    var sliceCounter = 0
+    var c = sliceDomain.lb();
+    var lastGeneralVar: Variable? = null;
+    while (c < sliceDomain.ub()) {
+        if (sliceDomain.contains(c)) {
+            val vEncodedVar = encodingContext.variableMap[sliceVariable]!![sliceCounter]!!
+            if (c < mergedDomain.lb()) {
+                constraints.add(vEncodedVar.negate(f))
+            } else if (c >= mergedDomain.ub()) {
+                constraints.add(vEncodedVar)
+            } else if (mergedDomain.contains(c)) {
+                val generalEncodedVar = encodingContext.variableMap[mergedVar]!![mergedCounter]!!
+                constraints.add(f.equivalence(generalEncodedVar, vEncodedVar))
+                lastGeneralVar = generalEncodedVar
+                ++mergedCounter
+            } else {
+                if (lastGeneralVar == null) {
+                    constraints.add(vEncodedVar.negate(f))
+                } else {
+                    constraints.add(f.implication(vEncodedVar, lastGeneralVar))
+                }
+            }
+            ++sliceCounter
+        }
+        ++c
+    }
+    return PrlProposition(RuleInformation(FEATURE_EQUIVALENCE_OVER_SLICES), f.and(constraints))
 }
 
 fun transpileSliceSet(context: CspEncodingContext, cf: CspFactory, integerEncodings: IntFeatureEncodingStore, sliceSet: SliceSet): SliceTranslation {
     val f = cf.formulaFactory()
-    val state = initState(context, cf.formulaFactory(), sliceSet, integerEncodings)
+    val state = initState(context, cf, sliceSet, integerEncodings)
     val propositions = sliceSet.rules.map { transpileRule(cf, it, sliceSet, state, integerEncodings) }.toMutableList()
     propositions += state.enumMapping.values.map {
         PrlProposition(
@@ -268,7 +294,7 @@ fun transpileSliceSet(context: CspEncodingContext, cf: CspFactory, integerEncodi
         )
     }
     propositions += state.intPredicateMapping.entries.map {
-        val lngPredicate = transpileIntPredicate(cf, integerEncodings, it.key)
+        val lngPredicate = transpileIntPredicate(cf, integerEncodings, state.featureInstantiations, it.key)
         val clauses = cf.encodeConstraint(lngPredicate, context)
         val formula = f.equivalence(it.value, f.and(clauses))
         PrlProposition(RuleInformation(PREDICATE_DEFINITION, sliceSet), formula)
@@ -282,26 +308,32 @@ fun transpileSliceSet(context: CspEncodingContext, cf: CspFactory, integerEncodi
     return SliceTranslation(sliceSet, state.toTranslationInfo(propositions, integerEncodings))
 }
 
-private fun initState(context: CspEncodingContext, f: FormulaFactory, sliceSet: SliceSet, integerEncodings: IntFeatureEncodingStore) =
+private fun initState(context: CspEncodingContext, cf: CspFactory, sliceSet: SliceSet, integerEncodings: IntFeatureEncodingStore) =
     TranspilerState(
-        intPredicateMapping = getAllIntPredicates(f, sliceSet),
+        featureInstantiations = getFeatureInstantiations(sliceSet),
+        intPredicateMapping = getAllIntPredicates(cf.formulaFactory(), sliceSet),
         encodingContext = context
     ).apply {
-        val allDefinitions = sliceSet.definitions.associateBy { it.feature.featureCode }
-        allDefinitions.values.forEach { featureMap[it.feature.fullName] = it }
-        sliceSet.rules.flatMap { it.features() }.filter { allDefinitions[it.featureCode] == null }
+        sliceSet.rules.flatMap { it.features() }.filter { featureInstantiations[it] == null }
             .forEach { unknownFeatures.add(it) }
         booleanVariables.addAll(
-            featureMap.values.filterIsInstance<BooleanFeatureDefinition>().map { f.variable(it.feature.fullName) })
-        featureMap.values.filterIsInstance<EnumFeatureDefinition>()
+            featureInstantiations.booleanFeatures.values.map { cf.formulaFactory().variable(it.feature.fullName) })
+        featureInstantiations.enumFeatures.values
             .forEach { def ->
-                enumMapping[def.feature.fullName] = def.values.associateWith { enumFeature(f, def.feature.fullName, it) }
+                enumMapping[def.feature.fullName] = def.values.associateWith { enumFeature(cf.formulaFactory(), def.feature.fullName, it) }
             }
         integerVariables.addAll(
-            featureMap.values.filterIsInstance<IntFeatureDefinition>()
-                .map { integerEncodings.getVariable(it.feature)!! }
+            featureInstantiations.integerFeatures.values
+                .map { integerEncodings.getVariable(featureInstantiations[it.feature]!!)!! }
         )
     }
+
+fun getFeatureInstantiations(sliceSet: SliceSet): FeatureInstantiation {
+    val booleanMap = sliceSet.definitions.filterIsInstance<BooleanFeatureDefinition>().associateBy { it.reference }
+    val enumMap = sliceSet.definitions.filterIsInstance<EnumFeatureDefinition>().associateBy { it.reference }
+    val intMap = sliceSet.definitions.filterIsInstance<IntFeatureDefinition>().associateBy { it.reference }
+    return FeatureInstantiation(booleanMap, enumMap, intMap)
+}
 
 fun getAllIntPredicates(f: FormulaFactory, sliceSet: SliceSet): MutableMap<IntPredicate, Variable> {
     val map = LinkedHashMap<IntPredicate, Variable>()
@@ -388,20 +420,25 @@ private fun transpileRule(cf: CspFactory, r: AnyRule, sliceSet: SliceSet, state:
 
 private fun transpileGroupRule(f: FormulaFactory, rule: GroupRule, state: TranspilerState): Formula {
     val content = filterFeatures(f, rule.content, state)
-    val group = if (state.featureMap.containsKey(rule.group.fullName)) f.variable(rule.group.fullName) else f.falsum()
+    val group = if (state.featureInstantiations.booleanFeatures.containsKey(rule.group.reference)) f.variable(rule.group.fullName) else f.falsum()
     val cc = if (rule.type == GroupType.MANDATORY) f.exo(content) else f.amo(content)
     return f.and(cc, f.equivalence(group, f.or(content)))
 }
 
-fun transpileIntPredicate(cf: CspFactory, integerEncodings: IntFeatureEncodingStore, predicate: IntPredicate): ComparisonPredicate =
+fun transpileIntPredicate(cf: CspFactory, integerEncodings: IntFeatureEncodingStore, instantiation: FeatureInstantiation, predicate: IntPredicate): ComparisonPredicate =
     when (predicate) {
-        is IntComparisonPredicate -> transpileIntComparisonPredicate(cf, integerEncodings, predicate)
-        is IntInPredicate -> transpileIntInPredicate(cf, integerEncodings, predicate)
+        is IntComparisonPredicate -> transpileIntComparisonPredicate(cf, integerEncodings, instantiation, predicate)
+        is IntInPredicate -> transpileIntInPredicate(cf, integerEncodings, instantiation, predicate)
     }
 
-fun transpileIntComparisonPredicate(cf: CspFactory, integerEncodings: IntFeatureEncodingStore, predicate: IntComparisonPredicate): ComparisonPredicate {
-    val left = transpileIntTerm(cf, integerEncodings, predicate.left)
-    val right = transpileIntTerm(cf, integerEncodings, predicate.right)
+fun transpileIntComparisonPredicate(
+    cf: CspFactory,
+    integerEncodings: IntFeatureEncodingStore,
+    instantiation: FeatureInstantiation,
+    predicate: IntComparisonPredicate
+): ComparisonPredicate {
+    val left = transpileIntTerm(cf, integerEncodings, instantiation, predicate.left)
+    val right = transpileIntTerm(cf, integerEncodings, instantiation, predicate.right)
     return when (predicate.comparison) {
         ComparisonOperator.EQ -> cf.eq(left, right)
         ComparisonOperator.GE -> cf.ge(left, right)
@@ -412,27 +449,29 @@ fun transpileIntComparisonPredicate(cf: CspFactory, integerEncodings: IntFeature
     }
 }
 
-fun transpileIntInPredicate(cf: CspFactory, integerEncodings: IntFeatureEncodingStore, predicate: IntInPredicate): ComparisonPredicate {
-    val term = transpileIntTerm(cf, integerEncodings, predicate.term)
+fun transpileIntInPredicate(cf: CspFactory, integerEncodings: IntFeatureEncodingStore, instantiation: FeatureInstantiation, predicate: IntInPredicate): ComparisonPredicate {
+    val term = transpileIntTerm(cf, integerEncodings, instantiation, predicate.term)
     val v = cf.auxVariable(transpileDomain(predicate.range))
     return cf.eq(term, v)
 }
 
-fun transpileIntTerm(cf: CspFactory, integerEncodings: IntFeatureEncodingStore, term: IntTerm): Term = when (term) {
+fun transpileIntTerm(cf: CspFactory, integerEncodings: IntFeatureEncodingStore, instantiation: FeatureInstantiation, term: IntTerm): Term = when (term) {
     is IntValue -> cf.constant(term.value)
-    is IntFeature -> transpileIntFeature(integerEncodings, term)
-    is IntMul -> cf.mul(term.coefficient, transpileIntFeature(integerEncodings, term.feature))
-    is IntSum -> cf.add(cf.add(term.operands.map { transpileIntMul(cf, integerEncodings, it) }), cf.constant(term.offset))
+    is IntFeature -> transpileIntFeature(integerEncodings, instantiation, term)
+    is IntMul -> cf.mul(term.coefficient, transpileIntFeature(integerEncodings, instantiation, term.feature))
+    is IntSum -> cf.add(cf.add(term.operands.map { transpileIntMul(cf, integerEncodings, instantiation, it) }), cf.constant(term.offset))
 }
 
-fun transpileIntMul(cf: CspFactory, integerEncodings: IntFeatureEncodingStore, feature: IntMul): Term =
-    cf.mul(feature.coefficient, transpileIntFeature(integerEncodings, feature.feature))
+fun transpileIntMul(cf: CspFactory, integerEncodings: IntFeatureEncodingStore, instantiation: FeatureInstantiation, feature: IntMul): Term =
+    cf.mul(feature.coefficient, transpileIntFeature(integerEncodings, instantiation, feature.feature))
 
-fun transpileIntFeature(integerEncodings: IntFeatureEncodingStore, feature: IntFeature) = integerEncodings.getVariable(feature)!!.variable
+fun transpileIntFeature(integerEncodings: IntFeatureEncodingStore, instantiation: FeatureInstantiation, feature: IntFeature) =
+    integerEncodings.getVariable(instantiation[feature]!!)!!.variable
 
-fun transpileDomain(domain: IntRange): IntegerDomain = when (domain) {
+fun transpileDomain(domain: PropertyRange<Int>): IntegerDomain = when (domain) {
     is IntList, EmptyIntRange -> IntegerSetDomain(domain.allValues())
     is IntInterval -> IntegerRangeDomain(domain.first(), domain.last())
+    else -> throw IllegalArgumentException("Invalid integer domain ${domain.javaClass}")
 }
 
 private fun filterFeatures(f: FormulaFactory, fs: Collection<BooleanFeature>, info: TranspilerCoreInfo) =
@@ -449,7 +488,7 @@ private fun filterFeatures(f: FormulaFactory, fs: Collection<BooleanFeature>, in
  *                       their respective variable
  */
 data class TranspilerState(
-    val featureMap: MutableMap<String, AnyFeatureDef> = mutableMapOf(),
+    override val featureInstantiations: FeatureInstantiation,
     override val unknownFeatures: MutableSet<Feature> = mutableSetOf(),
     override val booleanVariables: MutableSet<Variable> = mutableSetOf(),
     override val integerVariables: MutableSet<LngIntVariable> = mutableSetOf(),
@@ -459,41 +498,59 @@ data class TranspilerState(
 ) : TranspilerCoreInfo {
     private fun knownVariables() = (booleanVariables + enumMapping.values.flatMap { it.values }).toSortedSet()
     fun toTranslationInfo(propositions: List<PrlProposition>, integerEncodings: IntFeatureEncodingStore) =
-        TranslationInfo(propositions, knownVariables(), integerEncodings, booleanVariables, integerVariables, enumMapping, unknownFeatures, intPredicateMapping, encodingContext)
+        TranslationInfo(
+            propositions, knownVariables(), integerEncodings, featureInstantiations, booleanVariables, integerVariables, enumMapping, unknownFeatures,
+            intPredicateMapping, encodingContext
+        )
 }
 
-data class IntFeatureEncodingStore(val store: Map<String, IntFeatureEncodingInfo>) {
-    fun getEncoding(variable: LngIntVariable) = store[variable.feature]?.encodedVars?.get(variable.variable)
-    fun getVariable(feature: IntFeature) = store[feature.fullName]?.featureToVar?.get(feature)
-    fun getInfo(featureCode: String) = store[featureCode]
+data class IntFeatureEncodingStore(val store: Map<FeatureReference, IntFeatureEncodingInfo>) : Cloneable {
+
+    fun getEncoding(variable: LngIntVariable) =
+        getInfo(variable.feature)?.getEncoding(variable.variable)
+
+    fun getVariable(feature: IntFeatureDefinition) =
+        getInfo(feature.feature.reference)?.getVariable(feature)
+
+    fun getInfo(feature: FeatureReference) = store[feature]
+
+    public override fun clone() = IntFeatureEncodingStore(store.mapValues { (_, info) -> info.clone() })
+
+    companion object {
+        fun empty() = IntFeatureEncodingStore(mutableMapOf())
+    }
 }
 
 data class IntFeatureEncodingInfo(
-    val featureToVar: Map<IntFeature, LngIntVariable>,
-    val encodedVars: MutableMap<IntegerVariable, Formula>,
-) {
-    private var mergedVariables: MutableMap<String, LngIntVariable> = TreeMap()
+    private val featureToVar: MutableMap<IntFeatureDefinition, LngIntVariable>,
+    private val encodedVars: MutableMap<IntegerVariable, Formula>,
+) : Cloneable {
     fun contains(variable: IntegerVariable) = encodedVars.containsKey(variable)
 
-    fun getMergedVariable(name: String, variables: Collection<LngIntVariable>, encodingContext: CspEncodingContext, cf: CspFactory): LngIntVariable {
-        val mergedName = FEATURE_DEF_PREFIX + variables
-            .map { it.variable.name.substring(FEATURE_DEF_PREFIX.length, it.variable.name.indexOf(S)).toInt() }
-            .sorted()
-            .distinct()
-            .joinToString(",") + S + name
-        if (!mergedVariables.contains(mergedName)) {
-            val domain = variables.map { it.variable.domain }.reduce { a, b -> a.cap(b) }
-            val v = LngIntVariable(name, cf.variable(mergedName, domain))
-            val clauses = cf.encodeVariable(v.variable, encodingContext)
-            val formula = cf.formulaFactory().and(clauses)
-            encodedVars[v.variable] = formula
-            mergedVariables[mergedName] = v
+    fun getEncoding(variable: IntegerVariable) = encodedVars[variable]
+
+    fun getVariable(definition: IntFeatureDefinition) = featureToVar[definition]
+
+    fun addDefinition(definition: IntFeatureDefinition, encodingContext: CspEncodingContext, cf: CspFactory) {
+        if (!featureToVar.containsKey(definition)) {
+            val varName = "$FEATURE_DEF_PREFIX${featureToVar.size}$S${definition.reference.fullName}"
+            val domain = transpileDomain(definition.domain)
+            val variable = LngIntVariable(definition.reference, cf.variable(varName, domain))
+            val clauses = cf.encodeVariable(variable.variable, encodingContext)
+            val encoded = cf.formulaFactory().and(clauses)
+            featureToVar[definition] = variable
+            encodedVars[variable.variable] = encoded
         }
-        return mergedVariables[mergedName]!!
+    }
+
+    public override fun clone() = IntFeatureEncodingInfo(HashMap(featureToVar), HashMap(encodedVars))
+
+    companion object {
+        fun empty() = IntFeatureEncodingInfo(mutableMapOf(), mutableMapOf())
     }
 }
 
 data class LngIntVariable(
-    val feature: String,
+    val feature: FeatureReference,
     val variable: IntegerVariable,
 )

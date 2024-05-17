@@ -5,6 +5,7 @@ package com.booleworks.prl.model.constraints
 
 import com.booleworks.prl.model.IntRange
 import com.booleworks.prl.model.Module
+import com.booleworks.prl.model.PropertyRange
 import com.booleworks.prl.model.datastructures.FeatureAssignment
 import com.booleworks.prl.model.datastructures.FeatureRenaming
 import com.booleworks.prl.parser.PragmaticRuleLanguage
@@ -16,7 +17,7 @@ import com.booleworks.prl.parser.PragmaticRuleLanguage.SYMBOL_RSQB
 import com.booleworks.prl.parser.PragmaticRuleLanguage.range
 import java.util.Objects
 
-fun intFt(featureCode: String, module: Module, domain: IntRange) = IntFeature(featureCode, module, domain)
+fun intFt(featureCode: String, module: Module, domain: PropertyRange<Int>) = IntFeature(featureCode, module, domain)
 fun intVal(value: Int) = IntValue(value)
 
 fun intMul(coefficient: Int, feature: IntFeature) = IntMul(coefficient, feature)
@@ -65,7 +66,7 @@ sealed interface IntTerm {
 class IntFeature internal constructor(
     override val featureCode: String,
     override val module: Module,
-    internal val domain: IntRange
+    internal val domain: PropertyRange<Int>
 ) : Feature(featureCode, module), IntTerm {
     override fun value(assignment: FeatureAssignment) = assignment.getInt(this)
         ?: throw IllegalArgumentException("Integer Feature $featureCode is not assigned to any value")

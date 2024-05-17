@@ -3,6 +3,7 @@
 
 package com.booleworks.prl.model.constraints
 
+import com.booleworks.prl.model.FeatureReference
 import com.booleworks.prl.model.Module
 import com.booleworks.prl.parser.PragmaticRuleLanguage
 import com.booleworks.prl.parser.PragmaticRuleLanguage.SYMBOL_EQ
@@ -20,6 +21,8 @@ sealed interface Predicate : AtomicConstraint
 
 sealed class Feature(open val featureCode: String, open val module: Module) : Comparable<Feature> {
     val fullName by lazy { fullNameOf(featureCode, module.fullName) }
+
+    val reference by lazy { FeatureReference(module, featureCode) }
 
     companion object {
         fun fullNameOf(featureCode: String, moduleName: String): String {
