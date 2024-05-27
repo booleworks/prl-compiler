@@ -1,6 +1,5 @@
 package com.booleworks.prl.transpiler
 
-import com.booleworks.logicng.datastructures.Tristate
 import com.booleworks.logicng.formulas.FormulaFactory
 import com.booleworks.logicng.solvers.SATSolver
 import com.booleworks.logicng.solvers.sat.SATSolverConfig
@@ -88,7 +87,7 @@ class SliceMergeTest {
         assertThat(merged.propositions).hasSize(166)
         val solver = SATSolver.newSolver(f, SATSolverConfig.builder().proofGeneration(true).build())
         solver.addPropositions(merged.propositions)
-        assertThat(solver.sat()).isEqualTo(Tristate.TRUE)
+        assertThat(solver.sat()).isEqualTo(true)
         val models = solver.enumerateAllModels(listOf(a, b, c, p, q, r, x, y, z))
         assertThat(models).hasSize(2)
         models.forEach {
@@ -131,7 +130,7 @@ class SliceMergeTest {
         assertThat(merged.propositions).hasSize(94)
         val solver = SATSolver.newSolver(f, SATSolverConfig.builder().proofGeneration(true).build())
         solver.addPropositions(merged.propositions)
-        assertThat(solver.sat()).isEqualTo(Tristate.FALSE)
+        assertThat(solver.sat()).isEqualTo(false)
     }
 
     private fun filter(props: List<PrlProposition>, sel: String) = props.filter { it.formula().variables(f).any { v -> v.name().contains(sel) } }
