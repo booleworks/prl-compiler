@@ -148,6 +148,13 @@
       <artifactId>logicng-core</artifactId>
     </dependency>
 
+    <!-- LogicNG CSP Extension -->
+    <dependency>
+      <groupId>com.booleworks</groupId>
+      <artifactId>logicng-csp</artifactId>
+      <version>${version.logicng}</version>
+    </dependency>
+
     <!-- Parser -->
     <dependency>
       <groupId>org.antlr</groupId>
