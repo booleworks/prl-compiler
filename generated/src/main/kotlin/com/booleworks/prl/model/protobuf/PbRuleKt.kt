@@ -28,30 +28,6 @@ public object PbRuleKt {
     internal fun _build(): com.booleworks.prl.model.protobuf.ProtoBufRules.PbRule = _builder.build()
 
     /**
-     * `.boolerules.modules.PbModule module = 1;`
-     */
-    public var module: com.booleworks.prl.model.protobuf.ProtoBufModules.PbModule
-      @JvmName("getModule")
-      get() = _builder.getModule()
-      @JvmName("setModule")
-      set(value) {
-        _builder.setModule(value)
-      }
-    /**
-     * `.boolerules.modules.PbModule module = 1;`
-     */
-    public fun clearModule() {
-      _builder.clearModule()
-    }
-    /**
-     * `.boolerules.modules.PbModule module = 1;`
-     * @return Whether the module field is set.
-     */
-    public fun hasModule(): kotlin.Boolean {
-      return _builder.hasModule()
-    }
-
-    /**
      * `optional string id = 2;`
      */
     public var id: kotlin.String
@@ -609,45 +585,11 @@ public object PbRuleKt {
     @kotlin.jvm.JvmName("clearGroupFeatures")
     public fun com.google.protobuf.kotlin.DslList<kotlin.Int, GroupFeaturesProxy>.clear() {
       _builder.clearGroupFeatures()
-    }
-    /**
-     * `optional .boolerules.primitives.PbVisibility visibility = 17;`
-     */
-    public var visibility: com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbVisibility
-      @JvmName("getVisibility")
-      get() = _builder.getVisibility()
-      @JvmName("setVisibility")
-      set(value) {
-        _builder.setVisibility(value)
-      }
-    public var visibilityValue: kotlin.Int
-      @JvmName("getVisibilityValue")
-      get() = _builder.getVisibilityValue()
-      @JvmName("setVisibilityValue")
-      set(value) {
-        _builder.setVisibilityValue(value)
-      }
-    /**
-     * `optional .boolerules.primitives.PbVisibility visibility = 17;`
-     */
-    public fun clearVisibility() {
-      _builder.clearVisibility()
-    }
-    /**
-     * `optional .boolerules.primitives.PbVisibility visibility = 17;`
-     * @return Whether the visibility field is set.
-     */
-    public fun hasVisibility(): kotlin.Boolean {
-      return _builder.hasVisibility()
-    }
-  }
+    }}
 }
 @kotlin.jvm.JvmSynthetic
 public inline fun com.booleworks.prl.model.protobuf.ProtoBufRules.PbRule.copy(block: `com.booleworks.prl.model.protobuf`.PbRuleKt.Dsl.() -> kotlin.Unit): com.booleworks.prl.model.protobuf.ProtoBufRules.PbRule =
   `com.booleworks.prl.model.protobuf`.PbRuleKt.Dsl._create(this.toBuilder()).apply { block() }._build()
-
-public val com.booleworks.prl.model.protobuf.ProtoBufRules.PbRuleOrBuilder.moduleOrNull: com.booleworks.prl.model.protobuf.ProtoBufModules.PbModule?
-  get() = if (hasModule()) getModule() else null
 
 public val com.booleworks.prl.model.protobuf.ProtoBufRules.PbRuleOrBuilder.constraintOrNull: com.booleworks.prl.model.protobuf.ProtoBufConstraints.PbConstraint?
   get() = if (hasConstraint()) getConstraint() else null

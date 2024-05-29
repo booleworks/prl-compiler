@@ -12,9 +12,7 @@ import com.booleworks.logicng.propositions.ExtendedProposition
 import com.booleworks.logicng.propositions.PropositionBackpack
 import com.booleworks.prl.model.BooleanFeatureDefinition
 import com.booleworks.prl.model.EnumFeatureDefinition
-import com.booleworks.prl.model.FeatureReference
 import com.booleworks.prl.model.IntFeatureDefinition
-import com.booleworks.prl.model.Module
 import com.booleworks.prl.model.constraints.BooleanFeature
 import com.booleworks.prl.model.constraints.ComparisonOperator
 import com.booleworks.prl.model.constraints.Constraint
@@ -54,7 +52,7 @@ data class RuleInformation(val ruleType: RuleType, val rule: AnyRule?, val slice
 
     companion object {
         fun fromAdditionRestriction(constraint: Constraint) =
-            RuleInformation(RuleType.ADDITIONAL_RESTRICTION, ConstraintRule(constraint, Module("")), null)
+            RuleInformation(RuleType.ADDITIONAL_RESTRICTION, ConstraintRule(constraint), null)
     }
 }
 
@@ -103,19 +101,19 @@ data class ModelTranslation(val computations: List<SliceTranslation>) : Iterable
 }
 
 data class FeatureInstantiation(
-    val booleanFeatures: Map<FeatureReference, BooleanFeatureDefinition>,
-    val enumFeatures: Map<FeatureReference, EnumFeatureDefinition>,
-    val integerFeatures: Map<FeatureReference, IntFeatureDefinition>,
+    val booleanFeatures: Map<String, BooleanFeatureDefinition>,
+    val enumFeatures: Map<String, EnumFeatureDefinition>,
+    val integerFeatures: Map<String, IntFeatureDefinition>,
 ) {
     operator fun get(feature: Feature) = when (feature) {
-        is BooleanFeature -> booleanFeatures[feature.reference]
-        is EnumFeature -> enumFeatures[feature.reference]
-        is IntFeature -> integerFeatures[feature.reference]
+        is BooleanFeature -> booleanFeatures[feature.featureCode]
+        is EnumFeature -> enumFeatures[feature.featureCode]
+        is IntFeature -> integerFeatures[feature.featureCode]
     }
 
-    operator fun get(feature: BooleanFeature) = booleanFeatures[feature.reference]
-    operator fun get(feature: EnumFeature) = enumFeatures[feature.reference]
-    operator fun get(feature: IntFeature) = integerFeatures[feature.reference]
+    operator fun get(feature: BooleanFeature) = booleanFeatures[feature.featureCode]
+    operator fun get(feature: EnumFeature) = enumFeatures[feature.featureCode]
+    operator fun get(feature: IntFeature) = integerFeatures[feature.featureCode]
 
     companion object {
         fun empty() = FeatureInstantiation(mapOf(), mapOf(), mapOf())
@@ -133,12 +131,12 @@ interface TranspilerCoreInfo {
     val versionMapping: Map<String, Map<Int, Variable>>
 
     fun translateEnumIn(f: FormulaFactory, constraint: EnumInPredicate): Formula =
-        enumMapping[constraint.feature.fullName].let { enumMap ->
+        enumMapping[constraint.feature.featureCode].let { enumMap ->
             if (enumMap == null) f.falsum() else f.or(constraint.values.map { enumMap[it] ?: f.falsum() })
         }
 
     fun translateEnumComparison(f: FormulaFactory, constraint: EnumComparisonPredicate): Formula =
-        enumMapping[constraint.feature.fullName].let { enumMap ->
+        enumMapping[constraint.feature.featureCode].let { enumMap ->
             if (enumMap == null) f.falsum() else enumMap[constraint.value.value].let { v ->
                 if (v == null) f.constant(constraint.comparison != ComparisonOperator.EQ) else f.literal(
                     v.name(),

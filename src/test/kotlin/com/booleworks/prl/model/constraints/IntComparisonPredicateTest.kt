@@ -26,7 +26,7 @@ class IntComparisonPredicateTest {
         assertThat(c1.comparison).isEqualTo(ComparisonOperator.EQ)
         assertThat(c1.left).isEqualTo(feature)
         assertThat(c1.right).isEqualTo(term)
-        assertThat(c1.toString(DEFAULT_MODULE)).isEqualTo("[f1 = 4]")
+        assertThat(c1.toString()).isEqualTo("[f1 = 4]")
     }
 
     @Test
@@ -39,7 +39,7 @@ class IntComparisonPredicateTest {
         assertThat(c1.comparison).isEqualTo(ComparisonOperator.NE)
         assertThat(c1.left).isEqualTo(feature)
         assertThat(c1.right).isEqualTo(term)
-        assertThat(c1.toString(DEFAULT_MODULE)).isEqualTo("[f1 != 4]")
+        assertThat(c1.toString()).isEqualTo("[f1 != 4]")
     }
 
     @Test
@@ -52,7 +52,7 @@ class IntComparisonPredicateTest {
         assertThat(c1.comparison).isEqualTo(ComparisonOperator.LE)
         assertThat(c1.left).isEqualTo(feature)
         assertThat(c1.right).isEqualTo(term)
-        assertThat(c1.toString(DEFAULT_MODULE)).isEqualTo("[f1 <= 4]")
+        assertThat(c1.toString()).isEqualTo("[f1 <= 4]")
     }
 
     @Test
@@ -65,7 +65,7 @@ class IntComparisonPredicateTest {
         assertThat(c1.comparison).isEqualTo(ComparisonOperator.LT)
         assertThat(c1.left).isEqualTo(feature)
         assertThat(c1.right).isEqualTo(term)
-        assertThat(c1.toString(DEFAULT_MODULE)).isEqualTo("[f1 < 4]")
+        assertThat(c1.toString()).isEqualTo("[f1 < 4]")
     }
 
     @Test
@@ -78,7 +78,7 @@ class IntComparisonPredicateTest {
         assertThat(c1.comparison).isEqualTo(ComparisonOperator.GE)
         assertThat(c1.left).isEqualTo(feature)
         assertThat(c1.right).isEqualTo(term)
-        assertThat(c1.toString(DEFAULT_MODULE)).isEqualTo("[f1 >= 4]")
+        assertThat(c1.toString()).isEqualTo("[f1 >= 4]")
     }
 
     @Test
@@ -91,7 +91,7 @@ class IntComparisonPredicateTest {
         assertThat(c1.comparison).isEqualTo(ComparisonOperator.GT)
         assertThat(c1.left).isEqualTo(feature)
         assertThat(c1.right).isEqualTo(term)
-        assertThat(c1.toString(DEFAULT_MODULE)).isEqualTo("[f1 > 4]")
+        assertThat(c1.toString()).isEqualTo("[f1 > 4]")
     }
 
     @Test

@@ -16,7 +16,8 @@ import org.junit.jupiter.api.Test
 class LogicNGTranspilerBooleanTest {
     private val model = PrlCompiler().compile(parseRuleFile("test-files/prl/compiler/boolean_with_properties.prl"))
     private val rules = model.rules
-    private val sliceSets = computeSliceSets(computeAllSlices(listOf(), listOf(model.propertyDefinition("active"))), model)
+    private val sliceSets =
+        computeSliceSets(computeAllSlices(listOf(), listOf(model.propertyDefinition("active"))), model)
     private val ss1 = sliceSets[0]
     private val ss2 = sliceSets[1]
     private val f = FormulaFactory.caching()
@@ -25,15 +26,16 @@ class LogicNGTranspilerBooleanTest {
     private val varDef = encodeIntFeatures(context, cf, model.featureStore)
     private val translation1 = transpileSliceSet(context, cf, varDef, ss1)
     private val translation2 = transpileSliceSet(context, cf, varDef, ss2)
-    private val modelTranslation = transpileModel(cf, model, listOf(BooleanSliceSelection("active", BooleanRange.list(true))))
+    private val modelTranslation =
+        transpileModel(cf, model, listOf(BooleanSliceSelection("active", BooleanRange.list(true))))
 
-    private val f1 = f.variable("top.f1")
-    private val f2 = f.variable("top.f2")
-    private val f3 = f.variable("top.f3")
-    private val f4 = f.variable("top.f4")
-    private val f5 = f.variable("top.f5")
-    private val f6 = f.variable("top.f6")
-    private val g1 = f.variable("top.g1")
+    private val f1 = f.variable("f1")
+    private val f2 = f.variable("f2")
+    private val f3 = f.variable("f3")
+    private val f4 = f.variable("f4")
+    private val f5 = f.variable("f5")
+    private val f6 = f.variable("f6")
+    private val g1 = f.variable("g1")
 
     @Test
     fun testModel() {
@@ -53,14 +55,16 @@ class LogicNGTranspilerBooleanTest {
     fun testModelTranslation() {
         assertThat(modelTranslation.numberOfComputations).isEqualTo(14)
         modelTranslation.forEach { c ->
-            assertThat(c.sliceSet.slices.map { (it.property("active") as BooleanProperty).range }).containsOnly(BooleanRange.list(true))
+            assertThat(c.sliceSet.slices.map { (it.property("active") as BooleanProperty).range }).containsOnly(
+                BooleanRange.list(true)
+            )
         }
     }
 
     @Test
     fun testVariables() {
         assertThat(translation1.knownVariables).containsExactlyInAnyOrder(f1, f3, f4, f5, f6, g1)
-        assertThat(translation1.unknownFeatures).containsExactlyInAnyOrder(model.getFeature("f2", "top"))
+        assertThat(translation1.unknownFeatures).containsExactlyInAnyOrder(model.getFeature("f2"))
         assertThat(translation2.knownVariables).containsExactlyInAnyOrder(f1, f2, f3, f4, f5, f6, g1)
         assertThat(translation2.unknownFeatures).isEmpty()
     }
@@ -79,17 +83,33 @@ class LogicNGTranspilerBooleanTest {
 
     @Test
     fun testConstraintRule() {
-        assertThat(translation1.propositions[1]).isEqualTo(PrlProposition(RuleInformation(rules[2], ss1), f.exo(f4, f5)))
-        assertThat(translation2.propositions[1]).isEqualTo(PrlProposition(RuleInformation(rules[2], ss2), f.exo(f4, f5)))
+        assertThat(translation1.propositions[1]).isEqualTo(
+            PrlProposition(
+                RuleInformation(rules[2], ss1),
+                f.exo(f4, f5)
+            )
+        )
+        assertThat(translation2.propositions[1]).isEqualTo(
+            PrlProposition(
+                RuleInformation(rules[2], ss2),
+                f.exo(f4, f5)
+            )
+        )
     }
 
     @Test
     fun testGroupRule() {
         assertThat(translation1.propositions[2]).isEqualTo(
-            PrlProposition(RuleInformation(rules[3], ss1), f.and(f.amo(f4, f5, f6), f.equivalence(g1, f.or(f4, f5, f6))))
+            PrlProposition(
+                RuleInformation(rules[3], ss1),
+                f.and(f.amo(f4, f5, f6), f.equivalence(g1, f.or(f4, f5, f6)))
+            )
         )
         assertThat(translation2.propositions[2]).isEqualTo(
-            PrlProposition(RuleInformation(rules[3], ss2), f.and(f.amo(f4, f5, f6), f.equivalence(g1, f.or(f4, f5, f6))))
+            PrlProposition(
+                RuleInformation(rules[3], ss2),
+                f.and(f.amo(f4, f5, f6), f.equivalence(g1, f.or(f4, f5, f6)))
+            )
         )
     }
 
@@ -105,8 +125,18 @@ class LogicNGTranspilerBooleanTest {
 
     @Test
     fun testDefinitionRule() {
-        assertThat(translation1.propositions[4]).isEqualTo(PrlProposition(RuleInformation(rules[5], ss1), f.equivalence(f1, f3)))
-        assertThat(translation2.propositions[4]).isEqualTo(PrlProposition(RuleInformation(rules[5], ss2), f.equivalence(f1, f.or(f2, f3))))
+        assertThat(translation1.propositions[4]).isEqualTo(
+            PrlProposition(
+                RuleInformation(rules[5], ss1),
+                f.equivalence(f1, f3)
+            )
+        )
+        assertThat(translation2.propositions[4]).isEqualTo(
+            PrlProposition(
+                RuleInformation(rules[5], ss2),
+                f.equivalence(f1, f.or(f2, f3))
+            )
+        )
     }
 
     @Test

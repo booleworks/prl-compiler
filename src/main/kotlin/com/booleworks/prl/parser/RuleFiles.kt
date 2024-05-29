@@ -33,14 +33,7 @@ fun parseRuleFile(file: File): PrlRuleFile =
 
 data class PrlHeader(val major: Int, val minor: Int, val properties: List<PrlProperty<*>> = emptyList())
 
-data class PrlModule(val fullName: String)
-data class PrlModuleImport(val module: PrlModule, val lineNumber: Int? = null) {
-    constructor(module: String, lineNumber: Int? = null) : this(PrlModule(module), lineNumber)
-}
-
 data class PrlRuleSet(
-    val module: PrlModule,
-    val imports: List<PrlModuleImport> = listOf(),
     val featureDefinitions: List<PrlFeatureDefinition> = listOf(),
     val rules: List<PrlRule> = listOf(),
     val lineNumber: Int? = null
@@ -50,9 +43,9 @@ data class PrlRuleSet(
 
 data class PrlRuleFile(
     val header: PrlHeader,
-    val ruleSets: List<PrlRuleSet>,
+    val ruleSet: PrlRuleSet,
     val slicingPropertyDefinitions: List<PrlSlicingPropertyDefinition> = mutableListOf(),
     val fileName: String? = null
 ) {
-    fun features() = ruleSets.flatMap { it.features() }.toSet()
+    fun features() = ruleSet.features()
 }

@@ -11,7 +11,7 @@ class VersionedBooleanFeatureTest {
 
     @Test
     fun testCreation() {
-        val f1Def = BooleanFeatureDefinition(DEFAULT_MODULE, "f1", true)
+        val f1Def = BooleanFeatureDefinition("f1", true)
         val f1 = f1Def.feature
         val f2 = versionFt("f1")
         assertThat(f1 == f2).isTrue
@@ -32,8 +32,8 @@ class VersionedBooleanFeatureTest {
     fun testToString() {
         val f1 = versionFt("Special feature &# x")
         val f2 = versionFt("f2")
-        assertThat(f1.toString(DEFAULT_MODULE)).isEqualTo("`Special feature &# x`")
-        assertThat(f2.toString(DEFAULT_MODULE)).isEqualTo("f2")
+        assertThat(f1.toString()).isEqualTo("`Special feature &# x`")
+        assertThat(f2.toString()).isEqualTo("f2")
     }
 
     @Test

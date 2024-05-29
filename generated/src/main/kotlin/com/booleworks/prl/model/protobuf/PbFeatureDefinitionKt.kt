@@ -28,30 +28,6 @@ public object PbFeatureDefinitionKt {
     internal fun _build(): com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFeatureDefinition = _builder.build()
 
     /**
-     * `.boolerules.modules.PbModule module = 1;`
-     */
-    public var module: com.booleworks.prl.model.protobuf.ProtoBufModules.PbModule
-      @JvmName("getModule")
-      get() = _builder.getModule()
-      @JvmName("setModule")
-      set(value) {
-        _builder.setModule(value)
-      }
-    /**
-     * `.boolerules.modules.PbModule module = 1;`
-     */
-    public fun clearModule() {
-      _builder.clearModule()
-    }
-    /**
-     * `.boolerules.modules.PbModule module = 1;`
-     * @return Whether the module field is set.
-     */
-    public fun hasModule(): kotlin.Boolean {
-      return _builder.hasModule()
-    }
-
-    /**
      * `string code = 2;`
      */
     public var code: kotlin.String
@@ -66,30 +42,6 @@ public object PbFeatureDefinitionKt {
      */
     public fun clearCode() {
       _builder.clearCode()
-    }
-
-    /**
-     * `.boolerules.primitives.PbVisibility visibility = 3;`
-     */
-    public var visibility: com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbVisibility
-      @JvmName("getVisibility")
-      get() = _builder.getVisibility()
-      @JvmName("setVisibility")
-      set(value) {
-        _builder.setVisibility(value)
-      }
-    public var visibilityValue: kotlin.Int
-      @JvmName("getVisibilityValue")
-      get() = _builder.getVisibilityValue()
-      @JvmName("setVisibilityValue")
-      set(value) {
-        _builder.setVisibilityValue(value)
-      }
-    /**
-     * `.boolerules.primitives.PbVisibility visibility = 3;`
-     */
-    public fun clearVisibility() {
-      _builder.clearVisibility()
     }
 
     /**
@@ -405,9 +357,6 @@ public object PbFeatureDefinitionKt {
 @kotlin.jvm.JvmSynthetic
 public inline fun com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFeatureDefinition.copy(block: `com.booleworks.prl.model.protobuf`.PbFeatureDefinitionKt.Dsl.() -> kotlin.Unit): com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFeatureDefinition =
   `com.booleworks.prl.model.protobuf`.PbFeatureDefinitionKt.Dsl._create(this.toBuilder()).apply { block() }._build()
-
-public val com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFeatureDefinitionOrBuilder.moduleOrNull: com.booleworks.prl.model.protobuf.ProtoBufModules.PbModule?
-  get() = if (hasModule()) getModule() else null
 
 public val com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFeatureDefinitionOrBuilder.intDomainOrNull: com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange?
   get() = if (hasIntDomain()) getIntDomain() else null

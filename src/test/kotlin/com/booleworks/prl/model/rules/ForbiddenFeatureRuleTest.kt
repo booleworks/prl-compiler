@@ -4,7 +4,6 @@ import com.booleworks.prl.model.EnumProperty
 import com.booleworks.prl.model.EnumRange
 import com.booleworks.prl.model.IntProperty
 import com.booleworks.prl.model.IntRange
-import com.booleworks.prl.model.constraints.DEFAULT_MODULE
 import com.booleworks.prl.model.constraints.FALSE
 import com.booleworks.prl.model.constraints.TRUE
 import com.booleworks.prl.model.constraints.boolFt
@@ -18,11 +17,14 @@ import org.junit.jupiter.api.Test
 
 class ForbiddenFeatureRuleTest {
 
-    private val properties = mapOf(Pair("p1", EnumProperty("p1", EnumRange.list("text 1"))), Pair("p2", IntProperty("p2", IntRange.list(42))))
-    private val booleanRule = ForbiddenFeatureRule(boolFt("bf1"), DEFAULT_MODULE)
-    private val vBooleanRule = ForbiddenFeatureRule(versionFt("vf1"), 3, DEFAULT_MODULE)
-    private val intRule = ForbiddenFeatureRule(intFt("if1"), 7, DEFAULT_MODULE)
-    private val stringRule = ForbiddenFeatureRule(enumFt("sf1"), "te xdf", DEFAULT_MODULE)
+    private val properties = mapOf(
+        Pair("p1", EnumProperty("p1", EnumRange.list("text 1"))),
+        Pair("p2", IntProperty("p2", IntRange.list(42)))
+    )
+    private val booleanRule = ForbiddenFeatureRule(boolFt("bf1"))
+    private val vBooleanRule = ForbiddenFeatureRule(versionFt("vf1"), 3)
+    private val intRule = ForbiddenFeatureRule(intFt("if1"), 7)
+    private val stringRule = ForbiddenFeatureRule(enumFt("sf1"), "te xdf")
 
     @Test
     fun testDefaultsConstructor() {
@@ -33,12 +35,12 @@ class ForbiddenFeatureRuleTest {
         assertThat(booleanRule.id).isEqualTo("")
         assertThat(booleanRule.description).isEqualTo("")
         assertThat(booleanRule.properties).isEmpty()
-        assertThat(booleanRule.toString(DEFAULT_MODULE)).isEqualTo("rule forbidden feature bf1")
+        assertThat(booleanRule.toString()).isEqualTo("rule forbidden feature bf1")
     }
 
     @Test
     fun testFullConstructor() {
-        val rule = ForbiddenFeatureRule(boolFt("bf1"), DEFAULT_MODULE, "id string", "text text", properties)
+        val rule = ForbiddenFeatureRule(boolFt("bf1"), "id string", "text text", properties)
         assertThat(booleanRule.feature).isEqualTo(boolFt("bf1"))
         assertThat(booleanRule.enumValue).isNull()
         assertThat(booleanRule.intValue).isNull()
@@ -46,7 +48,7 @@ class ForbiddenFeatureRuleTest {
         assertThat(rule.id).isEqualTo("id string")
         assertThat(rule.description).isEqualTo("text text")
         assertThat(rule.properties).containsExactlyInAnyOrderEntriesOf(properties)
-        assertThat(rule.toString(DEFAULT_MODULE)).isEqualTo(
+        assertThat(rule.toString()).isEqualTo(
             "rule forbidden feature bf1 {" + System.lineSeparator() +
                     "  id \"id string\"" + System.lineSeparator() +
                     "  description \"text text\"" + System.lineSeparator() +
@@ -58,10 +60,10 @@ class ForbiddenFeatureRuleTest {
 
     @Test
     fun testEquals() {
-        assertThat(booleanRule == ForbiddenFeatureRule(boolFt("bf1"), DEFAULT_MODULE)).isTrue
-        assertThat(vBooleanRule == ForbiddenFeatureRule(versionFt("vf1"), 3, DEFAULT_MODULE)).isTrue
-        assertThat(intRule == ForbiddenFeatureRule(intFt("if1"), 7, DEFAULT_MODULE)).isTrue
-        assertThat(stringRule == ForbiddenFeatureRule(enumFt("sf1"), "te xdf", DEFAULT_MODULE)).isTrue
+        assertThat(booleanRule == ForbiddenFeatureRule(boolFt("bf1"))).isTrue
+        assertThat(vBooleanRule == ForbiddenFeatureRule(versionFt("vf1"), 3)).isTrue
+        assertThat(intRule == ForbiddenFeatureRule(intFt("if1"), 7)).isTrue
+        assertThat(stringRule == ForbiddenFeatureRule(enumFt("sf1"), "te xdf")).isTrue
         assertThat(booleanRule == vBooleanRule).isFalse
         assertThat(booleanRule == vBooleanRule).isFalse
         assertThat(booleanRule == intRule).isFalse
@@ -70,18 +72,18 @@ class ForbiddenFeatureRuleTest {
     @Test
     fun testHashCode() {
         assertThat(booleanRule).hasSameHashCodeAs(booleanRule)
-        assertThat(booleanRule).hasSameHashCodeAs(ForbiddenFeatureRule(boolFt("bf1"), DEFAULT_MODULE))
+        assertThat(booleanRule).hasSameHashCodeAs(ForbiddenFeatureRule(boolFt("bf1")))
         assertThat(vBooleanRule).hasSameHashCodeAs(vBooleanRule)
-        assertThat(vBooleanRule).hasSameHashCodeAs(ForbiddenFeatureRule(versionFt("vf1"), 3, DEFAULT_MODULE))
+        assertThat(vBooleanRule).hasSameHashCodeAs(ForbiddenFeatureRule(versionFt("vf1"), 3))
         assertThat(intRule).hasSameHashCodeAs(intRule)
-        assertThat(intRule).hasSameHashCodeAs(ForbiddenFeatureRule(intFt("if1"), 7, DEFAULT_MODULE))
+        assertThat(intRule).hasSameHashCodeAs(ForbiddenFeatureRule(intFt("if1"), 7))
         assertThat(stringRule).hasSameHashCodeAs(stringRule)
-        assertThat(stringRule).hasSameHashCodeAs(ForbiddenFeatureRule(enumFt("sf1"), "te xdf", DEFAULT_MODULE))
+        assertThat(stringRule).hasSameHashCodeAs(ForbiddenFeatureRule(enumFt("sf1"), "te xdf"))
         assertThat(booleanRule).doesNotHaveSameHashCodeAs(intRule)
-        assertThat(booleanRule).doesNotHaveSameHashCodeAs(ForbiddenFeatureRule(boolFt("bf2"), DEFAULT_MODULE))
-        assertThat(vBooleanRule).doesNotHaveSameHashCodeAs(ForbiddenFeatureRule(versionFt("vf1"), 4, DEFAULT_MODULE))
-        assertThat(intRule).doesNotHaveSameHashCodeAs(ForbiddenFeatureRule(intFt("if1"), 10, DEFAULT_MODULE))
-        assertThat(stringRule).doesNotHaveSameHashCodeAs(ForbiddenFeatureRule(enumFt("sf3"), "te xdf", DEFAULT_MODULE))
+        assertThat(booleanRule).doesNotHaveSameHashCodeAs(ForbiddenFeatureRule(boolFt("bf2")))
+        assertThat(vBooleanRule).doesNotHaveSameHashCodeAs(ForbiddenFeatureRule(versionFt("vf1"), 4))
+        assertThat(intRule).doesNotHaveSameHashCodeAs(ForbiddenFeatureRule(intFt("if1"), 10))
+        assertThat(stringRule).doesNotHaveSameHashCodeAs(ForbiddenFeatureRule(enumFt("sf3"), "te xdf"))
     }
 
     @Test
@@ -150,19 +152,19 @@ class ForbiddenFeatureRuleTest {
             .assign(enumFt("sf1"), "texdf")
             .assign(intFt("if1"), 2)
             .assign(versionFt("vf1"), 7)
-        assertThat(booleanRule.restrict(ass)).isEqualTo(ConstraintRule(TRUE, DEFAULT_MODULE))
-        assertThat(vBooleanRule.restrict(ass)).isEqualTo(ConstraintRule(TRUE, DEFAULT_MODULE))
-        assertThat(intRule.restrict(ass)).isEqualTo(ConstraintRule(TRUE, DEFAULT_MODULE))
-        assertThat(stringRule.restrict(ass)).isEqualTo(ConstraintRule(TRUE, DEFAULT_MODULE))
+        assertThat(booleanRule.restrict(ass)).isEqualTo(ConstraintRule(TRUE))
+        assertThat(vBooleanRule.restrict(ass)).isEqualTo(ConstraintRule(TRUE))
+        assertThat(intRule.restrict(ass)).isEqualTo(ConstraintRule(TRUE))
+        assertThat(stringRule.restrict(ass)).isEqualTo(ConstraintRule(TRUE))
         val ass2: FeatureAssignment = FeatureAssignment()
             .assign(boolFt("bf1"), true)
             .assign(enumFt("sf1"), "te xdf")
             .assign(intFt("if1"), 7)
             .assign(versionFt("vf1"), 3)
-        assertThat(booleanRule.restrict(ass2)).isEqualTo(ConstraintRule(FALSE, DEFAULT_MODULE))
-        assertThat(vBooleanRule.restrict(ass2)).isEqualTo(ConstraintRule(FALSE, DEFAULT_MODULE))
-        assertThat(intRule.restrict(ass2)).isEqualTo(ConstraintRule(FALSE, DEFAULT_MODULE))
-        assertThat(stringRule.restrict(ass2)).isEqualTo(ConstraintRule(FALSE, DEFAULT_MODULE))
+        assertThat(booleanRule.restrict(ass2)).isEqualTo(ConstraintRule(FALSE))
+        assertThat(vBooleanRule.restrict(ass2)).isEqualTo(ConstraintRule(FALSE))
+        assertThat(intRule.restrict(ass2)).isEqualTo(ConstraintRule(FALSE))
+        assertThat(stringRule.restrict(ass2)).isEqualTo(ConstraintRule(FALSE))
         val ass3: FeatureAssignment = FeatureAssignment()
             .assign(boolFt("bf11"), true)
             .assign(enumFt("sf11"), "te xdf")

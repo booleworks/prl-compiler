@@ -16,29 +16,16 @@ import com.booleworks.prl.parser.PrlVersion
 @Suppress("UNCHECKED_CAST")
 data class PrlModel(
     val header: PrlModelHeader,
-    val moduleHierarchy: ModuleHierarchy,
     val featureStore: FeatureStore,
     val rules: List<AnyRule>,
     val propertyStore: PropertyStore
 ) {
     private val featureMap: Map<String, Feature> by lazy {
-        mutableMapOf<String, Feature>().apply {
-            moduleHierarchy.modules().forEach {
-                featureStore.allDefinitions(it).forEach { def -> this[def.feature.fullName] = def.feature }
-            }
-        }
+        featureStore.allDefinitions().associateBy({ it.code }, { it.feature })
     }
 
-    fun getModule(moduleName: String) =
-        moduleHierarchy.moduleForName(moduleName) ?: throw IllegalArgumentException("Could not find module $moduleName")
-
-    fun <T : Feature> getFeature(featureCode: String, moduleName: String? = null): T {
-        val searchName = if (moduleName != null)
-            Feature.fullNameOf(featureCode, moduleName)
-        else
-            Feature.fullNameOf(featureCode, moduleHierarchy.modules().first().fullName)
-        val feature = featureMap[searchName]
-            ?: throw IllegalArgumentException("Could not find feature '$featureCode' in module '$moduleName'")
+    fun <T : Feature> getFeature(featureCode: String): T {
+        val feature = featureMap[featureCode] ?: throw IllegalArgumentException("Could not find feature '$featureCode'")
         return feature as T
     }
 
@@ -64,18 +51,11 @@ data class PrlModel(
 
     fun propertyDefinition(name: String) = propertyStore.definition(name)
 
-    fun toRuleFile() =
-        RuleFile(header, moduleHierarchy.modules().map { toRuleSet(it) }, propertyStore.slicingPropertyDefinitions)
+    fun toRuleFile() = RuleFile(header, toRuleSet(), propertyStore.slicingPropertyDefinitions)
 
-    private fun toRuleSet(module: Module): RuleSet {
-        val groups = featureStore.groups(module)
-        return RuleSet(
-            module,
-            featureStore.allDefinitions(module).filterNot { groups.contains(it.feature) },
-            rules.filter { it.module == module },
-            module.imports,
-            module.lineNumber
-        )
+    private fun toRuleSet(): RuleSet {
+        val groups = featureStore.groups
+        return RuleSet(featureStore.allDefinitions().filterNot { groups.contains(it.feature) }, rules)
     }
 }
 

@@ -1,7 +1,5 @@
 package com.booleworks.prl.compiler
 
-import com.booleworks.prl.model.Module
-import com.booleworks.prl.model.ModuleHierarchy
 import com.booleworks.prl.model.SlicingBooleanPropertyDefinition
 import com.booleworks.prl.model.SlicingDatePropertyDefinition
 import com.booleworks.prl.model.SlicingEnumPropertyDefinition
@@ -16,7 +14,6 @@ import com.booleworks.prl.model.constraints.intSum
 import com.booleworks.prl.model.deserialize
 import com.booleworks.prl.model.rules.ConstraintRule
 import com.booleworks.prl.model.serialize
-import com.booleworks.prl.parser.PrlFeature
 import com.booleworks.prl.parser.parseRuleFile
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -26,61 +23,33 @@ import java.time.LocalDate
 class PrlCompilerTest {
 
     @Test
-    fun testEmptyModuleName() {
-        val parsed = parseRuleFile("test-files/prl/parser/empty_module_name.prl")
+    fun testOnlyFeatures() {
+        val parsed = parseRuleFile("test-files/prl/parser/only_feature.prl")
         val compiler = PrlCompiler()
         val model = compiler.compile(parsed)
-        val module = Module("", lineNumber = 5)
-        val f1 = model.featureStore.findMatchingDefinitions(
-            module,
-            PrlFeature("f1"),
-            ModuleHierarchy(mapOf())
-        )[0].feature as EnumFeature
+        val f1 = model.featureStore.findMatchingDefinitions("f1")[0].feature as EnumFeature
         assertThat(compiler.errors()).isEmpty()
-        assertThat(model.moduleHierarchy.modules()).containsExactly(module)
-        assertThat(f1.fullName).isEqualTo("f1")
+        assertThat(f1.featureCode).isEqualTo("f1")
         assertThat(deserialize(serialize(model))).isEqualTo(model)
     }
 
     @Test
-    fun testIntModule() {
-        val parsed = parseRuleFile("test-files/prl/parser/int_module.prl")
+    fun testIntFile() {
+        val parsed = parseRuleFile("test-files/prl/parser/int_test.prl")
         val compiler = PrlCompiler()
         val model = compiler.compile(parsed)
 
-        val module = Module("ints", lineNumber = 5)
-        val i1 = model.featureStore.findMatchingDefinitions(
-            module,
-            PrlFeature("i1"),
-            ModuleHierarchy(mapOf())
-        )[0].feature as IntFeature
-        val i2 = model.featureStore.findMatchingDefinitions(
-            module,
-            PrlFeature("i2"),
-            ModuleHierarchy(mapOf())
-        )[0].feature as IntFeature
-        val i3 = model.featureStore.findMatchingDefinitions(
-            module,
-            PrlFeature("i3"),
-            ModuleHierarchy(mapOf())
-        )[0].feature as IntFeature
-        val i4 = model.featureStore.findMatchingDefinitions(
-            module,
-            PrlFeature("i4"),
-            ModuleHierarchy(mapOf())
-        )[0].feature as IntFeature
-        val sum = model.featureStore.findMatchingDefinitions(
-            module,
-            PrlFeature("sum"),
-            ModuleHierarchy(mapOf())
-        )[0].feature as IntFeature
+        val i1 = model.featureStore.findMatchingDefinitions("i1")[0].feature as IntFeature
+        val i2 = model.featureStore.findMatchingDefinitions("i2")[0].feature as IntFeature
+        val i3 = model.featureStore.findMatchingDefinitions("i3")[0].feature as IntFeature
+        val i4 = model.featureStore.findMatchingDefinitions("i4")[0].feature as IntFeature
+        val sum = model.featureStore.findMatchingDefinitions("sum")[0].feature as IntFeature
 
         assertThat(compiler.errors()).isEmpty()
-        assertThat(model.moduleHierarchy.modules()).containsExactly(module)
-        assertThat(model.featureStore.allDefinitions(module).map { it.feature }).containsExactly(i1, i2, i3, i4, sum)
+        assertThat(model.featureStore.allDefinitions().map { it.feature }).containsExactly(i1, i2, i3, i4, sum)
         assertThat(model.rules).hasSize(10)
-        assertThat(model.rules[0]).isEqualTo(ConstraintRule(intLe(i1, sum), module))
-        assertThat(model.rules[1]).isEqualTo(ConstraintRule(intLe(i1, 48), module))
+        assertThat(model.rules[0]).isEqualTo(ConstraintRule(intLe(i1, sum)))
+        assertThat(model.rules[1]).isEqualTo(ConstraintRule(intLe(i1, 48)))
         assertThat(model.rules[6]).isEqualTo(
             ConstraintRule(
                 intEq(
@@ -89,9 +58,10 @@ class PrlCompilerTest {
                         intMul(i1),
                         intMul(2, i2),
                         intMul(-4, i3),
-                        intMul(i4, false)
-                    ), sum
-                ), module
+                        intMul(i4, false),
+                    ),
+                    sum,
+                ),
             )
         )
 
@@ -100,7 +70,7 @@ class PrlCompilerTest {
 
     @Test
     fun testIntToRuleFile() {
-        val parsed = parseRuleFile("test-files/prl/parser/int_module.prl")
+        val parsed = parseRuleFile("test-files/prl/parser/int_test.prl")
         val model = PrlCompiler().compile(parsed)
         val tempFile = Files.createTempFile("temp", "prl")
         tempFile.toFile().writeText(model.toRuleFile().toString())
@@ -115,30 +85,18 @@ class PrlCompilerTest {
         val compiler = PrlCompiler()
         val model = compiler.compile(parsed)
 
-        val module = Module("boolerules", lineNumber = 5)
-        val f1 = model.featureStore.findMatchingDefinitions(
-            module,
-            PrlFeature("f1"),
-            ModuleHierarchy(mapOf())
-        )[0].feature as BooleanFeature
-        val i1 = model.featureStore.findMatchingDefinitions(
-            module,
-            PrlFeature("i1"),
-            ModuleHierarchy(mapOf())
-        )[0].feature as IntFeature
-
+        val f1 = model.featureStore.findMatchingDefinitions("f1")[0].feature as BooleanFeature
+        val i1 = model.featureStore.findMatchingDefinitions("i1")[0].feature as IntFeature
         assertThat(compiler.errors()).containsExactly(
-            "[module=boolerules, feature=com.x1, lineNumber=8] Feature name invalid: com.x1",
-            "[module=boolerules, feature=invalid.name, lineNumber=12] Rule name invalid: invalid.name",
+            "[feature=com.x1, lineNumber=7] Feature name invalid: com.x1",
+            "[feature=invalid.name, lineNumber=11] Rule name invalid: invalid.name",
         )
-        assertThat(model.moduleHierarchy.modules()).containsExactly(module)
-        assertThat(model.featureStore.allDefinitions(module).map { it.feature }).containsExactly(f1, i1)
-
+        assertThat(model.featureStore.allDefinitions().map { it.feature }).containsExactly(f1, i1)
         assertThat(deserialize(serialize(model))).isEqualTo(model)
     }
 
     @Test
-    fun testRealModule() {
+    fun testReal() {
         val parsed = parseRuleFile("test-files/prl/real/automotive/automotive_simple_1.prl")
         val compiler = PrlCompiler()
         val model = compiler.compile(parsed)
@@ -150,54 +108,6 @@ class PrlCompilerTest {
     fun testRealToRuleFile() {
         val parsed = parseRuleFile("test-files/prl/real/automotive/automotive_simple_1.prl")
         val model = PrlCompiler().compile(parsed)
-        val tempFile = Files.createTempFile("temp", "prl")
-        tempFile.toFile().writeText(model.toRuleFile().toString())
-        val parsedModel = PrlCompiler().compile(parseRuleFile(tempFile))
-        Files.deleteIfExists(tempFile)
-        assertThat(parsedModel).isEqualTo(model)
-    }
-
-    @Test
-    fun testInheritance() {
-        val parsed = parseRuleFile("test-files/prl/compiler/inheritance.prl")
-        val compiler = PrlCompiler()
-        val model = compiler.compile(parsed)
-
-        assertThat(compiler.warnings()).containsExactly("[module=top.second.a, feature=f22, lineNumber=32] Feature also defined in module: top.second")
-        assertThat(model.rules[0].features().map { it.fullName }).containsExactlyInAnyOrder("top.f1", "top.first.f10")
-        assertThat(model.rules[1].features().map { it.fullName }).containsExactlyInAnyOrder("top.f1", "top.second.f20")
-        assertThat(model.rules[2].features().map { it.fullName }).containsExactlyInAnyOrder("top.f1", "top.second.f20")
-        assertThat(model.rules[3].features().map { it.fullName }).containsExactlyInAnyOrder(
-            "top.f1",
-            "top.second.f21",
-            "top.second.a.f22",
-            "top.second.a.f30"
-        )
-        assertThat(model.rules[4].features().map { it.fullName }).containsExactlyInAnyOrder("top.second.a.f20")
-        assertThat(model.rules[5].features().map { it.fullName }).containsExactlyInAnyOrder("top.second.f22")
-        assertThat(model.rules[6].features().map { it.fullName }).containsExactlyInAnyOrder(
-            "top.second.f22",
-            "top.second.a.f22"
-        )
-        assertThat(model.rules[7].features().map { it.fullName }).containsExactlyInAnyOrder(
-            "top.second.f22",
-            "top.second.a.f22"
-        )
-
-        // TODO Fix Serialization
-//        assertThat(deserialize(serialize(model))).isEqualTo(model)
-    }
-
-    @Test
-    fun testInheritanceToRuleFile() {
-        val parsed = parseRuleFile("test-files/prl/compiler/inheritance.prl")
-        val model = PrlCompiler().compile(parsed)
-        val string = model.toRuleFile().toString()
-        assertThat(string).contains("rule top.f1 & f10")
-        assertThat(string).contains("rule top.f1 & f20")
-        assertThat(string).contains("rule top.f1 & top.second.f21 & f22 & f30")
-        assertThat(string).contains("rule f22 / top.second.f22")
-
         val tempFile = Files.createTempFile("temp", "prl")
         tempFile.toFile().writeText(model.toRuleFile().toString())
         val parsedModel = PrlCompiler().compile(parseRuleFile(tempFile))

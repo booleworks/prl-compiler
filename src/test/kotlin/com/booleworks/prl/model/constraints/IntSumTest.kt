@@ -34,10 +34,10 @@ class IntSumTest {
 
     @Test
     fun testToString() {
-        assertThat(sum1.toString(DEFAULT_MODULE)).isEqualTo("8")
-        assertThat(sum2.toString(DEFAULT_MODULE)).isEqualTo("f1")
-        assertThat(sum3.toString(DEFAULT_MODULE)).isEqualTo("f1 + 4*f2")
-        assertThat(sum4.toString(DEFAULT_MODULE)).isEqualTo("f1 + 4*f2 + -7*f3 + 8")
+        assertThat(sum1.toString()).isEqualTo("8")
+        assertThat(sum2.toString()).isEqualTo("f1")
+        assertThat(sum3.toString()).isEqualTo("f1 + 4*f2")
+        assertThat(sum4.toString()).isEqualTo("f1 + 4*f2 + -7*f3 + 8")
     }
 
     @Test

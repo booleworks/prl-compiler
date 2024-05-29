@@ -80,10 +80,10 @@ class OrTest {
         val or2 = or(a, impl(d, e), equiv(b, enumEq(enumFt("name"), "a")))
         val or3 = or(a, and(b, c), and(d, e))
         val or4 = and(or(a, b), or(c, d), e)
-        assertThat(or1.toString(DEFAULT_MODULE)).isEqualTo("a / b / -c / d")
-        assertThat(or2.toString(DEFAULT_MODULE)).isEqualTo("a / (d => e) / (b <=> [name = \"a\"])")
-        assertThat(or3.toString(DEFAULT_MODULE)).isEqualTo("a / b & c / d & e")
-        assertThat(or4.toString(DEFAULT_MODULE)).isEqualTo("(a / b) & (c / d) & e")
+        assertThat(or1.toString()).isEqualTo("a / b / -c / d")
+        assertThat(or2.toString()).isEqualTo("a / (d => e) / (b <=> [name = \"a\"])")
+        assertThat(or3.toString()).isEqualTo("a / b & c / d & e")
+        assertThat(or4.toString()).isEqualTo("(a / b) & (c / d) & e")
     }
 
     @Test
@@ -118,7 +118,15 @@ class OrTest {
         assertThat(or1.booleanFeatures()).containsExactly(f1, f2, f3)
         assertThat(or1.intFeatures()).isEmpty()
         assertThat(or1.enumFeatures()).isEmpty()
-        assertThat(or2.features().map { it.featureCode }).containsExactlyInAnyOrder("a", "name", "desc", "b", "i", "v", "x")
+        assertThat(or2.features().map { it.featureCode }).containsExactlyInAnyOrder(
+            "a",
+            "name",
+            "desc",
+            "b",
+            "i",
+            "v",
+            "x"
+        )
         assertThat(or2.booleanFeatures().map { it.featureCode }).containsExactly("a", "b")
         assertThat(or2.intFeatures().map { it.featureCode }).containsExactly("i", "x")
         assertThat(or2.enumFeatures().map { it.featureCode }).containsExactly("name", "desc")

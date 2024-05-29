@@ -4,12 +4,10 @@ import com.booleworks.prl.model.BooleanRange
 import com.booleworks.prl.model.DateRange
 import com.booleworks.prl.model.EnumRange
 import com.booleworks.prl.model.IntRange
-import com.booleworks.prl.model.Module
 import com.booleworks.prl.model.SlicingBooleanPropertyDefinition
 import com.booleworks.prl.model.SlicingDatePropertyDefinition
 import com.booleworks.prl.model.SlicingEnumPropertyDefinition
 import com.booleworks.prl.model.SlicingIntPropertyDefinition
-import com.booleworks.prl.model.Visibility
 import com.booleworks.prl.parser.PrlBooleanProperty
 import com.booleworks.prl.parser.PrlDateProperty
 import com.booleworks.prl.parser.PrlEnumFeatureDefinition
@@ -280,7 +278,13 @@ class PropertyStoreTest {
             propertyStore.addProperty(PrlIntProperty(p1, 1, 40), state)
             propertyStore.addProperty(PrlIntProperty(p1, IntRange.interval(100, 200), 50), state)
             propertyStore.addProperty(PrlDateProperty(p1, LocalDate.of(2023, 1, 1), 60), state)
-            propertyStore.addProperty(PrlDateProperty(p1, DateRange.interval(LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 1)), 70), state)
+            propertyStore.addProperty(
+                PrlDateProperty(
+                    p1,
+                    DateRange.interval(LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 1)),
+                    70
+                ), state
+            )
             assertThat(propertyStore.slicingPropertyDefinitions.size).isEqualTo(1)
             assertThat(state.warnings).isEmpty()
             assertThat(state.errors).containsExactlyInAnyOrder(
@@ -304,18 +308,20 @@ class PropertyStoreTest {
     @Test
     fun testAddProperties_WithWrongSlicingPropertyType() {
         val state = CompilerState()
-        val module = Module("com.booleworks")
         val propertyStore = PropertyStore()
         propertyStore.addSlicingPropertyDefinition(PrlSlicingIntPropertyDefinition("version", 5), state)
         propertyStore.addSlicingPropertyDefinition(PrlSlicingEnumPropertyDefinition("event", 6), state)
-        val properties1 = listOf(PrlIntProperty("version", IntRange.list(1), 11), PrlEnumProperty("event", EnumRange.list("E1", "E2"), 12))
-        val featureDefinition1 = PrlEnumFeatureDefinition("enum1", listOf("a", "b"), "", Visibility.PUBLIC, properties1, 10)
+        val properties1 = listOf(
+            PrlIntProperty("version", IntRange.list(1), 11),
+            PrlEnumProperty("event", EnumRange.list("E1", "E2"), 12)
+        )
+        val featureDefinition1 = PrlEnumFeatureDefinition("enum1", listOf("a", "b"), "", properties1, 10)
         val properties2 = listOf(PrlEnumProperty("version", EnumRange.list("VX"), 22))
-        val featureDefinition2 = PrlEnumFeatureDefinition("enum1", listOf("a", "b", "C"), "", Visibility.PUBLIC, properties2, 20)
+        val featureDefinition2 = PrlEnumFeatureDefinition("enum1", listOf("a", "b", "C"), "", properties2, 20)
 
-        state.context = CompilerContext(module.fullName, featureDefinition1.code, null, featureDefinition1.lineNumber)
+        state.context = CompilerContext(featureDefinition1.code, null, featureDefinition1.lineNumber)
         propertyStore.addProperties(featureDefinition1, state)
-        state.context = CompilerContext(module.fullName, featureDefinition2.code, null, featureDefinition2.lineNumber)
+        state.context = CompilerContext(featureDefinition2.code, null, featureDefinition2.lineNumber)
         propertyStore.addProperties(featureDefinition2, state)
 
         val slicingPropDefVersion = propertyStore.slicingPropertyDefinitions["version"]
@@ -323,19 +329,14 @@ class PropertyStoreTest {
         assertThat(slicingPropDefVersion!!.computeRelevantValues()).containsExactly(1)
         val slicingPropDefEvent = propertyStore.slicingPropertyDefinitions["event"]
         assertThat(slicingPropDefEvent).isNotNull
-        assertThat(slicingPropDefEvent!!.computeRelevantValues()).contains(
-            "E1", "E2"
-        )
+        assertThat(slicingPropDefEvent!!.computeRelevantValues()).contains("E1", "E2")
         assertThat(state.warnings).isEmpty()
-        assertThat(state.errors).contains(
-            "[module=com.booleworks, feature=enum1, lineNumber=20] Property type does not match slicing property type"
-        )
+        assertThat(state.errors).contains("[feature=enum1, lineNumber=20] Property type does not match slicing property type")
     }
 
     @Test
     fun testAddFeatureDefinition_WithDuplicateProperty() {
         val state = CompilerState()
-        val module = Module("com.booleworks")
         val propertyStore = PropertyStore()
         propertyStore.addSlicingPropertyDefinition(PrlSlicingIntPropertyDefinition("version", 5), state)
         propertyStore.addSlicingPropertyDefinition(PrlSlicingEnumPropertyDefinition("event", 6), state)
@@ -344,9 +345,9 @@ class PropertyStoreTest {
             PrlEnumProperty("event", EnumRange.list("E1", "E2"), 12),
             PrlIntProperty("version", IntRange.list(1, 2), 13)
         )
-        val featureDefinition1 = PrlEnumFeatureDefinition("enum1", listOf("a", "b"), "", Visibility.PUBLIC, properties1, 10)
+        val featureDefinition1 = PrlEnumFeatureDefinition("enum1", listOf("a", "b"), "", properties1, 10)
 
-        state.context = CompilerContext(module.fullName, featureDefinition1.code, null, featureDefinition1.lineNumber)
+        state.context = CompilerContext(featureDefinition1.code, null, featureDefinition1.lineNumber)
         propertyStore.addProperties(featureDefinition1, state)
 
         val slicingPropDefVersion = propertyStore.slicingPropertyDefinitions["version"]
@@ -356,15 +357,12 @@ class PropertyStoreTest {
         assertThat(slicingPropDefEvent).isNotNull
         assertThat(slicingPropDefEvent!!.computeRelevantValues()).isEmpty()
         assertThat(state.warnings).isEmpty()
-        assertThat(state.errors).contains(
-            "[module=com.booleworks, feature=enum1, lineNumber=10] Properties in feature or rule are not unique"
-        )
+        assertThat(state.errors).contains("[feature=enum1, lineNumber=10] Properties in feature or rule are not unique")
     }
 
     @Test
     fun testAddFeatureDefinition_WithMultipleErrors() {
         val state = CompilerState()
-        val module = Module("com.booleworks")
         val propertyStore = PropertyStore()
         propertyStore.addSlicingPropertyDefinition(PrlSlicingIntPropertyDefinition("version", 5), state)
         propertyStore.addSlicingPropertyDefinition(PrlSlicingEnumPropertyDefinition("event", 6), state)
@@ -373,17 +371,17 @@ class PropertyStoreTest {
             PrlEnumProperty("event", EnumRange.list("E1", "E2"), 12),
             PrlEnumProperty("version", EnumRange.list("1", "2"), 13)
         )
-        val featureDefinition1 = PrlEnumFeatureDefinition("enum1", listOf("a", "b"), "", Visibility.PUBLIC, properties1, 10)
+        val featureDefinition1 = PrlEnumFeatureDefinition("enum1", listOf("a", "b"), "", properties1, 10)
         val properties2 = listOf(
             PrlEnumProperty("test", EnumRange.list("VX"), 21),
             PrlEnumProperty("version", EnumRange.list("VX"), 22),
             PrlEnumProperty("test", EnumRange.list("A"), 23)
         )
-        val featureDefinition2 = PrlEnumFeatureDefinition("enum1", listOf("a", "b", "C"), "", Visibility.PUBLIC, properties2, 20)
+        val featureDefinition2 = PrlEnumFeatureDefinition("enum1", listOf("a", "b", "C"), "", properties2, 20)
 
-        state.context = CompilerContext(module.fullName, featureDefinition1.code, null, featureDefinition1.lineNumber)
+        state.context = CompilerContext(featureDefinition1.code, null, featureDefinition1.lineNumber)
         propertyStore.addProperties(featureDefinition1, state)
-        state.context = CompilerContext(module.fullName, featureDefinition2.code, null, featureDefinition2.lineNumber)
+        state.context = CompilerContext(featureDefinition2.code, null, featureDefinition2.lineNumber)
         propertyStore.addProperties(featureDefinition2, state)
 
         val slicingPropDefVersion = propertyStore.slicingPropertyDefinitions["version"]
@@ -395,9 +393,8 @@ class PropertyStoreTest {
 
         assertThat(state.warnings).isEmpty()
         assertThat(state.errors).containsExactlyInAnyOrder(
-            "[module=com.booleworks, feature=enum1, lineNumber=10] Properties in feature or rule are not unique",
-            "[module=com.booleworks, feature=enum1, lineNumber=20] Properties in feature or rule are not unique"
+            "[feature=enum1, lineNumber=10] Properties in feature or rule are not unique",
+            "[feature=enum1, lineNumber=20] Properties in feature or rule are not unique"
         )
     }
-
 }

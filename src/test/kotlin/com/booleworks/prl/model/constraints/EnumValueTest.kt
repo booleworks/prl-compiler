@@ -4,7 +4,7 @@ import com.booleworks.prl.model.datastructures.FeatureRenaming
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class veTest {
+class EnumValueTest {
 
     @Test
     fun testCreation() {

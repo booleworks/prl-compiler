@@ -58,10 +58,10 @@ class AmoTest {
         val amo2 = amo(f1)
         val amo3 = amo(f1, f2, f3)
         val amo4 = amo(f1, f1, f2, f2)
-        assertThat(amo1.toString(DEFAULT_MODULE)).isEqualTo("amo[]")
-        assertThat(amo2.toString(DEFAULT_MODULE)).isEqualTo("amo[f1]")
-        assertThat(amo3.toString(DEFAULT_MODULE)).isEqualTo("amo[f1, f2, f3]")
-        assertThat(amo4.toString(DEFAULT_MODULE)).isEqualTo("amo[f1, f2]")
+        assertThat(amo1.toString()).isEqualTo("amo[]")
+        assertThat(amo2.toString()).isEqualTo("amo[f1]")
+        assertThat(amo3.toString()).isEqualTo("amo[f1, f2, f3]")
+        assertThat(amo4.toString()).isEqualTo("amo[f1, f2]")
     }
 
     @Test
@@ -123,8 +123,10 @@ class AmoTest {
         val ass4: FeatureAssignment = FeatureAssignment().assign(f1, true).assign(f4, false)
         val ass5: FeatureAssignment = FeatureAssignment().assign(f1, false)
         val ass6: FeatureAssignment = FeatureAssignment().assign(f2, false).assign(f3, false).assign(f4, false)
-        val ass7: FeatureAssignment = FeatureAssignment().assign(f1, false).assign(f2, false).assign(f3, false).assign(f4, false)
-        val ass8: FeatureAssignment = FeatureAssignment().assign(f1, false).assign(f2, false).assign(f3, true).assign(f4, false)
+        val ass7: FeatureAssignment =
+            FeatureAssignment().assign(f1, false).assign(f2, false).assign(f3, false).assign(f4, false)
+        val ass8: FeatureAssignment =
+            FeatureAssignment().assign(f1, false).assign(f2, false).assign(f3, true).assign(f4, false)
         assertThat(amo1.restrict(ass1)).isEqualTo(TRUE)
         assertThat(amo1.restrict(ass2)).isEqualTo(TRUE)
         assertThat(amo1.restrict(ass3)).isEqualTo(TRUE)

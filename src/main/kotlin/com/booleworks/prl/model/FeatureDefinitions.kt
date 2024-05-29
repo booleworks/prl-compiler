@@ -24,30 +24,17 @@ import com.booleworks.prl.parser.PragmaticRuleLanguage.SYMBOL_LBRA
 import com.booleworks.prl.parser.PragmaticRuleLanguage.SYMBOL_RBRA
 import com.booleworks.prl.parser.PragmaticRuleLanguage.identifier
 import com.booleworks.prl.parser.PragmaticRuleLanguage.quote
-import com.booleworks.prl.parser.PragmaticRuleLanguage.visibilityString
 import com.booleworks.prl.parser.PrlBooleanFeatureDefinition
 import com.booleworks.prl.parser.PrlEnumFeatureDefinition
 import com.booleworks.prl.parser.PrlFeatureDefinition
 import com.booleworks.prl.parser.PrlIntFeatureDefinition
 import java.util.Objects
 
-/**
- * Feature visibility:
- *
- * PRIVATE: only visible in the module in which it was declared
- * INTERNAL: visible in its own modules and all modules which inherit from it
- * PUBLIC: visible everywhere
- */
-enum class Visibility {
-    PRIVATE, INTERNAL, PUBLIC
-}
-
 typealias AnyFeatureDef = FeatureDefinition<*, *>
 
 /**
  * Super class for features of different types.  A feature always has a code
- * (name) which has to be unique within the module.  By default, a feature
- * has PRIVATE visibility.  Additionally, it can have the following optional
+ * (name) which has to be unique.  It can have the following optional
  * parameters:
  *
  *  description: A textual description of the feature
@@ -58,9 +45,7 @@ typealias AnyFeatureDef = FeatureDefinition<*, *>
  *  properties: a list of additional properties of the feature
  */
 sealed class FeatureDefinition<F : FeatureDefinition<F, *>, T : Feature>(
-    open val module: Module,
     open val code: String,
-    open val visibility: Visibility,
     open val description: String,
     open val properties: Map<String, AnyProperty>,
     open val lineNumber: Int? = null,
@@ -72,7 +57,6 @@ sealed class FeatureDefinition<F : FeatureDefinition<F, *>, T : Feature>(
     abstract fun stripAll(): F
     abstract val headerLine: String
     abstract val feature: T
-    val reference by lazy { FeatureReference(module, code) }
 
     fun appendString(app: Appendable, depth: Int): Appendable {
         val i = INDENT.repeat(depth)
@@ -93,14 +77,12 @@ sealed class FeatureDefinition<F : FeatureDefinition<F, *>, T : Feature>(
 
     override fun toString() = StringBuilder().apply { appendString(this, 0) }.toString()
 
-    override fun hashCode() = Objects.hash(module, code, visibility, description, properties, headerLine, feature)
+    override fun hashCode() = Objects.hash(code, description, properties, headerLine, feature)
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as AnyFeatureDef
-        if (module != other.module) return false
         if (code != other.code) return false
-        if (visibility != other.visibility) return false
         if (description != other.description) return false
         if (properties != other.properties) return false
         if (headerLine != other.headerLine) return false
@@ -108,11 +90,11 @@ sealed class FeatureDefinition<F : FeatureDefinition<F, *>, T : Feature>(
     }
 
     companion object {
-        internal fun fromPrlModule(module: Module, definition: PrlFeatureDefinition): AnyFeatureDef =
+        internal fun fromPrlDef(definition: PrlFeatureDefinition): AnyFeatureDef =
             when (definition) {
-                is PrlBooleanFeatureDefinition -> BooleanFeatureDefinition(module, definition)
-                is PrlEnumFeatureDefinition -> EnumFeatureDefinition(module, definition)
-                is PrlIntFeatureDefinition -> IntFeatureDefinition(module, definition)
+                is PrlBooleanFeatureDefinition -> BooleanFeatureDefinition(definition)
+                is PrlEnumFeatureDefinition -> EnumFeatureDefinition(definition)
+                is PrlIntFeatureDefinition -> IntFeatureDefinition(definition)
             }
     }
 }
@@ -124,58 +106,46 @@ sealed class FeatureDefinition<F : FeatureDefinition<F, *>, T : Feature>(
  * many rule sets in propositional logic.
  */
 class BooleanFeatureDefinition(
-    override val module: Module,
     override val code: String,
     val versioned: Boolean = false,
-    override val visibility: Visibility = Visibility.PUBLIC,
     override val description: String = "",
     override val properties: Map<String, AnyProperty> = mapOf(),
     override val lineNumber: Int? = null
 ) : FeatureDefinition<BooleanFeatureDefinition, BooleanFeature>(
-    module,
     code,
-    visibility,
     description,
     properties,
     lineNumber
 ) {
 
-    constructor(module: Module, d: PrlBooleanFeatureDefinition) : this(
-        module,
+    constructor(d: PrlBooleanFeatureDefinition) : this(
         d.code,
         d.versioned,
-        d.visibility,
         d.description,
         compileProperties(d.properties).associateBy { it.name },
         d.lineNumber
     )
 
-    override fun stripProperties() =
-        BooleanFeatureDefinition(module, code, versioned, visibility, description, mapOf(), lineNumber)
+    override fun stripProperties() = BooleanFeatureDefinition(code, versioned, description, mapOf(), lineNumber)
 
-    override fun stripMetaInfo() =
-        BooleanFeatureDefinition(module, code, versioned, visibility, "", properties, lineNumber)
+    override fun stripMetaInfo() = BooleanFeatureDefinition(code, versioned, "", properties, lineNumber)
 
-    override fun stripAll() = BooleanFeatureDefinition(module, code, versioned, visibility, "", mapOf(), lineNumber)
+    override fun stripAll() = BooleanFeatureDefinition(code, versioned, "", mapOf(), lineNumber)
     override fun rename(renaming: FeatureRenaming): BooleanFeatureDefinition {
         val renamedCode = renaming.rename(feature).featureCode
-        return BooleanFeatureDefinition(module, renamedCode, versioned, visibility, description, properties, lineNumber)
+        return BooleanFeatureDefinition(renamedCode, versioned, description, properties, lineNumber)
     }
 
-    override val headerLine =
-        visibilityString(visibility) + (if (versioned) "$KEYWORD_VERSIONED " else "") + "$KEYWORD_FEATURE " +
-            identifier(code)
+    override val headerLine = (if (versioned) "$KEYWORD_VERSIONED " else "") + "$KEYWORD_FEATURE " + identifier(code)
 
-    override val feature = if (versioned) versionFt(code, module) else boolFt(code, module)
+    override val feature = if (versioned) versionFt(code) else boolFt(code)
 
     companion object {
         fun merge(definitions: Collection<BooleanFeatureDefinition>): BooleanFeatureDefinition {
             assert(!definitions.isEmpty())
-            val module = definitions.first().module
             val code = definitions.first().code
             val version = definitions.first().versioned
-            val visibility = definitions.first().visibility
-            return BooleanFeatureDefinition(module, code, version, visibility)
+            return BooleanFeatureDefinition(code, version)
         }
     }
 }
@@ -188,64 +158,45 @@ class BooleanFeatureDefinition(
  * fixed enum values (like x = "abc") or with a range (like x in ["a", "b", "c"]).
  */
 class EnumFeatureDefinition(
-    override val module: Module,
     override val code: String,
     val values: Set<String>,
-    override val visibility: Visibility = Visibility.PUBLIC,
     override val description: String = "",
     override val properties: Map<String, AnyProperty> = mapOf(),
     override val lineNumber: Int? = null
 ) : FeatureDefinition<EnumFeatureDefinition, EnumFeature>(
-    module,
     code,
-    visibility,
     description,
     properties,
     lineNumber
 ) {
 
-    constructor(module: Module, d: PrlEnumFeatureDefinition) : this(
-        module,
+    constructor(d: PrlEnumFeatureDefinition) : this(
         d.code,
         d.values.toSet(),
-        d.visibility,
         d.description,
         compileProperties(d.properties).associateBy { it.name },
         d.lineNumber
     )
 
-    override fun stripProperties() =
-        EnumFeatureDefinition(module, code, values, visibility, description, mapOf(), lineNumber)
-
-    override fun stripMetaInfo() = EnumFeatureDefinition(module, code, values, visibility, "", properties, lineNumber)
-    override fun stripAll() = EnumFeatureDefinition(module, code, values, visibility, "", mapOf(), lineNumber)
+    override fun stripProperties() = EnumFeatureDefinition(code, values, description, mapOf(), lineNumber)
+    override fun stripMetaInfo() = EnumFeatureDefinition(code, values, "", properties, lineNumber)
+    override fun stripAll() = EnumFeatureDefinition(code, values, "", mapOf(), lineNumber)
     override fun rename(renaming: FeatureRenaming): EnumFeatureDefinition {
         val renamedCode = renaming.rename(feature).featureCode
         val renamedValues = values.map { renaming.rename(feature, it) }.toSet()
-        return EnumFeatureDefinition(
-            module,
-            renamedCode,
-            renamedValues,
-            visibility,
-            description,
-            properties,
-            lineNumber
-        )
+        return EnumFeatureDefinition(renamedCode, renamedValues, description, properties, lineNumber)
     }
 
-    override val headerLine =
-        visibilityString(visibility) + "$KEYWORD_ENUM $KEYWORD_FEATURE " + identifier(code) + " " +
+    override val headerLine = "$KEYWORD_ENUM $KEYWORD_FEATURE " + identifier(code) + " " +
             (if (values.isEmpty()) "e" else "") + quote(values)
-    override val feature = enumFt(code, module, values)
+    override val feature = enumFt(code, values)
 
     companion object {
         fun merge(definitions: Collection<EnumFeatureDefinition>): EnumFeatureDefinition {
             assert(!definitions.isEmpty())
-            val module = definitions.first().module
             val code = definitions.first().code
-            val visibility = definitions.first().visibility
             val values = definitions.map { it.values }.reduce { acc, values -> acc.intersect(values) }
-            return EnumFeatureDefinition(module, code, values, visibility)
+            return EnumFeatureDefinition(code, values)
         }
     }
 }
@@ -260,57 +211,42 @@ class EnumFeatureDefinition(
  * or with a range (like x in [1-7]).
  */
 class IntFeatureDefinition(
-    override val module: Module,
     override val code: String,
     val domain: PropertyRange<Int>,
-    override val visibility: Visibility = Visibility.PUBLIC,
     override val description: String = "",
     override val properties: Map<String, AnyProperty> = mapOf(),
     override val lineNumber: Int? = null
-) : FeatureDefinition<IntFeatureDefinition, IntFeature>(module, code, visibility, description, properties, lineNumber) {
+) : FeatureDefinition<IntFeatureDefinition, IntFeature>(code, description, properties, lineNumber) {
 
-    constructor(module: Module, d: PrlIntFeatureDefinition) : this(
-        module,
+    constructor(d: PrlIntFeatureDefinition) : this(
         d.code,
         d.domain,
-        d.visibility,
         d.description,
         compileProperties(d.properties).associateBy { it.name },
         d.lineNumber
     )
 
-    override fun stripProperties() =
-        IntFeatureDefinition(module, code, domain, visibility, description, mapOf(), lineNumber)
-
-    override fun stripMetaInfo() = IntFeatureDefinition(module, code, domain, visibility, "", properties, lineNumber)
-    override fun stripAll() = IntFeatureDefinition(module, code, domain, visibility, "", mapOf(), lineNumber)
+    override fun stripProperties() = IntFeatureDefinition(code, domain, description, mapOf(), lineNumber)
+    override fun stripMetaInfo() = IntFeatureDefinition(code, domain, "", properties, lineNumber)
+    override fun stripAll() = IntFeatureDefinition(code, domain, "", mapOf(), lineNumber)
     override fun rename(renaming: FeatureRenaming) =
         IntFeatureDefinition(
-            module,
             renaming.rename(feature).featureCode,
             domain,
-            visibility,
             description,
             properties,
             lineNumber
         )
 
-    override val headerLine =
-        visibilityString(visibility) + "$KEYWORD_INT $KEYWORD_FEATURE " + identifier(code) + " " + domain
-    override val feature = intFt(code, module, domain)
+    override val headerLine = "$KEYWORD_INT $KEYWORD_FEATURE " + identifier(code) + " " + domain
+    override val feature = intFt(code, domain)
 
     companion object {
         fun merge(definitions: Collection<IntFeatureDefinition>): IntFeatureDefinition {
             assert(!definitions.isEmpty())
-            val module = definitions.first().module
             val code = definitions.first().code
-            val visibility = definitions.first().visibility
             val domain = definitions.map { it.domain }.reduce { acc, domain -> acc.intersection(domain) }
-            return IntFeatureDefinition(module, code, domain, visibility)
+            return IntFeatureDefinition(code, domain)
         }
     }
-}
-
-data class FeatureReference(val module: Module, val featureCode: String) {
-    val fullName by lazy { Feature.fullNameOf(featureCode, module.fullName) }
 }

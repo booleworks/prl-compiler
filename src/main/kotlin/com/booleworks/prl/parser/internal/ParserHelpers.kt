@@ -4,7 +4,6 @@
 package com.booleworks.prl.parser.internal
 
 import com.booleworks.prl.model.IntRange
-import com.booleworks.prl.model.Visibility
 import com.booleworks.prl.model.rules.GroupType
 import com.booleworks.prl.parser.PrlBooleanFeatureDefinition
 import com.booleworks.prl.parser.PrlConstraint
@@ -20,8 +19,6 @@ import com.booleworks.prl.parser.PrlIfThenElseRule
 import com.booleworks.prl.parser.PrlInclusionRule
 import com.booleworks.prl.parser.PrlIntFeatureDefinition
 import com.booleworks.prl.parser.PrlMandatoryFeatureRule
-import com.booleworks.prl.parser.PrlModule
-import com.booleworks.prl.parser.PrlModuleImport
 import com.booleworks.prl.parser.PrlProperty
 import com.booleworks.prl.parser.PrlRule
 import com.booleworks.prl.parser.PrlRuleSet
@@ -32,30 +29,27 @@ internal class FeatureFactory {
 }
 
 internal class PrlFeatureContent {
-    var vis: Visibility = Visibility.PUBLIC
     var lnr = 0
     var vs = false
     var desc = ""
-    var init = 0
     private var props: MutableList<PrlProperty<*>> = ArrayList()
 
     fun addProperty(prop: PrlProperty<*>) {
         props.add(prop)
     }
 
-    fun generateBoolFeature(code: String) = PrlBooleanFeatureDefinition(code, vs, desc, vis, props, lnr)
+    fun generateBoolFeature(code: String) = PrlBooleanFeatureDefinition(code, vs, desc, props, lnr)
     fun generateEnumFeature(code: String, values: List<String>) =
-        PrlEnumFeatureDefinition(code, values, desc, vis, props, lnr)
+        PrlEnumFeatureDefinition(code, values, desc, props, lnr)
 
     fun generateIntFeature(code: String, intRange: IntRange) =
-        PrlIntFeatureDefinition(code, intRange, desc, vis, props, lnr)
+        PrlIntFeatureDefinition(code, intRange, desc, props, lnr)
 }
 
 internal class PrlRuleContent {
     var lnr = 0
     var id = ""
     var desc = ""
-    var vis: Visibility = Visibility.PUBLIC
     private var props: MutableList<PrlProperty<*>> = ArrayList()
 
     fun addProperty(prop: PrlProperty<*>) {
@@ -73,7 +67,7 @@ internal class PrlRuleContent {
         PrlDefinitionRule(feature, definition, id, desc, props, lnr)
 
     fun generateGroupRule(type: GroupType, group: PrlFeature, content: List<PrlFeature>) =
-        PrlGroupRule(type, group, content, vis, id, desc, props, lnr)
+        PrlGroupRule(type, group, content, id, desc, props, lnr)
 
     fun generateIfThenElseRule(ifPart: PrlConstraint, thenPart: PrlConstraint, elsePart: PrlConstraint) =
         PrlIfThenElseRule(ifPart, thenPart, elsePart, id, desc, props, lnr)
@@ -86,13 +80,8 @@ internal class PrlRuleContent {
 }
 
 internal class PrlRuleSetContent {
-    private var imports: MutableList<PrlModuleImport> = ArrayList()
     private var featureDefinitions: MutableList<PrlFeatureDefinition> = ArrayList()
     private var rules: MutableList<PrlRule> = ArrayList()
-
-    fun addImport(moduleImport: PrlModuleImport) {
-        imports.add(moduleImport)
-    }
 
     fun addFeature(featureDefinition: PrlFeatureDefinition) {
         featureDefinitions.add(featureDefinition)
@@ -102,8 +91,5 @@ internal class PrlRuleSetContent {
         rules.add(rule)
     }
 
-    fun generateRuleSet(lnr: Int, moduleName: String) =
-        PrlRuleSet(PrlModule(moduleName), imports, featureDefinitions, rules, lnr)
-
-    fun generateRuleSet(lnr: Int) = PrlRuleSet(PrlModule(""), imports, featureDefinitions, rules, lnr)
+    fun generateRuleSet(lnr: Int) = PrlRuleSet(featureDefinitions, rules, lnr)
 }

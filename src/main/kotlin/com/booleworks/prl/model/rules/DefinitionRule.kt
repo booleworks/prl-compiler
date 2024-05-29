@@ -4,7 +4,6 @@
 package com.booleworks.prl.model.rules
 
 import com.booleworks.prl.model.AnyProperty
-import com.booleworks.prl.model.Module
 import com.booleworks.prl.model.constraints.BooleanFeature
 import com.booleworks.prl.model.constraints.Constraint
 import com.booleworks.prl.model.constraints.ConstraintType
@@ -18,19 +17,18 @@ import java.util.Objects
 class DefinitionRule(
     val feature: BooleanFeature,
     val definition: Constraint,
-    override val module: Module,
     override val id: String = "",
     override val description: String = "",
     override val properties: Map<String, AnyProperty> = mapOf(),
     override val lineNumber: Int? = null
-) : Rule<DefinitionRule>(module, id, description, properties, lineNumber) {
+) : Rule<DefinitionRule>(id, description, properties, lineNumber) {
 
     init {
         require(!feature.versioned) { "A versioned feature cannot be defined" }
     }
 
     private constructor(rule: AnyRule, feature: BooleanFeature, definition: Constraint) : this(
-        feature, definition, rule.module, rule.id, rule.description, rule.properties, rule.lineNumber
+        feature, definition, rule.id, rule.description, rule.properties, rule.lineNumber
     )
 
     override fun features() = definition.features() + feature
@@ -47,13 +45,11 @@ class DefinitionRule(
     override fun rename(renaming: FeatureRenaming) =
         DefinitionRule(this, renaming.rename(feature), definition.rename(renaming))
 
-    override fun stripProperties() =
-        DefinitionRule(feature, definition, module, id, description, mapOf(), lineNumber)
+    override fun stripProperties() = DefinitionRule(feature, definition, id, description, mapOf(), lineNumber)
 
-    override fun stripMetaInfo() = DefinitionRule(feature, definition, module, "", "", properties, lineNumber)
-    override fun stripAll() = DefinitionRule(feature, definition, module, "", "", mapOf(), lineNumber)
-    override fun headerLine(currentModule: Module) =
-        "${feature.toString(currentModule)} $KEYWORD_IS ${definition.toString(currentModule)}"
+    override fun stripMetaInfo() = DefinitionRule(feature, definition, "", "", properties, lineNumber)
+    override fun stripAll() = DefinitionRule(feature, definition, "", "", mapOf(), lineNumber)
+    override fun headerLine() = "$feature $KEYWORD_IS $definition"
 
     override fun hashCode() = Objects.hash(super.hashCode(), feature, definition)
     override fun equals(other: Any?) = super.equals(other) && hasEqualConstraint(other as AnyRule)

@@ -1,7 +1,6 @@
 package com.booleworks.prl.transpiler
 
 import com.booleworks.logicng.csp.CspFactory
-import com.booleworks.logicng.datastructures.Tristate
 import com.booleworks.logicng.formulas.FormulaFactory
 import com.booleworks.logicng.solvers.SATSolver
 import com.booleworks.logicng.solvers.sat.SATSolverConfig
@@ -14,15 +13,15 @@ class SliceMergeTest {
     private val f = FormulaFactory.caching()
     private val cf = CspFactory(f)
 
-    private val a = f.variable("test.a")
-    private val b = f.variable("test.b")
-    private val c = f.variable("test.c")
-    private val p = f.variable("test.p")
-    private val q = f.variable("test.q")
-    private val r = f.variable("test.r")
-    private val x = f.variable("test.x")
-    private val y = f.variable("test.y")
-    private val z = f.variable("test.z")
+    private val a = f.variable("a")
+    private val b = f.variable("b")
+    private val c = f.variable("c")
+    private val p = f.variable("p")
+    private val q = f.variable("q")
+    private val r = f.variable("r")
+    private val x = f.variable("x")
+    private val y = f.variable("y")
+    private val z = f.variable("z")
 
     @Test
     fun testModel1() {
@@ -112,11 +111,11 @@ class SliceMergeTest {
         val merged = mergeSlices(cf, modelTranslation.computations)
 
         val allVariables = f.variables(
-            "@ENUM_test#a_a1", "@ENUM_test#a_a2",
-            "@ENUM_test#b_b1", "@ENUM_test#b_b2", "@ENUM_test#b_b3",
-            "@ENUM_test#c_c1", "@ENUM_test#c_c2", "@ENUM_test#c_c3",
-            "@ENUM_test#p_px", "@ENUM_test#p_p1", "@ENUM_test#p_p2",
-            "@ENUM_test#q_q1", "@ENUM_test#q_q2"
+            "@ENUM_a_a1", "@ENUM_a_a2",
+            "@ENUM_b_b1", "@ENUM_b_b2", "@ENUM_b_b3",
+            "@ENUM_c_c1", "@ENUM_c_c2", "@ENUM_c_c3",
+            "@ENUM_p_px", "@ENUM_p_p1", "@ENUM_p_p2",
+            "@ENUM_q_q1", "@ENUM_q_q2"
         )
 
         assertThat(merged.sliceSelectors).hasSize(4)
@@ -124,7 +123,7 @@ class SliceMergeTest {
         assertThat(merged.booleanVariables).isEmpty()
         assertThat(merged.enumVariables).containsExactlyInAnyOrderElementsOf(allVariables)
         assertThat(merged.enumMapping).hasSize(5)
-        assertThat(merged.info.getFeatureAndValue(f.variable("@ENUM_test#c_c3"))).isEqualTo(Pair("test.c", "c3"))
+        assertThat(merged.info.getFeatureAndValue(f.variable("@ENUM_c_c3"))).isEqualTo(Pair("c", "c3"))
         assertThat(merged.knownVariables).containsExactlyInAnyOrderElementsOf(allVariables)
         assertThat(filter(merged.propositions, "@SL0")).hasSize(13 + 4 + 7)
         assertThat(filter(merged.propositions, "@SL1")).hasSize(13 + 2 + 8)
@@ -136,5 +135,6 @@ class SliceMergeTest {
         assertThat(solver.sat()).isEqualTo(false)
     }
 
-    private fun filter(props: List<PrlProposition>, sel: String) = props.filter { it.formula().variables(f).any { v -> v.name().contains(sel) } }
+    private fun filter(props: List<PrlProposition>, sel: String) =
+        props.filter { it.formula().variables(f).any { v -> v.name().contains(sel) } }
 }

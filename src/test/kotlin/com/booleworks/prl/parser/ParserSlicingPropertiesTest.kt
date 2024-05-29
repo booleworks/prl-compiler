@@ -10,7 +10,8 @@ class ParserSlicingPropertiesTest {
     fun testEmptyFile() {
         val ruleFile: PrlRuleFile = parseRuleFile(Paths.get("test-files/prl/parser/empty.prl"))
         assertThat(ruleFile).isNotNull
-        assertThat(ruleFile.ruleSets).isEmpty()
+        assertThat(ruleFile.ruleSet.featureDefinitions).isEmpty()
+        assertThat(ruleFile.ruleSet.rules).isEmpty()
         assertThat(ruleFile.fileName).isEqualTo("empty.prl")
     }
 
@@ -19,17 +20,8 @@ class ParserSlicingPropertiesTest {
         val ruleFile: PrlRuleFile = parseRuleFile(File("test-files/prl/parser/empty_slicing_properties.prl"))
         assertThat(ruleFile).isNotNull
         assertThat(ruleFile.slicingPropertyDefinitions).isEmpty();
-        assertThat(ruleFile.ruleSets[0].lineNumber).isEqualTo(8)
+        assertThat(ruleFile.ruleSet.lineNumber).isEqualTo(7)
         assertThat(ruleFile.fileName).isEqualTo("empty_slicing_properties.prl")
-    }
-
-    @Test
-    fun testSlicingPropertiesWithEmptyModules() {
-        val ruleFile: PrlRuleFile = parseRuleFile(File("test-files/prl/parser/slicing_properties_without_modules.prl"))
-        assertThat(ruleFile).isNotNull
-        assertThat(ruleFile.slicingPropertyDefinitions).isEmpty();
-        assertThat(ruleFile.ruleSets).isEmpty()
-        assertThat(ruleFile.fileName).isEqualTo("slicing_properties_without_modules.prl")
     }
 
     @Test
@@ -44,8 +36,7 @@ class ParserSlicingPropertiesTest {
             PrlSlicingDatePropertyDefinition("validFrom", 9),
             PrlSlicingEnumPropertyDefinition("event", 10)
         )
-        assertThat(ruleFile.ruleSets[0].lineNumber).isEqualTo(13)
+        assertThat(ruleFile.ruleSet.lineNumber).isEqualTo(13)
         assertThat(ruleFile.fileName).isEqualTo("slicing_properties.prl")
     }
-
 }

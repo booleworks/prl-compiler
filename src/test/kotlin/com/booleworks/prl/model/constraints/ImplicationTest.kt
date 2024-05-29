@@ -32,10 +32,10 @@ class ImplicationTest {
         val impl2 = impl(and(a, b), or(c, d))
         val impl3 = impl(a, impl(b, c))
         val imipl4 = impl(impl(a, b), c)
-        assertThat(impl1.toString(DEFAULT_MODULE)).isEqualTo("f1 => f2")
-        assertThat(impl2.toString(DEFAULT_MODULE)).isEqualTo("a & b => c / d")
-        assertThat(impl3.toString(DEFAULT_MODULE)).isEqualTo("a => (b => c)")
-        assertThat(imipl4.toString(DEFAULT_MODULE)).isEqualTo("(a => b) => c")
+        assertThat(impl1.toString()).isEqualTo("f1 => f2")
+        assertThat(impl2.toString()).isEqualTo("a & b => c / d")
+        assertThat(impl3.toString()).isEqualTo("a => (b => c)")
+        assertThat(imipl4.toString()).isEqualTo("(a => b) => c")
     }
 
     @Test

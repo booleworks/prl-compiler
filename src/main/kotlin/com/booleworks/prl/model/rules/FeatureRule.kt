@@ -4,7 +4,6 @@
 package com.booleworks.prl.model.rules
 
 import com.booleworks.prl.model.AnyProperty
-import com.booleworks.prl.model.Module
 import com.booleworks.prl.model.constraints.BooleanFeature
 import com.booleworks.prl.model.constraints.Constant
 import com.booleworks.prl.model.constraints.Constraint
@@ -24,12 +23,11 @@ sealed class FeatureRule<F : FeatureRule<F>>(
     open val feature: Feature,
     open val enumValue: String?,
     open val intValueOrVersion: Int?,
-    module: Module,
     id: String,
     description: String,
     properties: Map<String, AnyProperty>,
     lineNumber: Int? = null
-) : Rule<F>(module, id, description, properties, lineNumber) {
+) : Rule<F>(id, description, properties, lineNumber) {
 
     val constraint by lazy {
         generateConstraint(feature, enumValue, intValueOrVersion)
@@ -69,13 +67,13 @@ sealed class FeatureRule<F : FeatureRule<F>>(
         is IntFeature -> renaming.rename(feature as IntFeature)
     }
 
-    override fun headerLine(currentModule: Module): String {
+    override fun headerLine(): String {
         val keyword: String = if (this is ForbiddenFeatureRule) KEYWORD_FORBIDDEN else KEYWORD_MANDATORY
         val constraintString: String = when (feature) {
-            is BooleanFeature -> if (!(feature as BooleanFeature).versioned) feature.toString(currentModule) else
-                versionEq(feature as BooleanFeature, intValueOrVersion!!).toString(currentModule)
-            is EnumFeature -> feature.toString(currentModule) + " " + SYMBOL_EQ + " " + quote(enumValue!!)
-            is IntFeature -> "${feature.toString(currentModule)} $SYMBOL_EQ $intValueOrVersion"
+            is BooleanFeature -> if (!(feature as BooleanFeature).versioned) feature.toString() else
+                versionEq(feature as BooleanFeature, intValueOrVersion!!).toString()
+            is EnumFeature -> feature.toString() + " " + SYMBOL_EQ + " " + quote(enumValue!!)
+            is IntFeature -> "$feature $SYMBOL_EQ $intValueOrVersion"
         }
         return "$keyword $KEYWORD_FEATURE $constraintString"
     }

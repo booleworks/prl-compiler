@@ -32,10 +32,10 @@ class EquivalenceTest {
         val equiv2 = equiv(and(a, b), or(c, d))
         val equiv3 = equiv(a, equiv(b, c))
         val equiv4 = equiv(equiv(a, b), c)
-        assertThat(equiv1.toString(DEFAULT_MODULE)).isEqualTo("f1 <=> f2")
-        assertThat(equiv2.toString(DEFAULT_MODULE)).isEqualTo("a & b <=> c / d")
-        assertThat(equiv3.toString(DEFAULT_MODULE)).isEqualTo("a <=> (b <=> c)")
-        assertThat(equiv4.toString(DEFAULT_MODULE)).isEqualTo("(a <=> b) <=> c")
+        assertThat(equiv1.toString()).isEqualTo("f1 <=> f2")
+        assertThat(equiv2.toString()).isEqualTo("a & b <=> c / d")
+        assertThat(equiv3.toString()).isEqualTo("a <=> (b <=> c)")
+        assertThat(equiv4.toString()).isEqualTo("(a <=> b) <=> c")
     }
 
     @Test

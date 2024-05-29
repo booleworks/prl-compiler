@@ -7,8 +7,6 @@ import com.booleworks.prl.model.AnyFeatureDef
 import com.booleworks.prl.model.BooleanFeatureDefinition
 import com.booleworks.prl.model.EnumFeatureDefinition
 import com.booleworks.prl.model.IntFeatureDefinition
-import com.booleworks.prl.model.Module
-import com.booleworks.prl.model.ModuleHierarchy
 import com.booleworks.prl.model.PrlModel
 import com.booleworks.prl.model.PrlModelHeader
 import com.booleworks.prl.model.compileProperties
@@ -38,9 +36,6 @@ import com.booleworks.prl.parser.PrlRule
 import com.booleworks.prl.parser.PrlRuleFile
 import com.booleworks.prl.parser.PrlRuleSet
 import com.booleworks.prl.parser.PrlVersion
-import java.util.SortedSet
-import java.util.TreeMap
-import java.util.TreeSet
 import java.util.UUID.randomUUID
 
 class PrlCompiler {
@@ -51,34 +46,21 @@ class PrlCompiler {
         val version = PrlVersion(ruleFile.header.major, ruleFile.header.minor)
         val header = PrlModelHeader(version, compilePropertiesToMap(ruleFile.header.properties))
         val t1 = System.currentTimeMillis()
-        val moduleHierarchy = compileModuleHierarchy(ruleFile)
-        val t2 = System.currentTimeMillis()
         val propertyStore = compileSlicingPropertyDefinitionsIntoStore(ruleFile)
+        val t2 = System.currentTimeMillis()
+        val featureStore = compileFeaturesIntoStore(ruleFile, propertyStore)
         val t3 = System.currentTimeMillis()
-        val featureStore = compileFeaturesIntoStore(ruleFile, propertyStore, moduleHierarchy)
+        val rules = compileRules(ruleFile, propertyStore, featureStore)
         val t4 = System.currentTimeMillis()
-        val rules = compileRules(ruleFile, moduleHierarchy, propertyStore, featureStore)
-        val t5 = System.currentTimeMillis()
         val numDefs = featureStore.size()
         state.addInfo(
-            "Compiled ${moduleHierarchy.numberOfModules()} " +
-                "module${if (moduleHierarchy.numberOfModules() != 1) "s" else ""} in ${t2 - t1} ms."
-        )
-        state.addInfo(
             "Compiled ${propertyStore.slicingPropertyDefinitions.size} slicing property definition " +
-                "${if (propertyStore.slicingPropertyDefinitions.size != 1) "s" else ""} in ${t3 - t2} ms."
+                    "${if (propertyStore.slicingPropertyDefinitions.size != 1) "s" else ""} in ${t2 - t1} ms."
         )
-        state.addInfo("Compiled $numDefs feature definition${if (numDefs != 1) "s" else ""} in ${t4 - t3} ms.")
-        state.addInfo("Compiled ${rules.size} rule${if (rules.size != 1) "s" else ""} in ${t5 - t4} ms.")
+        state.addInfo("Compiled $numDefs feature definition${if (numDefs != 1) "s" else ""} in ${t3 - t2} ms.")
+        state.addInfo("Compiled ${rules.size} rule${if (rules.size != 1) "s" else ""} in ${t4 - t3} ms.")
 
-        // TODO limitations in the current developer preview
-        if (moduleHierarchy.numberOfModules() > 1) {
-            state.addError(
-                "Currently only PRL files with one module are supported. Multi-Module support will be " +
-                    "added in future releases."
-            )
-        }
-        return PrlModel(header, moduleHierarchy, featureStore, rules, propertyStore)
+        return PrlModel(header, featureStore, rules, propertyStore)
     }
 
     fun errors() = state.errors
@@ -86,65 +68,11 @@ class PrlCompiler {
     fun infos() = state.infos
     fun hasErrors() = state.hasErrors()
 
-    /////////////////////////////////
-    // Compile Modules and imports //
-    /////////////////////////////////
-    private fun compileModuleHierarchy(ruleFile: PrlRuleFile): ModuleHierarchy {
-        compileImports(compileModules(ruleFile.ruleSets), ruleFile)
-        state.context.clear()
-        return compileModules(ruleFile.ruleSets)
-    }
-
-    internal fun compileModules(ruleSets: Collection<PrlRuleSet>): ModuleHierarchy {
-        val sortedModuleNames = TreeSet<String>()
-        ruleSets.filterNot { sortedModuleNames.add(it.module.fullName) }.map {
-            state.context.module = it.module.fullName
-            state.context.lineNumber = it.lineNumber
-            state.addError("Duplicate module declaration")
-        }
-        val lineNumbers = ruleSets.associate { it.module.fullName to it.lineNumber }
-        return ModuleHierarchy(compileModules(sortedModuleNames, lineNumbers))
-    }
-
-    private fun compileModules(
-        sortedModuleNames: SortedSet<String>,
-        lineNumbers: Map<String, Int?>
-    ): Map<String, Module> {
-        val modules = TreeMap<String, Module>()
-        sortedModuleNames.forEach { moduleName ->
-            val newModule = Module(moduleName, lineNumber = lineNumbers[moduleName])
-            modules[moduleName] = newModule
-            modules.values.findLast { newModule.isDescendantOf(it) }?.also {
-                newModule.ancestor = it
-                it.descendants += newModule
-            }
-        }
-        return modules
-    }
-
-    private fun compileImports(moduleHierarchy: ModuleHierarchy, ruleFile: PrlRuleFile) {
-        ruleFile.ruleSets.flatMap {
-            val module = moduleHierarchy.moduleForName(it.module.fullName)!!
-            state.context.module = module.fullName
-            it.imports.map { importedModule ->
-                state.context.lineNumber = importedModule.lineNumber
-                val imported = moduleHierarchy.moduleForName(importedModule.module.fullName)
-                if (imported != null) {
-                    module.imports += imported
-                    null
-                } else {
-                    state.addError("Unknown imported module ${importedModule.module.fullName}")
-                }
-            }
-        }
-    }
-
     ////////////////////////////////
     // Compile Slicing Properties //
     ////////////////////////////////
     private fun compileSlicingPropertyDefinitionsIntoStore(ruleFile: PrlRuleFile): PropertyStore =
         PropertyStore().apply {
-            state.context.module = ""
             ruleFile.slicingPropertyDefinitions.forEach { addSlicingPropertyDefinition(it, state) }
             state.context.clear()
         }
@@ -155,29 +83,18 @@ class PrlCompiler {
     private fun compileFeaturesIntoStore(
         ruleFile: PrlRuleFile,
         propertyStore: PropertyStore,
-        moduleHierarchy: ModuleHierarchy
     ) =
         FeatureStore().apply {
-            ruleFile.ruleSets.forEach {
-                compileFeaturesIntoStore(
-                    moduleHierarchy.moduleForName(it.module.fullName)!!,
-                    it.featureDefinitions,
-                    it.rules,
-                    propertyStore,
-                    this
-                )
-            }
+            compileFeaturesIntoStore(ruleFile.ruleSet.featureDefinitions, ruleFile.ruleSet.rules, propertyStore, this)
             state.context.clear()
         }
 
     private fun compileFeaturesIntoStore(
-        module: Module,
         features: List<PrlFeatureDefinition>,
         rules: List<PrlRule>,
         propertyStore: PropertyStore,
         featureStore: FeatureStore
     ) {
-        state.context.module = module.fullName
         features.forEach {
             state.context.feature = it.code
             state.context.lineNumber = it.lineNumber
@@ -187,7 +104,7 @@ class PrlCompiler {
             }
             propertyStore.addProperties(it, state)
             if (!state.hasErrors()) {
-                featureStore.addDefinition(module, it, state, propertyStore.slicingPropertyDefinitions, false)
+                featureStore.addDefinition(it, state, propertyStore.slicingPropertyDefinitions, false)
             }
         }
         rules.filterIsInstance<PrlGroupRule>().forEach {
@@ -200,7 +117,6 @@ class PrlCompiler {
             propertyStore.checkPropertiesCorrect(it.properties, compileProperties(it.propsMap()), state)
             if (!state.hasErrors()) {
                 featureStore.addDefinition(
-                    module,
                     createFeatureDefinitionForGroup(it),
                     state,
                     propertyStore.slicingPropertyDefinitions,
@@ -218,7 +134,6 @@ class PrlCompiler {
             rule.group.featureCode,
             false,
             rule.description,
-            rule.visibility,
             rule.properties,
             rule.lineNumber
         )
@@ -228,38 +143,21 @@ class PrlCompiler {
     ///////////////////
     private fun compileRules(
         ruleFile: PrlRuleFile,
-        moduleHierarchy: ModuleHierarchy,
         propertyStore: PropertyStore,
         featureStore: FeatureStore,
-    ) =
-        if (!state.hasErrors()) {
-            mutableListOf<AnyRule>().apply {
-                ruleFile.ruleSets.forEach {
-                    this.addAll(
-                        compileRules(
-                            it,
-                            moduleHierarchy,
-                            propertyStore,
-                            featureStore,
-                        )
-                    )
-                }
-                state.context.clear()
-            }
-        } else {
-            emptyList()
-        }
+    ) = if (!state.hasErrors()) {
+        compileRules(ruleFile.ruleSet, propertyStore, featureStore)
+    } else {
+        emptyList()
+    }
 
 
     private fun compileRules(
         ruleSet: PrlRuleSet,
-        mh: ModuleHierarchy,
         propertyStore: PropertyStore,
         featureStore: FeatureStore,
     ): List<AnyRule> {
-        val module = mh.moduleForName(ruleSet.module.fullName)!!
-        state.context.module = module.fullName
-        val featureMap = featureStore.generateDefinitionMap(ruleSet.features(), module, mh, state)
+        val featureMap = featureStore.generateDefinitionMap(ruleSet.features(), state)
         if (state.hasErrors()) return listOf()
         return ruleSet.rules.mapNotNull {
             state.context.ruleId = it.id.ifEmpty { randomUUID().toString() }
@@ -268,23 +166,23 @@ class PrlCompiler {
                 null
             } else {
                 state.context.lineNumber = it.lineNumber
-                compileRule(it, module, featureMap)
+                compileRule(it, featureMap)
             }
         }
     }
 
-    internal fun compileRule(prlRule: PrlRule, module: Module, map: Fmap): AnyRule? {
+    internal fun compileRule(prlRule: PrlRule, map: Fmap): AnyRule? {
         return try {
             when (prlRule) {
-                is PrlConstraintRule -> rule(prlRule, module, map)
-                is PrlDefinitionRule -> rule(prlRule, module, map)
-                is PrlExclusionRule -> rule(prlRule, module, map)
-                is PrlForbiddenFeatureRule -> rule(prlRule, module, map)
-                is PrlGroupRule -> rule(prlRule, module, map)
-                is PrlIfThenElseRule -> rule(prlRule, module, map)
-                is PrlInclusionRule -> rule(prlRule, module, map)
-                is PrlMandatoryFeatureRule -> rule(prlRule, module, map)
-                is PrlFeatureRule -> rule(prlRule, module, map)
+                is PrlConstraintRule -> rule(prlRule, map)
+                is PrlDefinitionRule -> rule(prlRule, map)
+                is PrlExclusionRule -> rule(prlRule, map)
+                is PrlForbiddenFeatureRule -> rule(prlRule, map)
+                is PrlGroupRule -> rule(prlRule, map)
+                is PrlIfThenElseRule -> rule(prlRule, map)
+                is PrlInclusionRule -> rule(prlRule, map)
+                is PrlMandatoryFeatureRule -> rule(prlRule, map)
+                is PrlFeatureRule -> rule(prlRule, map)
             }
         } catch (e: CoCoException) {
             state.addError(e.message!!)
@@ -292,77 +190,69 @@ class PrlCompiler {
         }
     }
 
-    private fun rule(prl: PrlConstraintRule, module: Module, map: Fmap) =
+    private fun rule(prl: PrlConstraintRule, map: Fmap) =
         ConstraintRule(
             cc.compileConstraint(prl.constraint, map),
-            module,
             prl.id,
             prl.description,
             compileProperties(prl.propsMap()),
             prl.lineNumber
         )
 
-    private fun rule(prl: PrlInclusionRule, module: Module, map: Fmap) = InclusionRule(
+    private fun rule(prl: PrlInclusionRule, map: Fmap) = InclusionRule(
         cc.compileConstraint(prl.ifPart, map),
         cc.compileConstraint(prl.thenPart, map),
-        module,
         prl.id,
         prl.description,
         compileProperties(prl.propsMap()),
         prl.lineNumber
     )
 
-    private fun rule(prl: PrlExclusionRule, module: Module, map: Fmap) = ExclusionRule(
+    private fun rule(prl: PrlExclusionRule, map: Fmap) = ExclusionRule(
         cc.compileConstraint(prl.ifPart, map),
         cc.compileConstraint(prl.thenNotPart, map),
-        module,
         prl.id,
         prl.description,
         compileProperties(prl.propsMap()),
         prl.lineNumber
     )
 
-    private fun rule(prl: PrlDefinitionRule, module: Module, map: Fmap) = DefinitionRule(
+    private fun rule(prl: PrlDefinitionRule, map: Fmap) = DefinitionRule(
         cc.compileUnversionedBooleanFeature(prl.feature, map),
         cc.compileConstraint(prl.definition, map),
-        module,
         prl.id,
         prl.description,
         compileProperties(prl.propsMap()),
         prl.lineNumber
     )
 
-    private fun rule(prl: PrlIfThenElseRule, module: Module, map: Fmap) = IfThenElseRule(
+    private fun rule(prl: PrlIfThenElseRule, map: Fmap) = IfThenElseRule(
         cc.compileConstraint(prl.ifPart, map),
         cc.compileConstraint(prl.thenPart, map),
         cc.compileConstraint(prl.elsePart, map),
-        module,
         prl.id,
         prl.description,
         compileProperties(prl.propsMap()),
         prl.lineNumber
     )
 
-    private fun rule(prl: PrlGroupRule, module: Module, map: Fmap) = GroupRule(
+    private fun rule(prl: PrlGroupRule, map: Fmap) = GroupRule(
         prl.type,
         cc.compileUnversionedBooleanFeature(prl.group, map),
         cc.compileBooleanFeatures(prl.content, map).toSet(),
-        prl.visibility,
-        module,
         prl.id,
         prl.description,
         compileProperties(prl.propsMap()),
         prl.lineNumber
     )
 
-    private fun rule(prl: PrlFeatureRule, module: Module, map: Fmap): AnyRule {
+    private fun rule(prl: PrlFeatureRule, map: Fmap): AnyRule {
         val feature = validateFeature(prl, map)
         return if (prl is PrlForbiddenFeatureRule) {
             ForbiddenFeatureRule(
                 feature,
                 prl.enumValue,
                 prl.intValueOrVersion,
-                module,
                 prl.id,
                 prl.description,
                 compileProperties(prl.propsMap()),
@@ -373,7 +263,6 @@ class PrlCompiler {
                 feature,
                 prl.enumValue,
                 prl.intValueOrVersion,
-                module,
                 prl.id,
                 prl.description,
                 compileProperties(prl.propsMap()),
@@ -425,26 +314,23 @@ internal class CompilerState {
 }
 
 internal class CompilerContext(
-    var module: String? = null,
     var feature: String? = null,
     var ruleId: String? = null,
     var lineNumber: Int? = null
 ) {
     fun clear() {
-        module = null
         feature = null
         ruleId = null
         lineNumber = null
     }
 
-    fun isEmpty() = module == null && feature == null && ruleId == null && lineNumber == null
+    fun isEmpty() = feature == null && ruleId == null && lineNumber == null
 
     override fun toString(): String {
-        val moduleString = if (module == null) null else "module=$module"
         val featureString = if (feature == null) null else "feature=$feature"
         val ruleIdString = if (ruleId == null) null else "ruleId=$ruleId"
         val lineNumberString = if (lineNumber == null) null else "lineNumber=$lineNumber"
-        return listOfNotNull(moduleString, featureString, ruleIdString, lineNumberString).joinToString(", ", "[", "]")
+        return listOfNotNull(featureString, ruleIdString, lineNumberString).joinToString(", ", "[", "]")
     }
 }
 

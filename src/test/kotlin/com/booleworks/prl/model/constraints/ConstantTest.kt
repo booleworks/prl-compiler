@@ -25,8 +25,8 @@ class ConstantTest {
 
     @Test
     fun testToString() {
-        assertThat(TRUE.toString(DEFAULT_MODULE)).isEqualTo("true")
-        assertThat(FALSE.toString(DEFAULT_MODULE)).isEqualTo("false")
+        assertThat(TRUE.toString()).isEqualTo("true")
+        assertThat(FALSE.toString()).isEqualTo("false")
     }
 
     @Test

@@ -24,7 +24,7 @@ class EnumComparisonPredicateTest {
         assertThat(c.feature).isEqualTo(feature)
         assertThat(c.value).isEqualTo(value)
         assertThat(c.comparison).isEqualTo(ComparisonOperator.EQ)
-        assertThat(c.toString(DEFAULT_MODULE)).isEqualTo("[f1 = \"text\"]")
+        assertThat(c.toString()).isEqualTo("[f1 = \"text\"]")
     }
 
     @Test
@@ -35,7 +35,7 @@ class EnumComparisonPredicateTest {
         assertThat(c.feature).isEqualTo(feature)
         assertThat(c.value).isEqualTo(value)
         assertThat(c.comparison).isEqualTo(ComparisonOperator.NE)
-        assertThat(c.toString(DEFAULT_MODULE)).isEqualTo("[f1 != \"text\"]")
+        assertThat(c.toString()).isEqualTo("[f1 != \"text\"]")
     }
 
     @Test

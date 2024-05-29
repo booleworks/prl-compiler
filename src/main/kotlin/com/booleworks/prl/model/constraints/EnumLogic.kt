@@ -3,7 +3,6 @@
 
 package com.booleworks.prl.model.constraints
 
-import com.booleworks.prl.model.Module
 import com.booleworks.prl.model.constraints.ComparisonOperator.EQ
 import com.booleworks.prl.model.constraints.ComparisonOperator.NE
 import com.booleworks.prl.model.datastructures.FeatureAssignment
@@ -14,7 +13,7 @@ import com.booleworks.prl.parser.PragmaticRuleLanguage.SYMBOL_RSQB
 import com.booleworks.prl.parser.PragmaticRuleLanguage.quote
 import java.util.Objects
 
-fun enumFt(featureCode: String, module: Module, values: Set<String>) = EnumFeature(featureCode, module, values)
+fun enumFt(featureCode: String, values: Set<String>) = EnumFeature(featureCode, values)
 fun enumVal(value: String) = EnumValue(value)
 fun enumEq(feature: EnumFeature, value: EnumValue) = EnumComparisonPredicate(feature, value, EQ)
 fun enumEq(feature: EnumFeature, value: String) = EnumComparisonPredicate(feature, EnumValue(value), EQ)
@@ -38,24 +37,21 @@ sealed interface EnumTerm {
 
 class EnumFeature internal constructor(
     override val featureCode: String,
-    override val module: Module,
     internal val values: Set<String>
-) :
-    Feature(featureCode, module), EnumTerm {
+) : Feature(featureCode), EnumTerm {
     override fun value(assignment: FeatureAssignment) = assignment.getEnum(this)
         ?: throw IllegalArgumentException("Enum Feature $featureCode is not assigned to any value")
 
     override fun rename(feature: EnumFeature, renaming: FeatureRenaming) = renaming.rename(this)
     override fun restrict(assignment: FeatureAssignment) = assignment.getEnum(this).let { it?.toEnumValue() ?: this }
 
-    override fun hashCode() = Objects.hash(featureCode, module, values)
+    override fun hashCode() = Objects.hash(featureCode, values)
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         if (!super.equals(other)) return false
         other as EnumFeature
         if (featureCode != other.featureCode) return false
-        if (module != other.module) return false
         return values == other.values
     }
 }
@@ -104,8 +100,7 @@ data class EnumComparisonPredicate internal constructor(
             Constant(comparison == EQ == ((restrictedFeature as EnumValue).value == value.value))
         }
 
-    override fun toString(currentModule: Module) =
-        "$SYMBOL_LSQB${feature.toString(currentModule)} ${comparison.symbol} $value$SYMBOL_RSQB"
+    override fun toString() = "$SYMBOL_LSQB${feature} ${comparison.symbol} $value$SYMBOL_RSQB"
 }
 
 data class EnumInPredicate internal constructor(val feature: EnumFeature, val values: Set<String>) : EnumPredicate {
@@ -127,6 +122,5 @@ data class EnumInPredicate internal constructor(val feature: EnumFeature, val va
         Constant(values.contains((restricted as EnumValue).value))
     }
 
-    override fun toString(currentModule: Module) =
-        "$SYMBOL_LSQB${feature.toString(currentModule)} $KEYWORD_IN ${quote(values)}$SYMBOL_RSQB"
+    override fun toString() = "$SYMBOL_LSQB${feature} $KEYWORD_IN ${quote(values)}$SYMBOL_RSQB"
 }

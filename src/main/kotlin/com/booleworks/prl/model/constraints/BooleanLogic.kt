@@ -3,7 +3,6 @@
 
 package com.booleworks.prl.model.constraints
 
-import com.booleworks.prl.model.Module
 import com.booleworks.prl.model.datastructures.FeatureAssignment
 import com.booleworks.prl.model.datastructures.FeatureRenaming
 import com.booleworks.prl.parser.PragmaticRuleLanguage
@@ -17,7 +16,7 @@ import com.booleworks.prl.parser.PragmaticRuleLanguage.constantString
 val TRUE = Constant(true)
 val FALSE = Constant(false)
 
-fun boolFt(featureCode: String, module: Module) = BooleanFeature(featureCode, false, module)
+fun boolFt(featureCode: String) = BooleanFeature(featureCode, false)
 
 fun constant(value: Boolean) = Constant(value)
 
@@ -87,11 +86,10 @@ sealed interface Constraint {
     fun rename(renaming: FeatureRenaming): Constraint
     fun syntacticSimplify(): Constraint
     fun isAtom(): Boolean
-    fun toString(currentModule: Module): String
 }
 
-class BooleanFeature(override val featureCode: String, val versioned: Boolean, override val module: Module) :
-    Feature(featureCode, module), AtomicConstraint {
+class BooleanFeature(override val featureCode: String, val versioned: Boolean) :
+    Feature(featureCode), AtomicConstraint {
     override val type = ConstraintType.ATOM
     override fun features() = setOf(this)
     override fun booleanFeatures() = setOf(this)
@@ -131,7 +129,7 @@ data class Constant internal constructor(val value: Boolean) : Constraint {
     override fun rename(renaming: FeatureRenaming) = this
     override fun syntacticSimplify() = this
     override fun isAtom() = true
-    override fun toString(currentModule: Module) = constantString(type)
+    override fun toString() = constantString(type)
 }
 
 data class Not internal constructor(val operand: Constraint) : Constraint {
@@ -149,9 +147,9 @@ data class Not internal constructor(val operand: Constraint) : Constraint {
     override fun rename(renaming: FeatureRenaming) = not(operand.rename(renaming))
     override fun syntacticSimplify() = not(operand.syntacticSimplify())
     override fun isAtom() = false
-    override fun toString(currentModule: Module) = type.symbol +
-            if (operand.type.precedence > ConstraintType.NOT.precedence) operand.toString(currentModule) else
-                bracket(operand.toString(currentModule))
+    override fun toString() = type.symbol +
+            if (operand.type.precedence > ConstraintType.NOT.precedence) operand.toString() else
+                bracket(operand.toString())
 }
 
 sealed class BinaryOperator(open val left: Constraint, open val right: Constraint) : Constraint {
@@ -177,12 +175,10 @@ sealed class BinaryOperator(open val left: Constraint, open val right: Constrain
     override fun syntacticSimplify() = simplifiedConstraint(left.syntacticSimplify(), right.syntacticSimplify())
     protected abstract fun simplifiedConstraint(simpLeft: Constraint, simpRight: Constraint): Constraint
 
-    override fun toString(currentModule: Module): String {
+    override fun toString(): String {
         val precedence = type.precedence
-        val leftString = if (precedence < left.type.precedence) left.toString(currentModule) else
-            bracket(left.toString(currentModule))
-        val rightString = if (precedence < right.type.precedence) right.toString(currentModule) else
-            bracket(right.toString(currentModule))
+        val leftString = if (precedence < left.type.precedence) left.toString() else bracket(left.toString())
+        val rightString = if (precedence < right.type.precedence) right.toString() else bracket(right.toString())
         return leftString + " " + type.symbol + " " + rightString
     }
 }
@@ -192,6 +188,7 @@ data class Implication internal constructor(override val left: Constraint, overr
     override val type = ConstraintType.IMPL
     override fun evaluate(assignment: FeatureAssignment) = !left.evaluate(assignment) || right.evaluate(assignment)
     override fun rename(renaming: FeatureRenaming) = Implication(left.rename(renaming), right.rename(renaming))
+    override fun toString() = super.toString()
 
     override fun simplifiedConstraint(simpLeft: Constraint, simpRight: Constraint): Constraint {
         return when {
@@ -219,6 +216,7 @@ data class Equivalence internal constructor(override val left: Constraint, overr
         else -> Equivalence(simpLeft, simpRight)
     }
 
+    override fun toString() = super.toString()
     override fun hashCode() = left.hashCode() + right.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -260,8 +258,8 @@ sealed class CardinalityConstraint(open val features: Set<BooleanFeature>) : Con
         return featureAssignment
     }
 
-    override fun toString(currentModule: Module) = ccString(type) + SYMBOL_LSQB +
-            features.joinToString("$SYMBOL_COMMA ") { it.toString(currentModule) } + SYMBOL_RSQB
+    override fun toString() = ccString(type) + SYMBOL_LSQB +
+            features.joinToString("$SYMBOL_COMMA ") { it.toString() } + SYMBOL_RSQB
 
     protected class FeatureAssignmentCC {
         var numTrueAssignedFeatures = 0
@@ -274,6 +272,7 @@ data class Amo internal constructor(override val features: Set<BooleanFeature>) 
     override fun evaluate(assignment: FeatureAssignment) = count(assignment) != -1
     override fun rename(renaming: FeatureRenaming) = amo(features.map { renaming.rename(it) })
     override fun syntacticSimplify() = if (features.isEmpty() || features.size == 1) TRUE else this
+    override fun toString() = super.toString()
 
     override fun restrict(assignment: FeatureAssignment): Constraint {
         val restrictedFeatures = restrictedFeatures(assignment)
@@ -294,6 +293,7 @@ data class Exo internal constructor(override val features: Set<BooleanFeature>) 
     override val type = ConstraintType.EXO
     override fun evaluate(assignment: FeatureAssignment) = count(assignment) == 1
     override fun rename(renaming: FeatureRenaming) = exo(features.map(renaming::rename))
+    override fun toString() = super.toString()
 
     override fun syntacticSimplify() = when {
         features.isEmpty() -> FALSE
@@ -334,7 +334,7 @@ sealed class NaryOperator(open val operands: Set<Constraint>) : Constraint {
     override fun containsEnumFeatures() = operands.any { obj: Constraint -> obj.containsEnumFeatures() }
     override fun containsIntFeatures() = operands.any { obj: Constraint -> obj.containsIntFeatures() }
 
-    override fun toString(currentModule: Module): String {
+    override fun toString(): String {
         val sb = StringBuilder()
         val size = operands.size
         var last: Constraint? = null
@@ -342,24 +342,12 @@ sealed class NaryOperator(open val operands: Set<Constraint>) : Constraint {
             if (count + 1 == size) {
                 last = op
             } else {
-                sb.append(
-                    if (type.precedence < op.type.precedence) op.toString(currentModule) else bracket(
-                        op.toString(
-                            currentModule
-                        )
-                    )
-                )
+                sb.append(if (type.precedence < op.type.precedence) op.toString() else bracket(op.toString()))
                 sb.append(" ").append(type.symbol).append(" ")
             }
         }
         if (last != null) {
-            sb.append(
-                if (type.precedence < last.type.precedence) last.toString(currentModule) else bracket(
-                    last.toString(
-                        currentModule
-                    )
-                )
-            )
+            sb.append(if (type.precedence < last.type.precedence) last.toString() else bracket(last.toString()))
         }
         return sb.toString()
     }
@@ -371,6 +359,7 @@ data class And internal constructor(override val operands: Set<Constraint>) : Na
     override fun restrict(assignment: FeatureAssignment) = simplifiedConstraint(assignment)
     override fun rename(renaming: FeatureRenaming) = and(operands.map { o: Constraint -> o.rename(renaming) }.toList())
     override fun syntacticSimplify() = simplifiedConstraint(null)
+    override fun toString() = super.toString()
 
     private fun simplifiedConstraint(assignment: FeatureAssignment?): Constraint {
         val newOperands = LinkedHashSet<Constraint>()
@@ -392,6 +381,7 @@ data class Or internal constructor(override val operands: Set<Constraint>) : Nar
     override fun rename(renaming: FeatureRenaming) = or(operands.map { o: Constraint -> o.rename(renaming) }.toList())
     override fun restrict(assignment: FeatureAssignment) = simplifiedConstraint(assignment)
     override fun syntacticSimplify() = simplifiedConstraint(null)
+    override fun toString() = super.toString()
 
     private fun simplifiedConstraint(assignment: FeatureAssignment?): Constraint {
         val newOperands = LinkedHashSet<Constraint>()

@@ -1,7 +1,6 @@
 package com.booleworks.prl.model.constraints
 
 import com.booleworks.prl.model.BooleanFeatureDefinition
-import com.booleworks.prl.model.Module
 import com.booleworks.prl.model.datastructures.FeatureAssignment
 import com.booleworks.prl.model.datastructures.FeatureRenaming
 import com.booleworks.prl.model.deserialize
@@ -12,8 +11,7 @@ import org.junit.jupiter.api.Test
 class BooleanFeatureTest {
     @Test
     fun testCreation() {
-        val module = Module("module")
-        val f1Def = BooleanFeatureDefinition(module, "f1")
+        val f1Def = BooleanFeatureDefinition("f1")
         val f1 = f1Def.feature
         val f2 = boolFt("f2")
         assertThat(f1.featureCode).isEqualTo("f1")
@@ -36,8 +34,8 @@ class BooleanFeatureTest {
     fun testToString() {
         val f1 = boolFt("Special feature &# x")
         val f2 = boolFt("f2")
-        assertThat(f1.toString(DEFAULT_MODULE)).isEqualTo("`Special feature &# x`")
-        assertThat(f2.toString(DEFAULT_MODULE)).isEqualTo("f2")
+        assertThat(f1.toString()).isEqualTo("`Special feature &# x`")
+        assertThat(f2.toString()).isEqualTo("f2")
     }
 
     @Test

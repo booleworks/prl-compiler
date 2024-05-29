@@ -4,7 +4,6 @@
 package com.booleworks.prl.model.rules
 
 import com.booleworks.prl.model.AnyProperty
-import com.booleworks.prl.model.Module
 import com.booleworks.prl.model.constraints.Constraint
 import com.booleworks.prl.model.constraints.ConstraintType
 import com.booleworks.prl.model.constraints.EnumFeature
@@ -19,15 +18,14 @@ import java.util.Objects
 class InclusionRule(
     val ifConstraint: Constraint,
     val thenConstraint: Constraint,
-    override val module: Module,
     override val id: String = "",
     override val description: String = "",
     override val properties: Map<String, AnyProperty> = mapOf(),
     override val lineNumber: Int? = null
-) : Rule<InclusionRule>(module, id, description, properties, lineNumber) {
+) : Rule<InclusionRule>(id, description, properties, lineNumber) {
 
     internal constructor(rule: AnyRule, ifConstraint: Constraint, thenConstraint: Constraint) : this(
-        ifConstraint, thenConstraint, rule.module, rule.id, rule.description, rule.properties, rule.lineNumber
+        ifConstraint, thenConstraint, rule.id, rule.description, rule.properties, rule.lineNumber
     )
 
     override fun features() = ifConstraint.features() + thenConstraint.features()
@@ -59,13 +57,11 @@ class InclusionRule(
     override fun rename(renaming: FeatureRenaming) =
         InclusionRule(this, ifConstraint.rename(renaming), thenConstraint.rename(renaming))
 
-    override fun stripProperties() =
-        InclusionRule(ifConstraint, thenConstraint, module, id, description, mapOf(), lineNumber)
+    override fun stripProperties() = InclusionRule(ifConstraint, thenConstraint, id, description, mapOf(), lineNumber)
 
-    override fun stripMetaInfo() = InclusionRule(ifConstraint, thenConstraint, module, "", "", properties, lineNumber)
-    override fun stripAll() = InclusionRule(ifConstraint, thenConstraint, module, "", "", mapOf(), lineNumber)
-    override fun headerLine(currentModule: Module) =
-        "$KEYWORD_IF ${ifConstraint.toString(currentModule)} $KEYWORD_THEN ${thenConstraint.toString(currentModule)}"
+    override fun stripMetaInfo() = InclusionRule(ifConstraint, thenConstraint, "", "", properties, lineNumber)
+    override fun stripAll() = InclusionRule(ifConstraint, thenConstraint, "", "", mapOf(), lineNumber)
+    override fun headerLine() = "$KEYWORD_IF $ifConstraint $KEYWORD_THEN $thenConstraint"
 
     override fun hashCode() = Objects.hash(super.hashCode(), ifConstraint, thenConstraint)
     override fun equals(other: Any?) = super.equals(other) && hasEqualConstraint(other as AnyRule)

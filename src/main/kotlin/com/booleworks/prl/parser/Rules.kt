@@ -5,7 +5,6 @@
 
 package com.booleworks.prl.parser
 
-import com.booleworks.prl.model.Visibility
 import com.booleworks.prl.model.rules.GroupType
 import org.antlr.v4.runtime.CharStreams
 
@@ -64,7 +63,6 @@ data class PrlGroupRule(
     val type: GroupType,
     val group: PrlFeature,
     val content: List<PrlFeature>,
-    val visibility: Visibility = Visibility.PUBLIC,
     override val id: String = "",
     override val description: String = "",
     override val properties: List<PrlProperty<*>> = listOf(),

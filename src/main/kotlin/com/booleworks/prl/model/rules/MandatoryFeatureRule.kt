@@ -4,7 +4,6 @@
 package com.booleworks.prl.model.rules
 
 import com.booleworks.prl.model.AnyProperty
-import com.booleworks.prl.model.Module
 import com.booleworks.prl.model.constraints.BooleanFeature
 import com.booleworks.prl.model.constraints.EnumFeature
 import com.booleworks.prl.model.constraints.Feature
@@ -21,7 +20,6 @@ class MandatoryFeatureRule internal constructor(
     override val feature: Feature,
     override val enumValue: String?,
     override val intValueOrVersion: Int?,
-    override val module: Module,
     override val id: String,
     override val description: String,
     override val properties: Map<String, AnyProperty> = mapOf(),
@@ -30,7 +28,6 @@ class MandatoryFeatureRule internal constructor(
     feature,
     enumValue,
     intValueOrVersion,
-    module,
     id,
     description,
     properties,
@@ -38,55 +35,42 @@ class MandatoryFeatureRule internal constructor(
 ) {
 
     private constructor(rule: AnyRule, feature: Feature, enumValue: String?, intValueOrVersion: Int?)
-            : this(
-        feature,
-        enumValue,
-        intValueOrVersion,
-        rule.module,
-        rule.id,
-        rule.description,
-        rule.properties,
-        rule.lineNumber
-    )
+            : this(feature, enumValue, intValueOrVersion, rule.id, rule.description, rule.properties, rule.lineNumber)
 
     constructor(
         feature: BooleanFeature,
-        module: Module,
         id: String = "",
         description: String = "",
         properties: Map<String, AnyProperty> = mapOf(),
         lineNumber: Int? = null
-    ) : this(feature, null, null, module, id, description, properties, lineNumber)
+    ) : this(feature, null, null, id, description, properties, lineNumber)
 
     constructor(
         feature: BooleanFeature,
         version: Int,
-        module: Module,
         id: String = "",
         description: String = "",
         properties: Map<String, AnyProperty> = mapOf(),
         lineNumber: Int? = null
-    ) : this(feature, null, version, module, id, description, properties, lineNumber)
+    ) : this(feature, null, version, id, description, properties, lineNumber)
 
     constructor(
         feature: IntFeature,
         value: Int,
-        module: Module,
         id: String = "",
         description: String = "",
         properties: Map<String, AnyProperty> = mapOf(),
         lineNumber: Int? = null
-    ) : this(feature, null, value, module, id, description, properties, lineNumber)
+    ) : this(feature, null, value, id, description, properties, lineNumber)
 
     constructor(
         feature: EnumFeature,
         value: String,
-        module: Module,
         id: String = "",
         description: String = "",
         properties: Map<String, AnyProperty> = mapOf(),
         lineNumber: Int? = null
-    ) : this(feature, value, null, module, id, description, properties, lineNumber)
+    ) : this(feature, value, null, id, description, properties, lineNumber)
 
     override fun rename(renaming: FeatureRenaming) =
         renameFeature(renaming).let {
@@ -99,13 +83,13 @@ class MandatoryFeatureRule internal constructor(
         }
 
     override fun stripProperties() =
-        MandatoryFeatureRule(feature, enumValue, intValueOrVersion, module, id, description, mapOf(), lineNumber)
+        MandatoryFeatureRule(feature, enumValue, intValueOrVersion, id, description, mapOf(), lineNumber)
 
     override fun stripMetaInfo() =
-        MandatoryFeatureRule(feature, enumValue, intValueOrVersion, module, "", "", properties, lineNumber)
+        MandatoryFeatureRule(feature, enumValue, intValueOrVersion, "", "", properties, lineNumber)
 
     override fun stripAll() =
-        MandatoryFeatureRule(feature, enumValue, intValueOrVersion, module, "", "", mapOf(), lineNumber)
+        MandatoryFeatureRule(feature, enumValue, intValueOrVersion, "", "", mapOf(), lineNumber)
 
     override fun hashCode() = Objects.hash(super.hashCode(), feature, enumValue, intValueOrVersion)
     override fun equals(other: Any?) = super.equals(other) && hasEqualConstraint(other as AnyRule)

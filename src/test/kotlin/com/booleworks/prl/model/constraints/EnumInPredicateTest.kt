@@ -22,7 +22,7 @@ class EnumInPredicateTest {
         assertThat(c.isAtom()).isTrue
         assertThat(c.feature).isEqualTo(f1)
         assertThat(c.values).containsExactly(a.value, b.value)
-        assertThat(c.toString(DEFAULT_MODULE)).isEqualTo("[f1 in [\"a\", \"b\"]]")
+        assertThat(c.toString()).isEqualTo("[f1 in [\"a\", \"b\"]]")
     }
 
     @Test
@@ -64,7 +64,12 @@ class EnumInPredicateTest {
         ass1.assign(feature, "text")
         assertThat(unsafeParse("[s in [\"text\", \"test\"]]").restrict(ass1)).isEqualTo(TRUE)
         assertThat(unsafeParse("[s in [\"texxt\", \"test\"]]").restrict(ass1)).isEqualTo(FALSE)
-        assertThat(unsafeParse("[sx in [\"text\", \"test\"]]").restrict(ass1)).isEqualTo(enumIn(unassignedFeature, listOf("text", "test")))
+        assertThat(unsafeParse("[sx in [\"text\", \"test\"]]").restrict(ass1)).isEqualTo(
+            enumIn(
+                unassignedFeature,
+                listOf("text", "test")
+            )
+        )
     }
 
     @Test

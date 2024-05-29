@@ -4,7 +4,6 @@
 package com.booleworks.prl.model.rules
 
 import com.booleworks.prl.model.AnyProperty
-import com.booleworks.prl.model.Module
 import com.booleworks.prl.model.constraints.Constraint
 import com.booleworks.prl.model.constraints.ConstraintType
 import com.booleworks.prl.model.constraints.EnumFeature
@@ -21,12 +20,11 @@ class IfThenElseRule(
     val ifConstraint: Constraint,
     val thenConstraint: Constraint,
     val elseConstraint: Constraint,
-    override val module: Module,
     override val id: String = "",
     override val description: String = "",
     override val properties: Map<String, AnyProperty> = mapOf(),
     override val lineNumber: Int? = null
-) : Rule<IfThenElseRule>(module, id, description, properties, lineNumber) {
+) : Rule<IfThenElseRule>(id, description, properties, lineNumber) {
 
     private constructor(
         rule: AnyRule,
@@ -37,7 +35,6 @@ class IfThenElseRule(
         ifConstraint,
         thenConstraint,
         elseConstraint,
-        rule.module,
         rule.id,
         rule.description,
         rule.properties,
@@ -103,17 +100,15 @@ class IfThenElseRule(
         )
 
     override fun stripProperties() =
-        IfThenElseRule(ifConstraint, thenConstraint, elseConstraint, module, id, description, mapOf(), lineNumber)
+        IfThenElseRule(ifConstraint, thenConstraint, elseConstraint, id, description, mapOf(), lineNumber)
 
     override fun stripMetaInfo() =
-        IfThenElseRule(ifConstraint, thenConstraint, elseConstraint, module, "", "", properties, lineNumber)
+        IfThenElseRule(ifConstraint, thenConstraint, elseConstraint, "", "", properties, lineNumber)
 
     override fun stripAll() =
-        IfThenElseRule(ifConstraint, thenConstraint, elseConstraint, module, "", "", mapOf(), lineNumber)
+        IfThenElseRule(ifConstraint, thenConstraint, elseConstraint, "", "", mapOf(), lineNumber)
 
-    override fun headerLine(currentModule: Module) =
-        "$KEYWORD_IF ${ifConstraint.toString(currentModule)} $KEYWORD_THEN " +
-                "${thenConstraint.toString(currentModule)} $KEYWORD_ELSE ${elseConstraint.toString(currentModule)}"
+    override fun headerLine() = "$KEYWORD_IF $ifConstraint $KEYWORD_THEN $thenConstraint $KEYWORD_ELSE $elseConstraint"
 
     override fun hashCode() = Objects.hash(super.hashCode(), ifConstraint, thenConstraint, elseConstraint)
     override fun equals(other: Any?) = super.equals(other) && hasEqualConstraint(other as AnyRule)

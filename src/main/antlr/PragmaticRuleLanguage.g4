@@ -57,14 +57,11 @@ only_constraint returns [PrlConstraint c]
 
 rulefile returns [PrlRuleFile rf]
   @init{
-    List<PrlRuleSet> rulesets = new ArrayList<>();
     List<PrlSlicingPropertyDefinition> properties = new ArrayList<>();
   }
-  : header EOF {$rf = new PrlRuleFile($header.h, List.of(), List.of(), this.fileName);}
-  | header
+  : header
     (SLICING PROPERTIES LBRA (sp1 = slicing_property {properties.add($slicing_property.pd);})* RBRA)?
-    (a = ruleset {rulesets.add($a.rs);} (b = ruleset {rulesets.add($b.rs);})*)? EOF
-    {$rf = new PrlRuleFile($header.h, rulesets, properties, this.fileName);}
+    ruleset EOF {$rf = new PrlRuleFile($header.h, $ruleset.rs, properties, this.fileName);}
   ;
 
 header returns [PrlHeader h]
@@ -81,31 +78,25 @@ slicing_property returns [PrlSlicingPropertyDefinition pd]
   ;
 
 ruleset returns [PrlRuleSet rs]
-  : MODULE mod = identifier LBRA con = ruleset_content RBRA {$rs = $con.rsc.generateRuleSet(lnr(), $mod.text);}
-  | MODULE LBRA con = ruleset_content RBRA {$rs = $con.rsc.generateRuleSet(lnr());}
+  : con = ruleset_content {$rs = $con.rsc.generateRuleSet(lnr());}
   ;
 
 ruleset_content returns [PrlRuleSetContent rsc]
   @init{PrlRuleSetContent content = new PrlRuleSetContent();}
-  : (imp = import_def {content.addImport($imp.imp);}
-     | fea = feature_def {content.addFeature($fea.f);}
+  : (fea = feature_def {content.addFeature($fea.f);}
      | rul = rule_def {content.addRule($rul.r);})*
      {$rsc = content;}
   ;
 
-import_def returns [PrlModuleImport imp]
-  : IMPORT mod = identifier {$imp = new PrlModuleImport(new PrlModule($mod.text), lnr());}
-  ;
-
 feature_def returns [PrlFeatureDefinition f]
   @init{PrlFeatureContent c = new PrlFeatureContent();}
-  : (vis {c.setVis($vis.v);})? (VERS {c.setVs(true);})? (BOOL)? FEATURE identifier
+  : (VERS {c.setVs(true);})? (BOOL)? FEATURE identifier
     (LBRA (DESC quoted_string {c.setDesc($quoted_string.s);} | property {c.addProperty($property.p);})* RBRA)?
     {c.setLnr(lnr()); $f = c.generateBoolFeature($identifier.i);}
-  | (vis {c.setVis($vis.v);})? ENUM FEATURE identifier string_list
+  | ENUM FEATURE identifier string_list
     (LBRA (DESC quoted_string {c.setDesc($quoted_string.s);} | property {c.addProperty($property.p);})* RBRA)?
     {c.setLnr(lnr()); $f = c.generateEnumFeature($identifier.i, $string_list.ls);}
-  | (vis {c.setVis($vis.v);})? INT FEATURE identifier int_range
+  | INT FEATURE identifier int_range
     (LBRA (DESC quoted_string {c.setDesc($quoted_string.s);} | property {c.addProperty($property.p);})* RBRA)?
     {c.setLnr(lnr()); $f = c.generateIntFeature($identifier.i, $int_range.r);}
   ;
@@ -127,10 +118,10 @@ rule_def returns [PrlRule r]
   | RULE f = feature IS c2 = constraint
     (LBRA (ID s = quoted_string {c.setId($s.s);} | DESC s = quoted_string {c.setDesc($s.s);} | p = property {c.addProperty($p.p);})* RBRA)?
     {c.setLnr(lnr()); $r = c.generateDefinitionRule($f.f, $c2.c);}
-  | OPTIONAL (vis {c.setVis($vis.v);})? GROUP g = feature CONTAINS gl = feature_list
+  | OPTIONAL GROUP g = feature CONTAINS gl = feature_list
     (LBRA (ID s = quoted_string {c.setId($s.s);} | DESC s = quoted_string {c.setDesc($s.s);} | p = property {c.addProperty($p.p);})* RBRA)?
     {c.setLnr(lnr()); $r = c.generateGroupRule(GroupType.OPTIONAL, $g.f, $gl.ls);}
-  | MANDATORY (vis {c.setVis($vis.v);})? GROUP g = feature CONTAINS gl = feature_list
+  | MANDATORY GROUP g = feature CONTAINS gl = feature_list
     (LBRA (ID s = quoted_string {c.setId($s.s);} | DESC s = quoted_string {c.setDesc($s.s);} | p = property {c.addProperty($p.p);})* RBRA)?
     {c.setLnr(lnr()); $r = c.generateGroupRule(GroupType.MANDATORY, $g.f, $gl.ls);}
   | forbidden_feature_rule {$r = $forbidden_feature_rule.r;}
@@ -324,10 +315,6 @@ date_list returns [List<LocalDate> ls]
   : LSQB (date {list.add($date.d);}) (COMMA date {list.add($date.d);})* RSQB {$ls = list;}
   ;
 
-vis returns [Visibility v]
-  : PUBLIC   {$v = Visibility.PUBLIC;} | INTERNAL {$v = Visibility.INTERNAL;} | PRIVATE  {$v = Visibility.PRIVATE;}
-  ;
-
 comparator returns [ComparisonOperator c]
   : EQ {$c = ComparisonOperator.EQ;}
   | NE {$c = ComparisonOperator.NE;}
@@ -355,8 +342,6 @@ COMMA       : ',';
 // Keywords
 HEADER      : 'header';
 PRL_VERSION : 'prl_version';
-MODULE      : 'module';
-IMPORT      : 'import';
 FEATURE     : 'feature';
 RULE        : 'rule';
 SLICING     : 'slicing';
@@ -369,10 +354,6 @@ INT         : 'int';
 ENUM        : 'enum';
 DESC        : 'description';
 ID          : 'id';
-
-PUBLIC      : 'public';
-INTERNAL    : 'internal';
-PRIVATE     : 'private';
 
 // Contraint Language
 TRUE        : 'true';

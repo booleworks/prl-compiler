@@ -2,7 +2,6 @@ package com.booleworks.prl.compiler
 
 import com.booleworks.prl.model.IntRange
 import com.booleworks.prl.model.constraints.ComparisonOperator.EQ
-import com.booleworks.prl.model.constraints.DEFAULT_MODULE
 import com.booleworks.prl.model.constraints.FALSE
 import com.booleworks.prl.model.constraints.TRUE
 import com.booleworks.prl.model.constraints.amo
@@ -425,7 +424,7 @@ class ConstraintCompilerTest {
     fun testLargeExample() {
         val formula =
             """b1 => ([e1 in ["a", "b", "c"]] / -b2) & -(v[>=7] <=> [3*i3 + 47 > 8*i1 + -2*i2] / [-2*i2 + 4 in [-1, 1, 10]])"""
-        assertThat(cc.compileConstraint(parseConstraint(formula), featureMap).toString(DEFAULT_MODULE)).isEqualTo(
+        assertThat(cc.compileConstraint(parseConstraint(formula), featureMap).toString()).isEqualTo(
             formula
         )
     }

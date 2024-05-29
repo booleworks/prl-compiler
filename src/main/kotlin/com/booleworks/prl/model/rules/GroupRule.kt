@@ -4,8 +4,6 @@
 package com.booleworks.prl.model.rules
 
 import com.booleworks.prl.model.AnyProperty
-import com.booleworks.prl.model.Module
-import com.booleworks.prl.model.Visibility
 import com.booleworks.prl.model.constraints.BooleanFeature
 import com.booleworks.prl.model.constraints.ConstraintType
 import com.booleworks.prl.model.constraints.EnumFeature
@@ -24,7 +22,6 @@ import com.booleworks.prl.parser.PragmaticRuleLanguage.SYMBOL_COMMA
 import com.booleworks.prl.parser.PragmaticRuleLanguage.SYMBOL_LSQB
 import com.booleworks.prl.parser.PragmaticRuleLanguage.SYMBOL_RSQB
 import com.booleworks.prl.parser.PragmaticRuleLanguage.groupTypeString
-import com.booleworks.prl.parser.PragmaticRuleLanguage.visibilityString
 import java.util.Objects
 
 enum class GroupType { OPTIONAL, MANDATORY }
@@ -33,44 +30,28 @@ class GroupRule(
     val type: GroupType,
     val group: BooleanFeature,
     val content: Set<BooleanFeature>,
-    val visibility: Visibility = Visibility.PUBLIC,
-    override val module: Module,
     override val id: String = "",
     override val description: String = "",
     override val properties: Map<String, AnyProperty> = mapOf(),
     override val lineNumber: Int? = null
-) : Rule<GroupRule>(module, id, description, properties, lineNumber) {
+) : Rule<GroupRule>(id, description, properties, lineNumber) {
 
     constructor(
         type: GroupType,
         group: BooleanFeature,
         content: Collection<BooleanFeature>,
-        visibility: Visibility = Visibility.PUBLIC,
-        module: Module,
         id: String = "",
         description: String = "",
         properties: Map<String, AnyProperty> = mapOf(),
         lineNumber: Int? = null
-    ) : this(type, group, content.toSet(), visibility, module, id, description, properties, lineNumber)
+    ) : this(type, group, content.toSet(), id, description, properties, lineNumber)
 
     private constructor(
         rule: AnyRule,
         type: GroupType,
         group: BooleanFeature,
         content: Collection<BooleanFeature>,
-        visibility: Visibility = Visibility.PUBLIC
-    )
-            : this(
-        type,
-        group,
-        content.toSet(),
-        visibility,
-        rule.module,
-        rule.id,
-        rule.description,
-        rule.properties,
-        rule.lineNumber
-    )
+    ) : this(type, group, content.toSet(), rule.id, rule.description, rule.properties, rule.lineNumber)
 
     override fun features() = setOf(group) + content
     override fun booleanFeatures() = setOf(group) + content
@@ -115,7 +96,7 @@ class GroupRule(
                     this,
                     and(group, it)
                 )
-                else -> GroupRule(this, type, group, it.booleanFeatures(), visibility)
+                else -> GroupRule(this, type, group, it.booleanFeatures())
             }
         }
     }
@@ -139,7 +120,7 @@ class GroupRule(
                     }
                 it.type === ConstraintType.ATOM -> ConstraintRule(this, Equivalence(group, it))
                 it.type === ConstraintType.AND -> ConstraintRule(this, and(group, it).syntacticSimplify())
-                else -> GroupRule(this, type, group, it.booleanFeatures(), visibility)
+                else -> GroupRule(this, type, group, it.booleanFeatures())
             }
         }
     }
@@ -154,22 +135,17 @@ class GroupRule(
     }
 
     override fun rename(renaming: FeatureRenaming) =
-        GroupRule(this, type, renaming.rename(group), content.map { renaming.rename(it) }, visibility)
+        GroupRule(this, type, renaming.rename(group), content.map { renaming.rename(it) })
 
-    override fun stripProperties() =
-        GroupRule(type, group, content, visibility, module, id, description, mapOf(), lineNumber)
+    override fun stripProperties() = GroupRule(type, group, content, id, description, mapOf(), lineNumber)
+    override fun stripMetaInfo() = GroupRule(type, group, content, "", "", properties, lineNumber)
+    override fun stripAll() = GroupRule(type, group, content, "", "", mapOf(), lineNumber)
 
-    override fun stripMetaInfo() = GroupRule(type, group, content, visibility, module, "", "", properties, lineNumber)
-    override fun stripAll() = GroupRule(type, group, content, visibility, module, "", "", mapOf(), lineNumber)
+    override fun headerLine() = "${groupTypeString(type)} $KEYWORD_GROUP $group " +
+            "$KEYWORD_CONTAINS $SYMBOL_LSQB" + content.joinToString("$SYMBOL_COMMA ") { it.toString() } + SYMBOL_RSQB
 
-    override fun headerLine(currentModule: Module) =
-        "${groupTypeString(type)} ${visibilityString(visibility)}$KEYWORD_GROUP ${group.toString(currentModule)} " +
-                "$KEYWORD_CONTAINS $SYMBOL_LSQB" +
-                content.joinToString("$SYMBOL_COMMA ") { it.toString(currentModule) } + SYMBOL_RSQB
-
-    override fun hashCode() = Objects.hash(super.hashCode(), type, group, visibility, content)
+    override fun hashCode() = Objects.hash(super.hashCode(), type, group, content)
     override fun equals(other: Any?) = super.equals(other) && hasEqualConstraint(other as AnyRule)
     private fun hasEqualConstraint(other: AnyRule) =
-        other is GroupRule && type == other.type && group == other.group && visibility == other.visibility &&
-                content == other.content
+        other is GroupRule && type == other.type && group == other.group && content == other.content
 }

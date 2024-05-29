@@ -33,12 +33,12 @@ class IntMulTest {
 
     @Test
     fun testToString() {
-        assertThat(pos1.toString(DEFAULT_MODULE)).isEqualTo("f1")
-        assertThat(pos2.toString(DEFAULT_MODULE)).isEqualTo("f1")
-        assertThat(neg.toString(DEFAULT_MODULE)).isEqualTo("-f1")
-        assertThat(mul1.toString(DEFAULT_MODULE)).isEqualTo("42*f1")
-        assertThat(mul2.toString(DEFAULT_MODULE)).isEqualTo("-42*f1")
-        assertThat(zero.toString(DEFAULT_MODULE)).isEqualTo("0*f1")
+        assertThat(pos1.toString()).isEqualTo("f1")
+        assertThat(pos2.toString()).isEqualTo("f1")
+        assertThat(neg.toString()).isEqualTo("-f1")
+        assertThat(mul1.toString()).isEqualTo("42*f1")
+        assertThat(mul2.toString()).isEqualTo("-42*f1")
+        assertThat(zero.toString()).isEqualTo("0*f1")
     }
 
     @Test

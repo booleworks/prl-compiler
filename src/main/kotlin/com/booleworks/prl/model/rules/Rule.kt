@@ -4,7 +4,6 @@
 package com.booleworks.prl.model.rules
 
 import com.booleworks.prl.model.AnyProperty
-import com.booleworks.prl.model.Module
 import com.booleworks.prl.model.constraints.BooleanFeature
 import com.booleworks.prl.model.constraints.EnumFeature
 import com.booleworks.prl.model.constraints.Feature
@@ -25,13 +24,12 @@ import java.util.Objects
 typealias AnyRule = Rule<*>
 
 sealed class Rule<R>(
-    open val module: Module,
     open val id: String,
     open val description: String,
     open val properties: Map<String, AnyProperty>,
     open val lineNumber: Int? = null
 ) {
-    constructor(rule: Rule<R>) : this(rule.module, rule.id, rule.description, rule.properties, rule.lineNumber)
+    constructor(rule: Rule<R>) : this(rule.id, rule.description, rule.properties, rule.lineNumber)
 
     abstract fun features(): Set<Feature>
     abstract fun booleanFeatures(): Set<BooleanFeature>
@@ -48,17 +46,16 @@ sealed class Rule<R>(
     abstract fun stripProperties(): Rule<R>
     abstract fun stripMetaInfo(): Rule<R>
     abstract fun stripAll(): Rule<R>
-    fun toString(currentModule: Module) = StringBuilder().apply { appendString(this, 0, currentModule) }.toString()
-    abstract fun headerLine(currentModule: Module): String
+    abstract fun headerLine(): String
 
-    fun appendString(appendable: Appendable, depth: Int, currentModule: Module): Appendable {
+    fun appendString(appendable: Appendable, depth: Int): Appendable {
         val i = INDENT.repeat(depth)
         val ii = i + INDENT
         val rulePrefix = if (this is GroupRule) "" else "$KEYWORD_RULE "
         if (description.isBlank() && id.isBlank() && properties.isEmpty()) {
-            appendable.append(i).append(rulePrefix).append(headerLine(currentModule))
+            appendable.append(i).append(rulePrefix).append(headerLine())
         } else {
-            appendable.append(i).append(rulePrefix).append(headerLine(currentModule)).append(" ")
+            appendable.append(i).append(rulePrefix).append(headerLine()).append(" ")
                 .append(SYMBOL_LBRA).append(System.lineSeparator())
             if (id.isNotBlank()) {
                 appendable.append(ii).append(KEYWORD_ID).append(" ").append(quote(id))
@@ -79,13 +76,12 @@ sealed class Rule<R>(
 
     fun filter(sliceSelections: List<AnySliceSelection>) = evaluateProperties(properties, sliceSelections)
 
-    override fun toString() = toString(module)
-    override fun hashCode() = Objects.hash(module, id, description, properties)
+    override fun toString() = StringBuilder().apply { appendString(this, 0) }.toString()
+    override fun hashCode() = Objects.hash(id, description, properties)
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as AnyRule
-        if (module != other.module) return false
         if (id != other.id) return false
         if (description != other.description) return false
         if (properties != other.properties) return false

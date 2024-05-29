@@ -4,7 +4,6 @@
 package com.booleworks.prl.model.constraints
 
 import com.booleworks.prl.model.IntRange
-import com.booleworks.prl.model.Module
 import com.booleworks.prl.model.PropertyRange
 import com.booleworks.prl.model.datastructures.FeatureAssignment
 import com.booleworks.prl.model.datastructures.FeatureRenaming
@@ -17,7 +16,7 @@ import com.booleworks.prl.parser.PragmaticRuleLanguage.SYMBOL_RSQB
 import com.booleworks.prl.parser.PragmaticRuleLanguage.range
 import java.util.Objects
 
-fun intFt(featureCode: String, module: Module, domain: PropertyRange<Int>) = IntFeature(featureCode, module, domain)
+fun intFt(featureCode: String, domain: PropertyRange<Int>) = IntFeature(featureCode, domain)
 fun intVal(value: Int) = IntValue(value)
 
 fun intMul(coefficient: Int, feature: IntFeature) = IntMul(coefficient, feature)
@@ -61,14 +60,12 @@ sealed interface IntTerm {
     fun restrict(assignment: FeatureAssignment): IntTerm
     fun rename(renaming: FeatureRenaming): IntTerm
     fun features(): Set<IntFeature>
-    fun toString(currentModule: Module): String
 }
 
 class IntFeature internal constructor(
     override val featureCode: String,
-    override val module: Module,
     internal val domain: PropertyRange<Int>
-) : Feature(featureCode, module), IntTerm {
+) : Feature(featureCode), IntTerm {
     override fun value(assignment: FeatureAssignment) = assignment.getInt(this)
         ?: throw IllegalArgumentException("Integer Feature $featureCode is not assigned to any value")
 
@@ -77,14 +74,13 @@ class IntFeature internal constructor(
     override fun features() = setOf(this)
     override fun restrict(assignment: FeatureAssignment) = assignment.getInt(this).let { it?.toIntValue() ?: this }
 
-    override fun hashCode() = Objects.hash(featureCode, module, domain)
+    override fun hashCode() = Objects.hash(featureCode, domain)
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         if (!super.equals(other)) return false
         other as IntFeature
         if (featureCode != other.featureCode) return false
-        if (module != other.module) return false
         return domain == other.domain
     }
 
@@ -96,7 +92,7 @@ data class IntValue internal constructor(val value: Int) : IntTerm {
     override fun restrict(assignment: FeatureAssignment) = this
     override fun rename(renaming: FeatureRenaming) = this
     override fun features() = setOf<IntFeature>()
-    override fun toString(currentModule: Module) = value.toString()
+    override fun toString() = value.toString()
 }
 
 fun Int.toIntValue() = IntValue(this)
@@ -118,10 +114,10 @@ data class IntMul internal constructor(val coefficient: Int, val feature: IntFea
         throw IllegalArgumentException("Cannot create a multiplication with a " + restrictedTerm.javaClass)
     }
 
-    override fun toString(currentModule: Module) = when (coefficient) {
-        1 -> feature.toString(currentModule)
-        -1 -> SYMBOL_NOT_MINUS + feature.toString(currentModule)
-        else -> coefficient.toString() + SYMBOL_MUL + feature.toString(currentModule)
+    override fun toString() = when (coefficient) {
+        1 -> feature.toString()
+        -1 -> SYMBOL_NOT_MINUS + feature.toString()
+        else -> coefficient.toString() + SYMBOL_MUL + feature.toString()
     }
 }
 
@@ -146,15 +142,15 @@ data class IntSum internal constructor(val operands: List<IntMul>, val offset: I
         return if (newOps.isEmpty()) newOffset.toIntValue() else IntSum(newOps, newOffset)
     }
 
-    override fun toString(currentModule: Module): String {
+    override fun toString(): String {
         val sb = StringBuilder()
         val size = operands.size
         var last: IntMul? = null
         for ((count, op) in operands.withIndex()) {
-            if (count + 1 == size) last = op else sb.append(op.toString(currentModule)).append(" ")
+            if (count + 1 == size) last = op else sb.append(op.toString()).append(" ")
                 .append(PragmaticRuleLanguage.SYMBOL_ADD).append(" ")
         }
-        if (last != null) sb.append(last.toString(currentModule))
+        if (last != null) sb.append(last.toString())
         if (offset != 0) {
             if (last != null) sb.append(" ").append(PragmaticRuleLanguage.SYMBOL_ADD).append(" ")
             sb.append(offset)
@@ -179,8 +175,7 @@ data class IntInPredicate internal constructor(val term: IntTerm, val range: Int
         Constant(range.contains((restricted as IntValue).value))
     }
 
-    override fun toString(currentModule: Module) =
-        "$SYMBOL_LSQB${term.toString(currentModule)} $KEYWORD_IN ${range(range.toString())}$SYMBOL_RSQB"
+    override fun toString() = "$SYMBOL_LSQB${term} $KEYWORD_IN ${range(range.toString())}$SYMBOL_RSQB"
 }
 
 data class IntComparisonPredicate internal constructor(
@@ -214,9 +209,7 @@ data class IntComparisonPredicate internal constructor(
         comparison == that.comparison && left == that.left && right == that.right
                 || comparison == that.comparison.reverse() && left == that.right && right == that.left
 
-    override fun toString(currentModule: Module) =
-        SYMBOL_LSQB + left.toString(currentModule) + " " + comparison.symbol + " " +
-                right.toString(currentModule) + SYMBOL_RSQB
+    override fun toString() = "$SYMBOL_LSQB$left ${comparison.symbol} $right$SYMBOL_RSQB"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

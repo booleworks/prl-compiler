@@ -4,15 +4,16 @@ import com.booleworks.prl.model.BooleanFeatureDefinition
 import com.booleworks.prl.model.EnumFeatureDefinition
 import com.booleworks.prl.model.IntFeatureDefinition
 import com.booleworks.prl.model.IntRange
-import com.booleworks.prl.model.Module
 
-val DEFAULT_MODULE: Module = Module("com.booleworks")
+fun boolFt(featureCode: String) = BooleanFeatureDefinition(featureCode, false).feature
+fun enumFt(featureCode: String) = EnumFeatureDefinition(featureCode, setOf()).feature
+fun enumFt(featureCode: String, values: Collection<String>): EnumFeature =
+    EnumFeatureDefinition(featureCode, values.toSet()).feature
 
-fun boolFt(featureCode: String) = BooleanFeatureDefinition(DEFAULT_MODULE, featureCode, false).feature
-fun enumFt(featureCode: String) = EnumFeatureDefinition(DEFAULT_MODULE, featureCode, setOf()).feature
-fun enumFt(featureCode: String, values: Collection<String>): EnumFeature = EnumFeatureDefinition(DEFAULT_MODULE, featureCode, values.toSet()).feature
-fun intFt(featureCode: String) = IntFeatureDefinition(DEFAULT_MODULE, featureCode, IntRange.interval(Int.MIN_VALUE, Int.MAX_VALUE)).feature
-fun versionFt(featureCode: String) = BooleanFeatureDefinition(DEFAULT_MODULE, featureCode, true).feature
+fun intFt(featureCode: String) =
+    IntFeatureDefinition(featureCode, IntRange.interval(Int.MIN_VALUE, Int.MAX_VALUE)).feature
+
+fun versionFt(featureCode: String) = BooleanFeatureDefinition(featureCode, true).feature
 
 fun ftMap(vararg constraints: Constraint): Pair<Map<Feature, Int>, Map<Int, Feature>> {
     val map1 = mutableMapOf<Feature, Int>()

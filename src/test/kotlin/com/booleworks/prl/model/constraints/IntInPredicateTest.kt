@@ -21,7 +21,7 @@ class IntInPredicateTest {
         assertThat(c.isAtom()).isTrue
         assertThat(c.term).isEqualTo(f1)
         assertThat(c.range).isEqualTo(IntRange.interval(1, 42))
-        assertThat(c.toString(DEFAULT_MODULE)).isEqualTo("[f1 in [1 - 42]]")
+        assertThat(c.toString()).isEqualTo("[f1 in [1 - 42]]")
     }
 
     @Test

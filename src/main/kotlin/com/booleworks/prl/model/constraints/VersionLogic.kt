@@ -3,7 +3,6 @@
 
 package com.booleworks.prl.model.constraints
 
-import com.booleworks.prl.model.Module
 import com.booleworks.prl.model.constraints.ComparisonOperator.EQ
 import com.booleworks.prl.model.constraints.ComparisonOperator.GE
 import com.booleworks.prl.model.constraints.ComparisonOperator.GT
@@ -15,7 +14,7 @@ import com.booleworks.prl.model.datastructures.FeatureRenaming
 import com.booleworks.prl.parser.PragmaticRuleLanguage.SYMBOL_LSQB
 import com.booleworks.prl.parser.PragmaticRuleLanguage.SYMBOL_RSQB
 
-fun versionFt(featureCode: String, module: Module) = BooleanFeature(featureCode, true, module)
+fun versionFt(featureCode: String) = BooleanFeature(featureCode, true)
 fun versionEq(feature: BooleanFeature, version: Int) = VersionPredicate(feature, EQ, version)
 fun versionNe(feature: BooleanFeature, version: Int) = VersionPredicate(feature, NE, version)
 fun versionGt(feature: BooleanFeature, version: Int) = VersionPredicate(feature, GT, version)
@@ -50,6 +49,5 @@ data class VersionPredicate internal constructor(
         if (it == null) feature.restrict(assignment) else Constant(comparison.evaluate(it, version))
     }
 
-    override fun toString(currentModule: Module) =
-        feature.toString(currentModule) + SYMBOL_LSQB + comparison.symbol + version + SYMBOL_RSQB
+    override fun toString() = "$feature$SYMBOL_LSQB${comparison.symbol}$version$SYMBOL_RSQB"
 }

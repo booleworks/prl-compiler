@@ -91,7 +91,7 @@ private fun generateVersionConstraints(
     versionStore.usedValues.forEach { (fea, maxVer) ->
         val vars = (1..maxVer).map { v -> vin(f, fea, v) }
         val amo = f.amo(vars)
-        val euqiv = f.equivalence(f.variable(fea.fullName), f.or(vars))
+        val euqiv = f.equivalence(f.variable(fea.featureCode), f.or(vars))
         propositions.add(PrlProposition(RuleInformation(RuleType.VERSION_AMO_CONSTRAINT, sliceSet), amo))
         propositions.add(PrlProposition(RuleInformation(RuleType.VERSION_EQUIVALENCE, sliceSet), euqiv))
     }
@@ -109,19 +109,19 @@ private fun uninstalledLE(f: FormulaFactory, fea: BooleanFeature, v: Int) = vul(
 private fun uninstalledLT(f: FormulaFactory, fea: BooleanFeature, v: Int) = vul(f, fea, v - 1)
 
 private fun vin(f: FormulaFactory, fea: BooleanFeature, v: Int) =
-    f.variable(PREFIX_INSTALL + "_" + fea.fullName + "_" + v)
+    f.variable(PREFIX_INSTALL + "_" + fea.featureCode + "_" + v)
 
 private fun vig(f: FormulaFactory, fea: BooleanFeature, v: Int) =
-    f.variable(PREFIX_INSTALL_GE + "_" + fea.fullName + "_" + v)
+    f.variable(PREFIX_INSTALL_GE + "_" + fea.featureCode + "_" + v)
 
 private fun vil(f: FormulaFactory, fea: BooleanFeature, v: Int) =
-    f.variable(PREFIX_INSTALL_LE + "_" + fea.fullName + "_" + v)
+    f.variable(PREFIX_INSTALL_LE + "_" + fea.featureCode + "_" + v)
 
 private fun vug(f: FormulaFactory, fea: BooleanFeature, v: Int) =
-    f.variable(PREFIX_UNINSTALL_GE + "_" + fea.fullName + "_" + v)
+    f.variable(PREFIX_UNINSTALL_GE + "_" + fea.featureCode + "_" + v)
 
 private fun vul(f: FormulaFactory, fea: BooleanFeature, v: Int) =
-    f.variable(PREFIX_UNINSTALL_LE + "_" + fea.fullName + "_" + v)
+    f.variable(PREFIX_UNINSTALL_LE + "_" + fea.featureCode + "_" + v)
 
 data class VersionStore internal constructor(
     val usedValues: MutableMap<BooleanFeature, Int> = mutableMapOf()

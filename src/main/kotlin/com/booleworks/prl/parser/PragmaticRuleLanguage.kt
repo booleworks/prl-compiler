@@ -3,7 +3,6 @@
 
 package com.booleworks.prl.parser
 
-import com.booleworks.prl.model.Visibility
 import com.booleworks.prl.model.constraints.ConstraintType
 import com.booleworks.prl.model.rules.GroupType
 import com.booleworks.prl.parser.internal.PragmaticRuleLanguageLexer
@@ -15,17 +14,12 @@ object PragmaticRuleLanguage {
 
     val KEYWORD_HEADER: String = PragmaticRuleLanguageLexer.symbol(PragmaticRuleLanguageLexer.HEADER)
     val KEYWORD_PRL_VERSION: String = PragmaticRuleLanguageLexer.symbol(PragmaticRuleLanguageLexer.PRL_VERSION)
-    val KEYWORD_MODULE: String = PragmaticRuleLanguageLexer.symbol(PragmaticRuleLanguageLexer.MODULE)
-    val KEYWORD_IMPORT: String = PragmaticRuleLanguageLexer.symbol(PragmaticRuleLanguageLexer.IMPORT)
     val KEYWORD_FEATURE: String = PragmaticRuleLanguageLexer.symbol(PragmaticRuleLanguageLexer.FEATURE)
     val KEYWORD_VERSIONED: String = PragmaticRuleLanguageLexer.symbol(PragmaticRuleLanguageLexer.VERS)
     val KEYWORD_BOOL: String = PragmaticRuleLanguageLexer.symbol(PragmaticRuleLanguageLexer.BOOL)
     val KEYWORD_INT: String = PragmaticRuleLanguageLexer.symbol(PragmaticRuleLanguageLexer.INT)
     val KEYWORD_ENUM: String = PragmaticRuleLanguageLexer.symbol(PragmaticRuleLanguageLexer.ENUM)
 
-    val KEYWORD_VISIBILITY_PRIVATE: String = PragmaticRuleLanguageLexer.symbol(PragmaticRuleLanguageLexer.PRIVATE)
-    val KEYWORD_VISIBILITY_INTERNAL: String = PragmaticRuleLanguageLexer.symbol(PragmaticRuleLanguageLexer.INTERNAL)
-    val KEYWORD_VISIBILITY_PUBLIC: String = PragmaticRuleLanguageLexer.symbol(PragmaticRuleLanguageLexer.PUBLIC)
     val KEYWORD_RULE: String = PragmaticRuleLanguageLexer.symbol(PragmaticRuleLanguageLexer.RULE)
     val KEYWORD_SLICING: String = PragmaticRuleLanguageLexer.symbol(PragmaticRuleLanguageLexer.SLICING)
     val KEYWORD_PROPERTIES: String = PragmaticRuleLanguageLexer.symbol(PragmaticRuleLanguageLexer.PROPERTIES)
@@ -72,9 +66,8 @@ object PragmaticRuleLanguage {
 
     const val INDENT: String = "  "
     val KEYWORDS = setOf(
-        KEYWORD_HEADER, KEYWORD_PRL_VERSION, KEYWORD_MODULE, KEYWORD_IMPORT,
+        KEYWORD_HEADER, KEYWORD_PRL_VERSION,
         KEYWORD_FEATURE, KEYWORD_VERSIONED, KEYWORD_BOOL, KEYWORD_INT, KEYWORD_ENUM,
-        KEYWORD_VISIBILITY_PRIVATE, KEYWORD_VISIBILITY_INTERNAL, KEYWORD_VISIBILITY_PUBLIC,
         KEYWORD_RULE, KEYWORD_IS, KEYWORD_IF, KEYWORD_THEN, KEYWORD_THEN_NOT, KEYWORD_ELSE,
         KEYWORD_MANDATORY, KEYWORD_OPTIONAL, KEYWORD_FORBIDDEN, KEYWORD_GROUP, KEYWORD_CONTAINS,
         KEYWORD_ID, KEYWORD_DESCRIPTION,
@@ -92,12 +85,6 @@ object PragmaticRuleLanguage {
     fun identifier(code: String) =
         if (KEYWORDS.contains(code) || !identifierRegexPattern.matcher(code).matches()) SYMBOL_BACKTICK + code +
                 SYMBOL_BACKTICK else code
-
-    fun visibilityString(visibility: Visibility) = when (visibility) {
-        Visibility.PRIVATE -> "$KEYWORD_VISIBILITY_PRIVATE "
-        Visibility.INTERNAL -> "$KEYWORD_VISIBILITY_INTERNAL "
-        else -> ""
-    }
 
     fun quote(string: String) = SYMBOL_QUOTE + string + SYMBOL_QUOTE
     fun quote(objects: Collection<*>): String = objects.stream().map { o: Any? -> SYMBOL_QUOTE + o + SYMBOL_QUOTE }

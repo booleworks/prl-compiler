@@ -58,10 +58,10 @@ class ExoTest {
         val exo2 = exo(f1)
         val exo3 = exo(f1, f2, f3)
         val exo4 = exo(f1, f1, f2, f2)
-        assertThat(exo1.toString(DEFAULT_MODULE)).isEqualTo("exo[]")
-        assertThat(exo2.toString(DEFAULT_MODULE)).isEqualTo("exo[f1]")
-        assertThat(exo3.toString(DEFAULT_MODULE)).isEqualTo("exo[f1, f2, f3]")
-        assertThat(exo4.toString(DEFAULT_MODULE)).isEqualTo("exo[f1, f2]")
+        assertThat(exo1.toString()).isEqualTo("exo[]")
+        assertThat(exo2.toString()).isEqualTo("exo[f1]")
+        assertThat(exo3.toString()).isEqualTo("exo[f1, f2, f3]")
+        assertThat(exo4.toString()).isEqualTo("exo[f1, f2]")
     }
 
     @Test
@@ -127,8 +127,10 @@ class ExoTest {
         val ass4: FeatureAssignment = FeatureAssignment().assign(f1, true).assign(f4, false)
         val ass5: FeatureAssignment = FeatureAssignment().assign(f1, false)
         val ass6: FeatureAssignment = FeatureAssignment().assign(f2, false).assign(f3, false).assign(f4, false)
-        val ass7: FeatureAssignment = FeatureAssignment().assign(f1, false).assign(f2, false).assign(f3, false).assign(f4, false)
-        val ass8: FeatureAssignment = FeatureAssignment().assign(f1, false).assign(f2, false).assign(f3, true).assign(f4, false)
+        val ass7: FeatureAssignment =
+            FeatureAssignment().assign(f1, false).assign(f2, false).assign(f3, false).assign(f4, false)
+        val ass8: FeatureAssignment =
+            FeatureAssignment().assign(f1, false).assign(f2, false).assign(f3, true).assign(f4, false)
         assertThat(exo1.restrict(ass1)).isEqualTo(FALSE)
         assertThat(exo1.restrict(ass2)).isEqualTo(FALSE)
         assertThat(exo1.restrict(ass3)).isEqualTo(FALSE)

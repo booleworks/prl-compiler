@@ -5,17 +5,15 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class IntFeatureDefinitionTest {
-    private val module = Module("module")
     private val properties = mapOf(Pair("prop1", EnumProperty("prop1", EnumRange.list("val1"))))
-    private val testDefinition = IntFeatureDefinition(module, "ft1", IntRange.interval(1, 7), Visibility.INTERNAL, "desc 1", properties)
+    private val testDefinition = IntFeatureDefinition("ft1", IntRange.interval(1, 7), "desc 1", properties)
 
     @Test
     fun testDefaults() {
-        val definition = IntFeatureDefinition(module, "ft1", IntRange.interval(1, 7))
+        val definition = IntFeatureDefinition("ft1", IntRange.interval(1, 7))
         assertThat(definition.code).isEqualTo("ft1")
         assertThat(definition.domain).isEqualTo(IntRange.interval(1, 7))
         assertThat(definition.description).isEqualTo("")
-        assertThat(definition.visibility).isEqualTo(Visibility.PUBLIC)
         assertThat(definition.properties).isEmpty()
     }
 
@@ -24,14 +22,13 @@ class IntFeatureDefinitionTest {
         assertThat(testDefinition.code).isEqualTo("ft1")
         assertThat(testDefinition.domain).isEqualTo(IntRange.interval(1, 7))
         assertThat(testDefinition.description).isEqualTo("desc 1")
-        assertThat(testDefinition.visibility).isEqualTo(Visibility.INTERNAL)
         assertThat(testDefinition.properties).isEqualTo(properties)
     }
 
     @Test
     fun testToString() {
         assertThat(testDefinition.toString()).isEqualTo(
-            "internal int feature ft1 [1 - 7] {" + System.lineSeparator() +
+            "int feature ft1 [1 - 7] {" + System.lineSeparator() +
                     "  description \"desc 1\"" + System.lineSeparator() +
                     "  prop1 \"val1\"" + System.lineSeparator() +
                     "}"
@@ -44,32 +41,31 @@ class IntFeatureDefinitionTest {
         assertThat(f.code).isEqualTo("x")
         assertThat(f.domain).isEqualTo(IntRange.interval(1, 7))
         assertThat(f.description).isEqualTo("desc 1")
-        assertThat(f.visibility).isEqualTo(Visibility.INTERNAL)
         assertThat(f.properties).isEqualTo(properties)
     }
 
     @Test
     fun testEquals() {
-        val f1 = IntFeatureDefinition(module, "ft1", IntRange.interval(1, 5))
-        val f2 = IntFeatureDefinition(module, "ft2", IntRange.interval(1, 10), Visibility.INTERNAL, "description", properties)
-        assertThat(f1 == IntFeatureDefinition(module, "ft1", IntRange.interval(1, 5))).isTrue
-        assertThat(f1 == IntFeatureDefinition(Module("module2"), "ft1", IntRange.interval(1, 5))).isFalse
+        val f1 = IntFeatureDefinition("ft1", IntRange.interval(1, 5))
+        val f2 = IntFeatureDefinition("ft2", IntRange.interval(1, 10), "description", properties)
+        assertThat(f1 == IntFeatureDefinition("ft1", IntRange.interval(1, 5))).isTrue
+        assertThat(f1 == IntFeatureDefinition("ft1", IntRange.interval(1, 7))).isFalse
         assertThat(f1.equals(null)).isFalse
         assertThat(f1.equals("foo")).isFalse
         assertThat(f1 == f2).isFalse
         assertThat(f2 == f1).isFalse
-        assertThat(f1 == IntFeatureDefinition(module, "ft1", IntRange.interval(1, 4))).isFalse
-        assertThat(f1 == IntFeatureDefinition(module, "ft1", IntRange.interval(1, 5), Visibility.INTERNAL, "", properties)).isFalse
+        assertThat(f1 == IntFeatureDefinition("ft1", IntRange.interval(1, 4))).isFalse
+        assertThat(f1 == IntFeatureDefinition("ft1", IntRange.interval(1, 5), "", properties)).isFalse
     }
 
     @Test
     fun testHashCode() {
-        val f1 = IntFeatureDefinition(module, "ft1", IntRange.interval(1, 5))
-        val f2 = IntFeatureDefinition(module, "ft2", IntRange.interval(1, 10), Visibility.INTERNAL, "description", properties)
+        val f1 = IntFeatureDefinition("ft1", IntRange.interval(1, 5))
+        val f2 = IntFeatureDefinition("ft2", IntRange.interval(1, 10), "description", properties)
         assertThat(f1).hasSameHashCodeAs(f1)
-        assertThat(f1).hasSameHashCodeAs(IntFeatureDefinition(module, "ft1", IntRange.interval(1, 5)))
+        assertThat(f1).hasSameHashCodeAs(IntFeatureDefinition("ft1", IntRange.interval(1, 5)))
         assertThat(f1).doesNotHaveSameHashCodeAs(f2)
-        assertThat(f1).doesNotHaveSameHashCodeAs(IntFeatureDefinition(module, "ft1", IntRange.interval(1, 4)))
-        assertThat(f1).doesNotHaveSameHashCodeAs(IntFeatureDefinition(module, "ft1", IntRange.interval(1, 5), Visibility.INTERNAL, "", properties))
+        assertThat(f1).doesNotHaveSameHashCodeAs(IntFeatureDefinition("ft1", IntRange.interval(1, 4)))
+        assertThat(f1).doesNotHaveSameHashCodeAs(IntFeatureDefinition("ft1", IntRange.interval(1, 5), "", properties))
     }
 }

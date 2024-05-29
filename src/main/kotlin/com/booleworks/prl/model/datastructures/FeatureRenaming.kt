@@ -19,20 +19,20 @@ data class FeatureRenaming(
 ) {
     fun add(feature: BooleanFeature, newName: String) = apply {
         booleanFeatures[feature] = if (feature.versioned) {
-            versionFt(newName, feature.module)
+            versionFt(newName)
         } else {
-            boolFt(newName, feature.module)
+            boolFt(newName)
         }
     }
 
     fun add(feature: EnumFeature, newName: String) =
-        apply { enumFeatures[feature] = enumFt(newName, feature.module, feature.values) }
+        apply { enumFeatures[feature] = enumFt(newName, feature.values) }
 
     fun add(feature: EnumFeature, oldValue: String, newValues: String) =
         apply { enumValues.computeIfAbsent(feature) { mutableMapOf() }[oldValue] = newValues }
 
     fun add(feature: IntFeature, newName: String) =
-        apply { intFeatures[feature] = intFt(newName, feature.module, feature.domain) }
+        apply { intFeatures[feature] = intFt(newName, feature.domain) }
 
     fun rename(feature: BooleanFeature) = booleanFeatures.getOrDefault(feature, feature)
     fun rename(feature: EnumFeature) = enumFeatures.getOrDefault(feature, feature)

@@ -50,30 +50,8 @@ public object PbModelKt {
     public fun hasHeader(): kotlin.Boolean {
       return _builder.hasHeader()
     }
-
-    /**
-     * `.boolerules.modules.PbModuleHierarchy moduleHierarchy = 2;`
-     */
-    public var moduleHierarchy: com.booleworks.prl.model.protobuf.ProtoBufModules.PbModuleHierarchy
-      @JvmName("getModuleHierarchy")
-      get() = _builder.getModuleHierarchy()
-      @JvmName("setModuleHierarchy")
-      set(value) {
-        _builder.setModuleHierarchy(value)
-      }
-    /**
-     * `.boolerules.modules.PbModuleHierarchy moduleHierarchy = 2;`
-     */
-    public fun clearModuleHierarchy() {
-      _builder.clearModuleHierarchy()
-    }
-    /**
-     * `.boolerules.modules.PbModuleHierarchy moduleHierarchy = 2;`
-     * @return Whether the moduleHierarchy field is set.
-     */
-    public fun hasModuleHierarchy(): kotlin.Boolean {
-      return _builder.hasModuleHierarchy()
-    }
+    public val PbModelKt.Dsl.headerOrNull: com.booleworks.prl.model.protobuf.ProtoBufModel.PbHeader?
+      get() = _builder.headerOrNull
 
     /**
      * `.boolerules.features.PbFeatureStore featureStore = 3;`
@@ -98,6 +76,8 @@ public object PbModelKt {
     public fun hasFeatureStore(): kotlin.Boolean {
       return _builder.hasFeatureStore()
     }
+    public val PbModelKt.Dsl.featureStoreOrNull: com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFeatureStore?
+      get() = _builder.featureStoreOrNull
 
     /**
      * `.boolerules.properties.PbPropertyStore propertyStore = 4;`
@@ -122,6 +102,8 @@ public object PbModelKt {
     public fun hasPropertyStore(): kotlin.Boolean {
       return _builder.hasPropertyStore()
     }
+    public val PbModelKt.Dsl.propertyStoreOrNull: com.booleworks.prl.model.protobuf.ProtoBufProperties.PbPropertyStore?
+      get() = _builder.propertyStoreOrNull
 
     /**
      * An uninstantiable, behaviorless type to represent the field in
@@ -274,9 +256,6 @@ public inline fun com.booleworks.prl.model.protobuf.ProtoBufModel.PbModel.copy(b
 
 public val com.booleworks.prl.model.protobuf.ProtoBufModel.PbModelOrBuilder.headerOrNull: com.booleworks.prl.model.protobuf.ProtoBufModel.PbHeader?
   get() = if (hasHeader()) getHeader() else null
-
-public val com.booleworks.prl.model.protobuf.ProtoBufModel.PbModelOrBuilder.moduleHierarchyOrNull: com.booleworks.prl.model.protobuf.ProtoBufModules.PbModuleHierarchy?
-  get() = if (hasModuleHierarchy()) getModuleHierarchy() else null
 
 public val com.booleworks.prl.model.protobuf.ProtoBufModel.PbModelOrBuilder.featureStoreOrNull: com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFeatureStore?
   get() = if (hasFeatureStore()) getFeatureStore() else null

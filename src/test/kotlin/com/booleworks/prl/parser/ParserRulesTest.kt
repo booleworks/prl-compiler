@@ -12,7 +12,7 @@ import java.time.LocalDate
 class ParserRulesTest {
 
     private val ruleFile = parseRuleFile("test-files/prl/parser/rules.prl")
-    private var rules = ruleFile.ruleSets[0].rules
+    private var rules = ruleFile.ruleSet.rules
 
     @Test
     fun testGeneral() {
@@ -119,7 +119,12 @@ class ParserRulesTest {
         val groupRule: PrlGroupRule = rule as PrlGroupRule
         assertThat(groupRule.type).isEqualTo(GroupType.OPTIONAL)
         assertThat(groupRule.group).isEqualTo(PrlFeature("hitches"))
-        assertThat(groupRule.content).containsExactly(PrlFeature("h1"), PrlFeature("h2"), PrlFeature("h3"), PrlFeature("h4"))
+        assertThat(groupRule.content).containsExactly(
+            PrlFeature("h1"),
+            PrlFeature("h2"),
+            PrlFeature("h3"),
+            PrlFeature("h4")
+        )
         assertThat(rule.lineNumber).isEqualTo(20)
     }
 
@@ -133,7 +138,12 @@ class ParserRulesTest {
         val groupRule: PrlGroupRule = rule as PrlGroupRule
         assertThat(groupRule.type).isEqualTo(GroupType.MANDATORY)
         assertThat(groupRule.group).isEqualTo(PrlFeature("hitches"))
-        assertThat(groupRule.content).containsExactly(PrlFeature("h1"), PrlFeature("h2"), PrlFeature("h3"), PrlFeature("h4"))
+        assertThat(groupRule.content).containsExactly(
+            PrlFeature("h1"),
+            PrlFeature("h2"),
+            PrlFeature("h3"),
+            PrlFeature("h4")
+        )
         assertThat(rule.lineNumber).isEqualTo(21)
     }
 
@@ -145,8 +155,20 @@ class ParserRulesTest {
         assertThat(rule.properties).isEmpty()
         assertThat(rule is PrlConstraintRule).isTrue
         val constraint: PrlConstraint = (rule as PrlConstraintRule).constraint
-        assertThat((constraint as PrlImplication).left).isEqualTo(PrlComparisonPredicate(ComparisonOperator.EQ, PrlFeature("name"), PrlEnumValue("text")))
-        assertThat(constraint.right).isEqualTo(PrlComparisonPredicate(ComparisonOperator.GT, PrlFeature("version"), PrlIntValue(3)))
+        assertThat((constraint as PrlImplication).left).isEqualTo(
+            PrlComparisonPredicate(
+                ComparisonOperator.EQ,
+                PrlFeature("name"),
+                PrlEnumValue("text")
+            )
+        )
+        assertThat(constraint.right).isEqualTo(
+            PrlComparisonPredicate(
+                ComparisonOperator.GT,
+                PrlFeature("version"),
+                PrlIntValue(3)
+            )
+        )
         assertThat(rule.lineNumber).isEqualTo(23)
     }
 
@@ -239,7 +261,12 @@ class ParserRulesTest {
         )
         assertThat(rule.lineNumber).isEqualTo(30)
         assertThat(implConstraint.left).isEqualTo(PrlFeature("a"))
-        assertThat(implConstraint.right).isEqualTo(PrlImplication(PrlFeature("b"), PrlNot(PrlOr(PrlFeature("c"), PrlFeature("d")))))
+        assertThat(implConstraint.right).isEqualTo(
+            PrlImplication(
+                PrlFeature("b"),
+                PrlNot(PrlOr(PrlFeature("c"), PrlFeature("d")))
+            )
+        )
     }
 
     @Test
@@ -286,7 +313,13 @@ class ParserRulesTest {
         assertThat(rule.properties).isEmpty()
         assertThat(rule is PrlConstraintRule).isTrue
         val constraintRule: PrlConstraintRule = rule as PrlConstraintRule
-        assertThat(constraintRule.constraint).isEqualTo(PrlComparisonPredicate(ComparisonOperator.NE, PrlFeature("version_1"), PrlFeature("version_2")))
+        assertThat(constraintRule.constraint).isEqualTo(
+            PrlComparisonPredicate(
+                ComparisonOperator.NE,
+                PrlFeature("version_1"),
+                PrlFeature("version_2")
+            )
+        )
         assertThat(rule.lineNumber).isEqualTo(47)
     }
 
@@ -298,7 +331,13 @@ class ParserRulesTest {
         assertThat(rule.properties).isEmpty()
         assertThat(rule is PrlConstraintRule).isTrue
         val constraintRule: PrlConstraintRule = rule as PrlConstraintRule
-        assertThat(constraintRule.constraint).isEqualTo(PrlComparisonPredicate(ComparisonOperator.EQ, PrlFeature("version_1"), PrlFeature("version_2")))
+        assertThat(constraintRule.constraint).isEqualTo(
+            PrlComparisonPredicate(
+                ComparisonOperator.EQ,
+                PrlFeature("version_1"),
+                PrlFeature("version_2")
+            )
+        )
         assertThat(rule.lineNumber).isEqualTo(48)
     }
 

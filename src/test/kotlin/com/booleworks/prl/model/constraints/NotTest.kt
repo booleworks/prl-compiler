@@ -57,12 +57,12 @@ class NotTest {
         val not3 = not(amo(f1, f2, f3))
         val not4 = not(and(f1, f2, not(f3)))
         val not5 = not(and(f1, not(or(f2, not(f3))), not(impl(f1, f2))))
-        assertThat(not1.toString(DEFAULT_MODULE)).isEqualTo("-f1")
-        assertThat(not1b.toString(DEFAULT_MODULE)).isEqualTo("-f1")
-        assertThat(not2.toString(DEFAULT_MODULE)).isEqualTo("-(f1 => f2)")
-        assertThat(not3.toString(DEFAULT_MODULE)).isEqualTo("-amo[f1, f2, f3]")
-        assertThat(not4.toString(DEFAULT_MODULE)).isEqualTo("-(f1 & f2 & -f3)")
-        assertThat(not5.toString(DEFAULT_MODULE)).isEqualTo("-(f1 & -(f2 / -f3) & -(f1 => f2))")
+        assertThat(not1.toString()).isEqualTo("-f1")
+        assertThat(not1b.toString()).isEqualTo("-f1")
+        assertThat(not2.toString()).isEqualTo("-(f1 => f2)")
+        assertThat(not3.toString()).isEqualTo("-amo[f1, f2, f3]")
+        assertThat(not4.toString()).isEqualTo("-(f1 & f2 & -f3)")
+        assertThat(not5.toString()).isEqualTo("-(f1 & -(f2 / -f3) & -(f1 => f2))")
     }
 
     @Test

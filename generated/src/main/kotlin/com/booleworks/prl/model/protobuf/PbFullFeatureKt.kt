@@ -62,30 +62,6 @@ public object PbFullFeatureKt {
     }
 
     /**
-     * `.boolerules.modules.PbModule module = 3;`
-     */
-    public var module: com.booleworks.prl.model.protobuf.ProtoBufModules.PbModule
-      @JvmName("getModule")
-      get() = _builder.getModule()
-      @JvmName("setModule")
-      set(value) {
-        _builder.setModule(value)
-      }
-    /**
-     * `.boolerules.modules.PbModule module = 3;`
-     */
-    public fun clearModule() {
-      _builder.clearModule()
-    }
-    /**
-     * `.boolerules.modules.PbModule module = 3;`
-     * @return Whether the module field is set.
-     */
-    public fun hasModule(): kotlin.Boolean {
-      return _builder.hasModule()
-    }
-
-    /**
      * `optional bool versioned = 4;`
      */
     public var versioned: kotlin.Boolean
@@ -209,9 +185,6 @@ public object PbFullFeatureKt {
 @kotlin.jvm.JvmSynthetic
 public inline fun com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFullFeature.copy(block: `com.booleworks.prl.model.protobuf`.PbFullFeatureKt.Dsl.() -> kotlin.Unit): com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFullFeature =
   `com.booleworks.prl.model.protobuf`.PbFullFeatureKt.Dsl._create(this.toBuilder()).apply { block() }._build()
-
-public val com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFullFeatureOrBuilder.moduleOrNull: com.booleworks.prl.model.protobuf.ProtoBufModules.PbModule?
-  get() = if (hasModule()) getModule() else null
 
 public val com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFullFeatureOrBuilder.intRangeOrNull: com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange?
   get() = if (hasIntRange()) getIntRange() else null

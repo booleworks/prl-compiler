@@ -19,7 +19,6 @@ import com.booleworks.prl.compiler.FeatureStore
 import com.booleworks.prl.model.BooleanFeatureDefinition
 import com.booleworks.prl.model.EmptyIntRange
 import com.booleworks.prl.model.EnumFeatureDefinition
-import com.booleworks.prl.model.FeatureReference
 import com.booleworks.prl.model.IntFeatureDefinition
 import com.booleworks.prl.model.IntInterval
 import com.booleworks.prl.model.IntList
@@ -67,6 +66,7 @@ import com.booleworks.prl.transpiler.RuleType.ENUM_FEATURE_CONSTRAINT
 import com.booleworks.prl.transpiler.RuleType.FEATURE_EQUIVALENCE_OVER_SLICES
 import com.booleworks.prl.transpiler.RuleType.INTEGER_VARIABLE
 import com.booleworks.prl.transpiler.RuleType.PREDICATE_DEFINITION
+import com.booleworks.prl.transpiler.RuleType.UNKNOWN_FEATURE_IN_SLICE
 
 const val S = "_"
 const val SLICE_SELECTOR_PREFIX = "@SL"
@@ -93,15 +93,15 @@ fun encodeIntFeatures(
     cf: CspFactory,
     store: FeatureStore
 ): IntFeatureEncodingStore = IntFeatureEncodingStore(store.intFeatures.values.associate { defs ->
-    val reference = defs.first().reference
+    val reference = defs.first().code
     val map1 = defs.mapIndexed { index, d ->
         val def = (d as IntFeatureDefinition)
         Pair(
             def,
             LngIntVariable(
-                def.feature.reference,
+                def.feature.featureCode,
                 cf.variable(
-                    "$FEATURE_DEF_PREFIX$index$S${def.feature.fullName}",
+                    "$FEATURE_DEF_PREFIX$index$S${def.feature.featureCode}",
                     transpileDomain(def.feature.domain)
                 )
             )
@@ -123,8 +123,8 @@ fun transpileConstraint(
     when (constraint) {
         is Constant -> cf.formulaFactory().constant(constraint.value)
         is BooleanFeature ->
-            if (info.booleanVariables.contains(cf.formulaFactory().variable(constraint.fullName))) {
-                cf.formulaFactory().variable(constraint.fullName)
+            if (info.booleanVariables.contains(cf.formulaFactory().variable(constraint.featureCode))) {
+                cf.formulaFactory().variable(constraint.featureCode)
             } else {
                 cf.formulaFactory().falsum()
             }
@@ -176,7 +176,7 @@ fun mergeSlices(cf: CspFactory, slices: List<SliceTranslation>): MergedSliceTran
 
     val instantiation = mergeFeatureInstantiations(slices)
     instantiation.integerFeatures.values.forEach {
-        integerEncodings.getInfo(it.reference)!!.addDefinition(it, encodingContext, cf)
+        integerEncodings.getInfo(it.code)!!.addDefinition(it, encodingContext, cf)
     }
     val mergedVarMap = instantiation.integerFeatures.mapValues { (_, v) -> integerEncodings.getVariable(v)!! }
     val integerVariables = mergedVarMap.values.toSet()
@@ -193,7 +193,7 @@ fun mergeSlices(cf: CspFactory, slices: List<SliceTranslation>): MergedSliceTran
             val sVar = f.variable("${selector}_${kVar.name()}")
             propositions.add(
                 PrlProposition(
-                    RuleInformation(RuleType.FEATURE_EQUIVALENCE_OVER_SLICES, slice.sliceSet),
+                    RuleInformation(FEATURE_EQUIVALENCE_OVER_SLICES, slice.sliceSet),
                     f.equivalence(kVar, sVar)
                 )
             )
@@ -202,7 +202,7 @@ fun mergeSlices(cf: CspFactory, slices: List<SliceTranslation>): MergedSliceTran
             } else {
                 propositions.add(
                     PrlProposition(
-                        RuleInformation(RuleType.UNKNOWN_FEATURE_IN_SLICE, slice.sliceSet),
+                        RuleInformation(UNKNOWN_FEATURE_IN_SLICE, slice.sliceSet),
                         sVar.negate(f)
                     )
                 )
@@ -251,19 +251,19 @@ fun mergeSlices(cf: CspFactory, slices: List<SliceTranslation>): MergedSliceTran
 }
 
 fun mergeFeatureInstantiations(slices: List<SliceTranslation>): FeatureInstantiation {
-    val booleanFeatureDefs = mutableMapOf<FeatureReference, MutableList<BooleanFeatureDefinition>>()
+    val booleanFeatureDefs = mutableMapOf<String, MutableList<BooleanFeatureDefinition>>()
     slices.flatMap { it.info.featureInstantiations.booleanFeatures.entries }
         .groupByTo(booleanFeatureDefs, { it.key }, { it.value })
     val booleanFeatureInstantiations =
         booleanFeatureDefs.mapValues { (_, v) -> BooleanFeatureDefinition.merge(v) }.toMutableMap()
 
-    val enumFeatureDefs = mutableMapOf<FeatureReference, MutableList<EnumFeatureDefinition>>()
+    val enumFeatureDefs = mutableMapOf<String, MutableList<EnumFeatureDefinition>>()
     slices.flatMap { it.info.featureInstantiations.enumFeatures.entries }
         .groupByTo(enumFeatureDefs, { it.key }, { it.value })
     val enumFeatureInstantiations =
         enumFeatureDefs.mapValues { (_, v) -> EnumFeatureDefinition.merge(v) }.toMutableMap()
 
-    val intFeatureDefs = mutableMapOf<FeatureReference, MutableList<IntFeatureDefinition>>()
+    val intFeatureDefs = mutableMapOf<String, MutableList<IntFeatureDefinition>>()
     slices.flatMap { it.info.featureInstantiations.integerFeatures.entries }
         .groupByTo(intFeatureDefs, { it.key }, { it.value })
     val intFeatureInstantiations = intFeatureDefs.mapValues { (_, v) -> IntFeatureDefinition.merge(v) }.toMutableMap()
@@ -356,25 +356,25 @@ private fun initState(
         sliceSet.rules.flatMap { it.features() }.filter { featureInstantiations[it] == null }
             .forEach { unknownFeatures.add(it) }
         booleanVariables.addAll(
-            featureInstantiations.booleanFeatures.values.map { cf.formulaFactory().variable(it.feature.fullName) })
+            featureInstantiations.booleanFeatures.values.map { cf.formulaFactory().variable(it.feature.featureCode) })
         featureInstantiations.enumFeatures.values
             .forEach { def ->
-                enumMapping[def.feature.fullName] =
-                    def.values.associateWith { enumFeature(cf.formulaFactory(), def.feature.fullName, it) }
+                enumMapping[def.feature.featureCode] =
+                    def.values.associateWith { enumFeature(cf.formulaFactory(), def.feature.featureCode, it) }
             }
         integerVariables.addAll(
             featureInstantiations.integerFeatures.values
                 .map { integerEncodings.getVariable(featureInstantiations[it.feature]!!)!! }
         )
         versionStore?.usedValues?.forEach { (fea, maxVer) ->
-            versionMapping[fea.fullName] = (1..maxVer).associateWith { installed(cf.formulaFactory(), fea, it) }
+            versionMapping[fea.featureCode] = (1..maxVer).associateWith { installed(cf.formulaFactory(), fea, it) }
         }
     }
 
 fun getFeatureInstantiations(sliceSet: SliceSet): FeatureInstantiation {
-    val booleanMap = sliceSet.definitions.filterIsInstance<BooleanFeatureDefinition>().associateBy { it.reference }
-    val enumMap = sliceSet.definitions.filterIsInstance<EnumFeatureDefinition>().associateBy { it.reference }
-    val intMap = sliceSet.definitions.filterIsInstance<IntFeatureDefinition>().associateBy { it.reference }
+    val booleanMap = sliceSet.definitions.filterIsInstance<BooleanFeatureDefinition>().associateBy { it.code }
+    val enumMap = sliceSet.definitions.filterIsInstance<EnumFeatureDefinition>().associateBy { it.code }
+    val intMap = sliceSet.definitions.filterIsInstance<IntFeatureDefinition>().associateBy { it.code }
     return FeatureInstantiation(booleanMap, enumMap, intMap)
 }
 
@@ -472,8 +472,11 @@ private fun transpileRule(
 
 private fun transpileGroupRule(f: FormulaFactory, rule: GroupRule, state: TranspilerState): Formula {
     val content = filterFeatures(f, rule.content, state)
-    val group =
-        if (state.featureInstantiations.booleanFeatures.containsKey(rule.group.reference)) f.variable(rule.group.fullName) else f.falsum()
+    val group = if (state.featureInstantiations.booleanFeatures.containsKey(rule.group.featureCode)) {
+        f.variable(rule.group.featureCode)
+    } else {
+        f.falsum()
+    }
     val cc = if (rule.type == GroupType.MANDATORY) f.exo(content) else f.amo(content)
     return f.and(cc, f.equivalence(group, f.or(content)))
 }
@@ -555,7 +558,7 @@ fun transpileDomain(domain: PropertyRange<Int>): IntegerDomain = when (domain) {
 }
 
 private fun filterFeatures(f: FormulaFactory, fs: Collection<BooleanFeature>, info: TranspilerCoreInfo) =
-    fs.filter { info.booleanVariables.contains(f.variable(it.fullName)) }.map { f.variable(it.fullName) }
+    fs.filter { info.booleanVariables.contains(f.variable(it.featureCode)) }.map { f.variable(it.featureCode) }
 
 private fun initVersionStore(rules: List<AnyRule>): VersionStore {
     val versionStore = VersionStore()
@@ -619,15 +622,15 @@ data class TranspilerState(
         )
 }
 
-data class IntFeatureEncodingStore(val store: Map<FeatureReference, IntFeatureEncodingInfo>) : Cloneable {
+data class IntFeatureEncodingStore(val store: Map<String, IntFeatureEncodingInfo>) : Cloneable {
 
     fun getEncoding(variable: LngIntVariable) =
         getInfo(variable.feature)?.getEncoding(variable.variable)
 
     fun getVariable(feature: IntFeatureDefinition) =
-        getInfo(feature.feature.reference)?.getVariable(feature)
+        getInfo(feature.feature.featureCode)?.getVariable(feature)
 
-    fun getInfo(feature: FeatureReference) = store[feature]
+    fun getInfo(feature: String) = store[feature]
 
     public override fun clone() = IntFeatureEncodingStore(store.mapValues { (_, info) -> info.clone() })
 
@@ -648,9 +651,9 @@ data class IntFeatureEncodingInfo(
 
     fun addDefinition(definition: IntFeatureDefinition, encodingContext: CspEncodingContext, cf: CspFactory) {
         if (!featureToVar.containsKey(definition)) {
-            val varName = "$FEATURE_DEF_PREFIX${featureToVar.size}$S${definition.reference.fullName}"
+            val varName = "$FEATURE_DEF_PREFIX${featureToVar.size}$S${definition.code}"
             val domain = transpileDomain(definition.domain)
-            val variable = LngIntVariable(definition.reference, cf.variable(varName, domain))
+            val variable = LngIntVariable(definition.code, cf.variable(varName, domain))
             val clauses = cf.encodeVariable(variable.variable, encodingContext)
             val encoded = cf.formulaFactory().and(clauses)
             featureToVar[definition] = variable
@@ -666,6 +669,6 @@ data class IntFeatureEncodingInfo(
 }
 
 data class LngIntVariable(
-    val feature: FeatureReference,
+    val feature: String,
     val variable: IntegerVariable,
 )

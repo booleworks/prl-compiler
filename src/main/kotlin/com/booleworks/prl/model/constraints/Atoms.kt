@@ -3,8 +3,6 @@
 
 package com.booleworks.prl.model.constraints
 
-import com.booleworks.prl.model.FeatureReference
-import com.booleworks.prl.model.Module
 import com.booleworks.prl.parser.PragmaticRuleLanguage
 import com.booleworks.prl.parser.PragmaticRuleLanguage.SYMBOL_EQ
 import com.booleworks.prl.parser.PragmaticRuleLanguage.SYMBOL_GE
@@ -19,37 +17,16 @@ sealed interface AtomicConstraint : Constraint {
 
 sealed interface Predicate : AtomicConstraint
 
-sealed class Feature(open val featureCode: String, open val module: Module) : Comparable<Feature> {
-    val fullName by lazy { fullNameOf(featureCode, module.fullName) }
+sealed class Feature(open val featureCode: String) : Comparable<Feature> {
 
-    val reference by lazy { FeatureReference(module, featureCode) }
+    override fun compareTo(other: Feature) = compareValuesBy(this, other, { it.featureCode }, { it.featureCode })
 
-    companion object {
-        fun fullNameOf(featureCode: String, moduleName: String): String {
-            return if (moduleName.isNotEmpty()) {
-                moduleName + Module.MODULE_SEPARATOR + featureCode
-            } else {
-                featureCode
-            }
-        }
-
-        fun featureCodeOfFullName(fullName: String): String {
-            val tokens = fullName.split(Module.MODULE_SEPARATOR)
-            return tokens[tokens.size - 1]
-        }
-    }
-
-    fun toString(currentModule: Module) =
-        PragmaticRuleLanguage.identifier(if (module == currentModule) featureCode else fullName)
-
-    override fun compareTo(other: Feature) = compareValuesBy(this, other, { it.fullName }, { it.fullName })
-
-    override fun toString() = fullName
-    override fun hashCode() = fullName.hashCode()
+    override fun toString() = PragmaticRuleLanguage.identifier(featureCode)
+    override fun hashCode() = featureCode.hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-        return fullName == (other as Feature).fullName
+        return featureCode == (other as Feature).featureCode
     }
 }
 

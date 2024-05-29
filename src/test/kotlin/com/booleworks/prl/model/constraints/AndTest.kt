@@ -80,10 +80,10 @@ class AndTest {
         val and2 = and(a, impl(d, e), equiv(b, enumEq(enumFt("name"), "a")))
         val and3 = and(a, or(b, c), or(d, e))
         val and4 = or(and(a, b), and(c, d), e)
-        assertThat(and1.toString(DEFAULT_MODULE)).isEqualTo("a & b & -c & d")
-        assertThat(and2.toString(DEFAULT_MODULE)).isEqualTo("a & (d => e) & (b <=> [name = \"a\"])")
-        assertThat(and3.toString(DEFAULT_MODULE)).isEqualTo("a & (b / c) & (d / e)")
-        assertThat(and4.toString(DEFAULT_MODULE)).isEqualTo("a & b / c & d / e")
+        assertThat(and1.toString()).isEqualTo("a & b & -c & d")
+        assertThat(and2.toString()).isEqualTo("a & (d => e) & (b <=> [name = \"a\"])")
+        assertThat(and3.toString()).isEqualTo("a & (b / c) & (d / e)")
+        assertThat(and4.toString()).isEqualTo("a & b / c & d / e")
     }
 
     @Test
@@ -118,7 +118,15 @@ class AndTest {
         assertThat(and1.booleanFeatures()).containsExactly(f1, f2, f3)
         assertThat(and1.intFeatures()).isEmpty()
         assertThat(and1.enumFeatures()).isEmpty()
-        assertThat(and2.features().map { it.featureCode }).containsExactlyInAnyOrder("a", "name", "desc", "b", "i", "v", "x")
+        assertThat(and2.features().map { it.featureCode }).containsExactlyInAnyOrder(
+            "a",
+            "name",
+            "desc",
+            "b",
+            "i",
+            "v",
+            "x"
+        )
         assertThat(and2.booleanFeatures().map { it.featureCode }).containsExactly("a", "b")
         assertThat(and2.intFeatures().map { it.featureCode }).containsExactly("i", "x")
         assertThat(and2.enumFeatures().map { it.featureCode }).containsExactly("name", "desc")

@@ -1,7 +1,6 @@
 package com.booleworks.prl.model.constraints
 
 import com.booleworks.prl.model.EnumFeatureDefinition
-import com.booleworks.prl.model.Module
 import com.booleworks.prl.model.datastructures.FeatureAssignment
 import com.booleworks.prl.model.datastructures.FeatureRenaming
 import org.assertj.core.api.Assertions.assertThat
@@ -11,8 +10,7 @@ class EnumFeatureTest {
 
     @Test
     fun testCreation() {
-        val module = Module("module")
-        val f1Def = EnumFeatureDefinition(module, "f1", setOf("a", "b", "c"))
+        val f1Def = EnumFeatureDefinition("f1", setOf("a", "b", "c"))
         val f1 = f1Def.feature
         val f2 = enumFt("f2")
         assertThat(f1.featureCode).isEqualTo("f1")
@@ -29,8 +27,8 @@ class EnumFeatureTest {
     fun testToString() {
         val f1 = enumFt("Special feature &# x")
         val f2 = enumFt("f2")
-        assertThat(f1.toString(DEFAULT_MODULE)).isEqualTo("`Special feature &# x`")
-        assertThat(f2.toString(DEFAULT_MODULE)).isEqualTo("f2")
+        assertThat(f1.toString()).isEqualTo("`Special feature &# x`")
+        assertThat(f2.toString()).isEqualTo("f2")
     }
 
     @Test

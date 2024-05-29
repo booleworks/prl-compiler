@@ -14,7 +14,7 @@ class VersionPredicateTest {
 
     @Test
     fun testCreation() {
-        val f1Def = BooleanFeatureDefinition(DEFAULT_MODULE, "f1", true)
+        val f1Def = BooleanFeatureDefinition("f1", true)
         val vp1 = versionComparison(f1Def.feature, ComparisonOperator.EQ, 3)
         val vp2 = versionEq(versionFt("f1"), 3)
         assertThat(vp1 == vp2).isTrue
@@ -38,8 +38,8 @@ class VersionPredicateTest {
     fun testToString() {
         val vp1 = versionLe(versionFt("Special feature &# x"), 12)
         val vp2 = versionNe(f2, 18)
-        assertThat(vp1.toString(DEFAULT_MODULE)).isEqualTo("`Special feature &# x`[<=12]")
-        assertThat(vp2.toString(DEFAULT_MODULE)).isEqualTo("f2[!=18]")
+        assertThat(vp1.toString()).isEqualTo("`Special feature &# x`[<=12]")
+        assertThat(vp2.toString()).isEqualTo("f2[!=18]")
     }
 
     @Test

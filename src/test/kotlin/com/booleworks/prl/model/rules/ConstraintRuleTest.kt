@@ -4,7 +4,6 @@ import com.booleworks.prl.model.EnumProperty
 import com.booleworks.prl.model.EnumRange
 import com.booleworks.prl.model.IntProperty
 import com.booleworks.prl.model.IntRange
-import com.booleworks.prl.model.constraints.DEFAULT_MODULE
 import com.booleworks.prl.model.constraints.FALSE
 import com.booleworks.prl.model.constraints.TRUE
 import com.booleworks.prl.model.constraints.and
@@ -28,20 +27,26 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class ConstraintRuleTest {
-    private val properties = mapOf(Pair("p1", EnumProperty("p1", EnumRange.list("text 1"))), Pair("p2", IntProperty("p2", IntRange.list(42))))
+    private val properties = mapOf(
+        Pair("p1", EnumProperty("p1", EnumRange.list("text 1"))),
+        Pair("p2", IntProperty("p2", IntRange.list(42)))
+    )
     private val constraint = impl(boolFt("a"), boolFt("b"))
     private val and = and(
-        boolFt("a"), or(boolFt("b"), intLt(intFt("i"), 8), versionGt(versionFt("v"), 3)), intGt(intFt("x"), 3), or(boolFt("b"), enumEq(enumFt("desc"), "a"))
+        boolFt("a"),
+        or(boolFt("b"), intLt(intFt("i"), 8), versionGt(versionFt("v"), 3)),
+        intGt(intFt("x"), 3),
+        or(boolFt("b"), enumEq(enumFt("desc"), "a"))
     )
 
     @Test
     fun testDefaultsConstructor() {
-        val rule = ConstraintRule(constraint, DEFAULT_MODULE)
+        val rule = ConstraintRule(constraint)
         assertThat(rule.constraint).isEqualTo(constraint)
         assertThat(rule.id).isEqualTo("")
         assertThat(rule.description).isEqualTo("")
         assertThat(rule.properties).isEmpty()
-        assertThat(rule.toString(DEFAULT_MODULE)).isEqualTo("rule a => b")
+        assertThat(rule.toString()).isEqualTo("rule a => b")
 
         val map = ftMap(constraint)
         val deserialize = deserialize(serialize(rule, map.first), map.second)
@@ -50,12 +55,12 @@ class ConstraintRuleTest {
 
     @Test
     fun testFullConstructor() {
-        val rule = ConstraintRule(constraint, DEFAULT_MODULE, "id string", "text text", properties)
+        val rule = ConstraintRule(constraint, "id string", "text text", properties)
         assertThat(rule.constraint).isEqualTo(constraint)
         assertThat(rule.id).isEqualTo("id string")
         assertThat(rule.description).isEqualTo("text text")
         assertThat(rule.properties).containsExactlyInAnyOrderEntriesOf(properties)
-        assertThat(rule.toString(DEFAULT_MODULE)).isEqualTo(
+        assertThat(rule.toString()).isEqualTo(
             "rule a => b {" + System.lineSeparator() +
                     "  id \"id string\"" + System.lineSeparator() +
                     "  description \"text text\"" + System.lineSeparator() +
@@ -69,12 +74,17 @@ class ConstraintRuleTest {
 
     @Test
     fun testEquals() {
-        val rule = ConstraintRule(constraint, DEFAULT_MODULE, "id string", "text text", properties)
-        val rule1 = ConstraintRule(constraint, DEFAULT_MODULE, "id string", "text text", properties)
-        val rule2 = ConstraintRule(constraint, DEFAULT_MODULE, "id string 2", "text text", properties)
-        val rule3 = ConstraintRule(constraint, DEFAULT_MODULE, "id string", "text text 2", properties)
-        val rule4 = ConstraintRule(constraint, DEFAULT_MODULE, "id string", "text text", mapOf(Pair("p1", EnumProperty("p1", EnumRange.list("text 1")))))
-        val rule5 = ConstraintRule(TRUE, DEFAULT_MODULE, "id string", "text text", properties)
+        val rule = ConstraintRule(constraint, "id string", "text text", properties)
+        val rule1 = ConstraintRule(constraint, "id string", "text text", properties)
+        val rule2 = ConstraintRule(constraint, "id string 2", "text text", properties)
+        val rule3 = ConstraintRule(constraint, "id string", "text text 2", properties)
+        val rule4 = ConstraintRule(
+            constraint,
+            "id string",
+            "text text",
+            mapOf(Pair("p1", EnumProperty("p1", EnumRange.list("text 1"))))
+        )
+        val rule5 = ConstraintRule(TRUE, "id string", "text text", properties)
         assertThat(rule == rule1).isTrue
         assertThat(rule == rule2).isFalse
         assertThat(rule == rule3).isFalse
@@ -85,7 +95,7 @@ class ConstraintRuleTest {
 
     @Test
     fun testFeatures() {
-        val rule = ConstraintRule(and, DEFAULT_MODULE)
+        val rule = ConstraintRule(and)
         assertThat(rule.features().map { it.featureCode }).containsExactly("a", "b", "i", "v", "x", "desc")
         assertThat(rule.booleanFeatures().map { it.featureCode }).containsExactly("a", "b")
         assertThat(rule.intFeatures().map { it.featureCode }).containsExactly("i", "x")
@@ -99,7 +109,7 @@ class ConstraintRuleTest {
 
     @Test
     fun testEvaluate() {
-        val rule = ConstraintRule(and, DEFAULT_MODULE)
+        val rule = ConstraintRule(and)
         val ass: FeatureAssignment = FeatureAssignment()
             .assign(boolFt("a"), true)
             .assign(boolFt("b"), true)
@@ -114,24 +124,24 @@ class ConstraintRuleTest {
 
     @Test
     fun testRestriction() {
-        val rule = ConstraintRule(and, DEFAULT_MODULE)
+        val rule = ConstraintRule(and)
         val ass: FeatureAssignment = FeatureAssignment()
             .assign(boolFt("a"), true)
             .assign(enumFt("name"), "desc")
             .assign(enumFt("desc"), "text")
             .assign(intFt("i"), 12)
             .assign(intFt("x"), 42)
-        assertThat(rule.restrict(ass)).isEqualTo(ConstraintRule(and(or(boolFt("b"), versionFt("v")), boolFt("b")), DEFAULT_MODULE))
+        assertThat(rule.restrict(ass)).isEqualTo(ConstraintRule(and(or(boolFt("b"), versionFt("v")), boolFt("b"))))
         ass.assign(boolFt("b"), true)
-        assertThat(rule.restrict(ass)).isEqualTo(ConstraintRule(TRUE, DEFAULT_MODULE))
+        assertThat(rule.restrict(ass)).isEqualTo(ConstraintRule(TRUE))
         ass.assign(boolFt("b"), false)
-        assertThat(rule.restrict(ass)).isEqualTo(ConstraintRule(FALSE, DEFAULT_MODULE))
+        assertThat(rule.restrict(ass)).isEqualTo(ConstraintRule(FALSE))
     }
 
     @Test
     fun testSyntacticSimplify() {
         val or = or(and(enumEq(enumFt("name"), "text"), enumEq(enumFt("name"), "text"), TRUE), FALSE)
-        val constraintRule = ConstraintRule(or, DEFAULT_MODULE)
+        val constraintRule = ConstraintRule(or)
         val simplifiedRule = constraintRule.syntacticSimplify()
         assertThat(simplifiedRule).isInstanceOf(ConstraintRule::class.java)
         assertThat(simplifiedRule.constraint).isEqualTo(enumEq(enumFt("name"), "text".toEnumValue()))
@@ -144,7 +154,13 @@ class ConstraintRuleTest {
     fun testRenaming() {
         val r = FeatureRenaming().add(boolFt("a"), "a1").add(intFt("i"), "i1")
         val constraint = and(boolFt("a"), enumEq(enumFt("name"), "desc"), or(boolFt("b"), intLt(intFt("i"), 8)))
-        val rule = ConstraintRule(constraint, DEFAULT_MODULE)
-        assertThat(rule.rename(r).constraint).isEqualTo(and(boolFt("a1"), enumEq(enumFt("name"), "desc"), or(boolFt("b"), intLt(intFt("i1"), 8))))
+        val rule = ConstraintRule(constraint)
+        assertThat(rule.rename(r).constraint).isEqualTo(
+            and(
+                boolFt("a1"),
+                enumEq(enumFt("name"), "desc"),
+                or(boolFt("b"), intLt(intFt("i1"), 8))
+            )
+        )
     }
 }

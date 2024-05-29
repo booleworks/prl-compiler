@@ -4,7 +4,6 @@
 package com.booleworks.prl.model.rules
 
 import com.booleworks.prl.model.AnyProperty
-import com.booleworks.prl.model.Module
 import com.booleworks.prl.model.constraints.Constraint
 import com.booleworks.prl.model.constraints.ConstraintType
 import com.booleworks.prl.model.constraints.EnumFeature
@@ -19,15 +18,14 @@ import java.util.Objects
 class ExclusionRule(
     val ifConstraint: Constraint,
     val thenNotConstraint: Constraint,
-    override val module: Module,
     override val id: String = "",
     override val description: String = "",
     override val properties: Map<String, AnyProperty> = mapOf(),
     override val lineNumber: Int? = null
-) : Rule<ExclusionRule>(module, id, description, properties, lineNumber) {
+) : Rule<ExclusionRule>(id, description, properties, lineNumber) {
 
     private constructor(rule: AnyRule, ifConstraint: Constraint, thenNotConstraint: Constraint) : this(
-        ifConstraint, thenNotConstraint, rule.module, rule.id, rule.description, rule.properties, rule.lineNumber
+        ifConstraint, thenNotConstraint, rule.id, rule.description, rule.properties, rule.lineNumber
     )
 
     override fun features() = ifConstraint.features() + thenNotConstraint.features()
@@ -35,7 +33,7 @@ class ExclusionRule(
     override fun enumFeatures() = ifConstraint.enumFeatures() + thenNotConstraint.enumFeatures()
     override fun intFeatures() = ifConstraint.intFeatures() + thenNotConstraint.intFeatures()
     override fun enumValues(): Map<EnumFeature, MutableSet<String>> {
-        val result: MutableMap<EnumFeature, MutableSet<String>> = LinkedHashMap<EnumFeature, MutableSet<String>>()
+        val result: MutableMap<EnumFeature, MutableSet<String>> = LinkedHashMap()
         ifConstraint.enumValues().forEach { (v, vs) -> result.computeIfAbsent(v) { mutableSetOf() }.addAll(vs) }
         thenNotConstraint.enumValues().forEach { (v, vs) -> result.computeIfAbsent(v) { mutableSetOf() }.addAll(vs) }
         return result
@@ -61,18 +59,13 @@ class ExclusionRule(
         ExclusionRule(this, ifConstraint.rename(renaming), thenNotConstraint.rename(renaming))
 
     override fun stripProperties() =
-        ExclusionRule(ifConstraint, thenNotConstraint, module, id, description, mapOf(), lineNumber)
+        ExclusionRule(ifConstraint, thenNotConstraint, id, description, mapOf(), lineNumber)
 
     override fun stripMetaInfo() =
-        ExclusionRule(ifConstraint, thenNotConstraint, module, "", "", properties, lineNumber)
+        ExclusionRule(ifConstraint, thenNotConstraint, "", "", properties, lineNumber)
 
-    override fun stripAll() = ExclusionRule(ifConstraint, thenNotConstraint, module, "", "", mapOf(), lineNumber)
-    override fun headerLine(currentModule: Module) =
-        "$KEYWORD_IF ${ifConstraint.toString(currentModule)} $KEYWORD_THEN_NOT ${
-            thenNotConstraint.toString(
-                currentModule
-            )
-        }"
+    override fun stripAll() = ExclusionRule(ifConstraint, thenNotConstraint, "", "", mapOf(), lineNumber)
+    override fun headerLine() = "$KEYWORD_IF $ifConstraint $KEYWORD_THEN_NOT $thenNotConstraint"
 
     override fun hashCode() = Objects.hash(super.hashCode(), ifConstraint, thenNotConstraint)
     override fun equals(other: Any?) = super.equals(other) && hasEqualConstraint(other as AnyRule)

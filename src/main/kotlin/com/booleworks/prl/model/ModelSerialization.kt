@@ -48,8 +48,6 @@ import com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFeatureDefinitio
 import com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFeatureStore
 import com.booleworks.prl.model.protobuf.ProtoBufModel.PbHeader
 import com.booleworks.prl.model.protobuf.ProtoBufModel.PbModel
-import com.booleworks.prl.model.protobuf.ProtoBufModules.PbModule
-import com.booleworks.prl.model.protobuf.ProtoBufModules.PbModuleHierarchy
 import com.booleworks.prl.model.protobuf.ProtoBufPrimitives
 import com.booleworks.prl.model.protobuf.ProtoBufProperties
 import com.booleworks.prl.model.protobuf.ProtoBufProperties.PbPropertyStore
@@ -74,8 +72,6 @@ import com.booleworks.prl.model.protobuf.pbIntPredicate
 import com.booleworks.prl.model.protobuf.pbIntRange
 import com.booleworks.prl.model.protobuf.pbIntTerm
 import com.booleworks.prl.model.protobuf.pbModel
-import com.booleworks.prl.model.protobuf.pbModule
-import com.booleworks.prl.model.protobuf.pbModuleHierarchy
 import com.booleworks.prl.model.protobuf.pbProperty
 import com.booleworks.prl.model.protobuf.pbPropertyStore
 import com.booleworks.prl.model.protobuf.pbRule
@@ -99,14 +95,12 @@ import java.time.LocalDate
 
 fun serialize(model: PrlModel) = pbModel {
     header = serialize(model.header)
-    moduleHierarchy = serialize(model.moduleHierarchy)
     val featureMap = mutableMapOf<Feature, Int>()
     model.features().forEach {
         val featureId = featureMap.size
         feature.add(pbFullFeature {
             id = featureId
             featureCode = it.featureCode
-            module = serialize(it.module)
             when (it) {
                 is BooleanFeature -> versioned = it.versioned
                 is EnumFeature -> enumValues += it.values
@@ -118,10 +112,6 @@ fun serialize(model: PrlModel) = pbModel {
     featureStore = serialize(model.featureStore, featureMap)
     propertyStore = serialize(model.propertyStore)
     rule += model.rules.map { serialize(it, featureMap) }
-}
-
-fun serialize(mh: ModuleHierarchy) = pbModuleHierarchy {
-    modules.putAll(mh.modules.map { it.key to serialize(it.value) }.toMap())
 }
 
 fun serialize(fs: FeatureStore, featureMap: Map<Feature, Int>) = pbFeatureStore {
@@ -172,7 +162,6 @@ fun serialize(c: Constraint, fm: Map<Feature, Int>): PbConstraint = when (c) {
 }
 
 fun serialize(r: AnyRule, fm: Map<Feature, Int>): PbRule = pbRule {
-    module = serialize(r.module)
     id = r.id
     description = r.description
     properties += r.properties.values.map { serialize(it) }
@@ -206,7 +195,6 @@ fun serialize(r: AnyRule, fm: Map<Feature, Int>): PbRule = pbRule {
         is GroupRule -> {
             isAmo = r.type == GroupType.OPTIONAL
             feature = fm[r.group]!!
-            visibility = serialize(r.visibility)
             groupFeatures += r.content.map { fm[it]!! }
         }
 
@@ -226,18 +214,16 @@ fun serialize(r: AnyRule, fm: Map<Feature, Int>): PbRule = pbRule {
 fun deserialize(bin: PbModel): PrlModel {
     val featureMap = mutableMapOf<Int, Feature>()
     bin.featureList.forEach {
-        val module = deserialize(it.module)
         val featureCode = it.featureCode
         val feature: Feature = when {
-            it.hasVersioned() -> BooleanFeature(featureCode, it.versioned, module)
-            it.hasIntRange() -> IntFeature(featureCode, module, deserialize(it.intRange))
-            else -> EnumFeature(featureCode, module, it.enumValuesList.toSet())
+            it.hasVersioned() -> BooleanFeature(featureCode, it.versioned)
+            it.hasIntRange() -> IntFeature(featureCode, deserialize(it.intRange))
+            else -> EnumFeature(featureCode, it.enumValuesList.toSet())
         }
         featureMap[it.id] = feature
     }
     return PrlModel(
         deserialize(bin.header),
-        deserialize(bin.moduleHierarchy),
         deserialize(bin.featureStore, featureMap),
         bin.ruleList.map { deserialize(it, featureMap) },
         deserialize(bin.propertyStore)
@@ -250,9 +236,6 @@ fun deserialize(bin: PbPropertyStore) = PropertyStore().apply {
     bin.datePropertiesList.forEach { deserialize(it).let { def -> slicingPropertyDefinitions[def.name] = def } }
     bin.enumPropertiesList.forEach { deserialize(it).let { def -> slicingPropertyDefinitions[def.name] = def } }
 }
-
-fun deserialize(bin: PbModuleHierarchy) =
-    ModuleHierarchy(bin.modulesMap.map { it.key to deserialize(it.value) }.toMap())
 
 fun deserialize(bin: PbFeatureStore, featureMap: Map<Int, Feature>) = FeatureStore(
     bin.booleanFeaturesMap.map { it.key to deserialize(it.value) }.toMap().toMutableMap(),
@@ -281,7 +264,6 @@ fun deserialize(bin: PbConstraint, fm: Map<Int, Feature>): Constraint = when {
 
 fun deserialize(bin: PbRule, fm: Map<Int, Feature>): AnyRule =
     (if (bin.hasLineNumber()) bin.lineNumber else null).let { ln ->
-        val mod = deserialize(bin.module)
         val props = bin.propertiesList.map { deserialize(it) }.associateBy { it.name }
         val id = bin.id
         val desc = bin.description
@@ -290,7 +272,6 @@ fun deserialize(bin: PbRule, fm: Map<Int, Feature>): AnyRule =
                 deserialize(bin.ifPart, fm),
                 deserialize(bin.thenPart, fm),
                 deserialize(bin.elsePart, fm),
-                mod,
                 id,
                 desc,
                 props,
@@ -300,7 +281,6 @@ fun deserialize(bin: PbRule, fm: Map<Int, Feature>): AnyRule =
             bin.hasThenPart() -> InclusionRule(
                 deserialize(bin.ifPart, fm),
                 deserialize(bin.thenPart, fm),
-                mod,
                 id,
                 desc,
                 props,
@@ -309,7 +289,6 @@ fun deserialize(bin: PbRule, fm: Map<Int, Feature>): AnyRule =
             bin.hasThenNotPart() -> ExclusionRule(
                 deserialize(bin.ifPart, fm),
                 deserialize(bin.thenNotPart, fm),
-                mod,
                 id,
                 desc,
                 props,
@@ -319,9 +298,9 @@ fun deserialize(bin: PbRule, fm: Map<Int, Feature>): AnyRule =
                 val enumValue = if (bin.hasEnumValue()) bin.enumValue else null
                 val intValue = if (bin.hasIntValueOrVersion()) bin.intValueOrVersion else null
                 if (bin.isForbidden) {
-                    ForbiddenFeatureRule(fm[bin.feature]!!, enumValue, intValue, mod, id, desc, props, ln)
+                    ForbiddenFeatureRule(fm[bin.feature]!!, enumValue, intValue, id, desc, props, ln)
                 } else {
-                    MandatoryFeatureRule(fm[bin.feature]!!, enumValue, intValue, mod, id, desc, props, ln)
+                    MandatoryFeatureRule(fm[bin.feature]!!, enumValue, intValue, id, desc, props, ln)
                 }
             }
 
@@ -331,8 +310,6 @@ fun deserialize(bin: PbRule, fm: Map<Int, Feature>): AnyRule =
                     type,
                     fm[bin.feature]!! as BooleanFeature,
                     bin.groupFeaturesList.map { fm[it]!! as BooleanFeature },
-                    deserialize(bin.visibility),
-                    mod,
                     id,
                     desc,
                     props,
@@ -343,13 +320,12 @@ fun deserialize(bin: PbRule, fm: Map<Int, Feature>): AnyRule =
             bin.hasFeature() -> DefinitionRule(
                 fm[bin.feature]!! as BooleanFeature,
                 deserialize(bin.constraint, fm),
-                mod,
                 id,
                 desc,
                 props,
                 ln
             )
-            else -> ConstraintRule(deserialize(bin.constraint, fm), mod, id, desc, props, ln)
+            else -> ConstraintRule(deserialize(bin.constraint, fm), id, desc, props, ln)
         }
     }
 
@@ -359,16 +335,8 @@ private fun serialize(h: PrlModelHeader) = pbHeader {
     properties += h.properties.values.map { serialize(it) }
 }
 
-private fun serialize(m: Module): PbModule = pbModule {
-    fullName = m.fullName
-    imports.addAll(m.imports.map { serialize(it) })
-    if (m.lineNumber != null) lineNumber = m.lineNumber
-}
-
 private fun serialize(fd: AnyFeatureDef) = pbFeatureDefinition {
-    module = serialize(fd.module)
     code = fd.code
-    visibility = serialize(fd.visibility)
     description = fd.description
     properties += fd.properties.values.map { serialize(it) }
     if (fd.lineNumber != null) lineNumber = fd.lineNumber!!
@@ -390,42 +358,29 @@ private fun term(term: IntTerm, fm: Map<Feature, Int>): PbIntTerm = when (term) 
     is IntSum -> pbIntTerm { muls += term.operands.map { term(it, fm) }; offset = term.offset }
 }
 
-private fun deserialize(bin: PbModule): Module =
-    Module(
-        bin.fullName,
-        bin.importsList.map { deserialize(it) }.toMutableList(),
-        if (bin.hasLineNumber()) bin.lineNumber else null
-    )
-
 private fun deserialize(bin: PbFeatureDefinition): AnyFeatureDef =
     (if (bin.hasLineNumber()) bin.lineNumber else null).let { ln ->
         val props = bin.propertiesList.map { deserialize(it) }.associateBy { it.name }
         when {
             bin.hasVersioned() -> BooleanFeatureDefinition(
-                deserialize(bin.module),
                 bin.code,
                 bin.versioned,
-                deserialize(bin.visibility),
                 bin.description,
                 props,
                 ln,
             ).apply { used = bin.used }
 
             bin.hasIntDomain() -> IntFeatureDefinition(
-                deserialize(bin.module),
                 bin.code,
                 deserialize(bin.intDomain),
-                deserialize(bin.visibility),
                 bin.description,
                 props,
                 ln
             ).apply { used = bin.used }
 
             else -> EnumFeatureDefinition(
-                deserialize(bin.module),
                 bin.code,
                 bin.enumValuesList.toSet(),
-                deserialize(bin.visibility),
                 bin.description,
                 props,
                 ln
@@ -487,12 +442,6 @@ private fun comp(op: ComparisonOperator) = when (op) {
     ComparisonOperator.LE -> ProtoBufPrimitives.PbComparisonOperator.LE
     ComparisonOperator.GT -> ProtoBufPrimitives.PbComparisonOperator.GT
     ComparisonOperator.GE -> ProtoBufPrimitives.PbComparisonOperator.GE
-}
-
-private fun serialize(visibility: Visibility) = when (visibility) {
-    Visibility.PRIVATE -> ProtoBufPrimitives.PbVisibility.PRIVATE
-    Visibility.INTERNAL -> ProtoBufPrimitives.PbVisibility.INTERNAL
-    Visibility.PUBLIC -> ProtoBufPrimitives.PbVisibility.PUBLIC
 }
 
 private fun serialize(prop: AnyProperty) = pbProperty {
@@ -563,13 +512,6 @@ private fun deserialize(bin: ProtoBufPrimitives.PbDateRange) = if (bin.hasStart(
 private fun deserialize(bin: ProtoBufPrimitives.PbEnumRange) = EnumRange.list(bin.valuesList)
 
 private fun deDate(bin: Long) = Timestamp(bin).toLocalDateTime().toLocalDate()
-
-private fun deserialize(bin: ProtoBufPrimitives.PbVisibility) = when (bin) {
-    ProtoBufPrimitives.PbVisibility.PRIVATE -> Visibility.PRIVATE
-    ProtoBufPrimitives.PbVisibility.INTERNAL -> Visibility.INTERNAL
-    ProtoBufPrimitives.PbVisibility.PUBLIC -> Visibility.PUBLIC
-    ProtoBufPrimitives.PbVisibility.UNRECOGNIZED -> throw IllegalArgumentException("Unknown visibility")
-}
 
 private fun deserialize(bin: ProtoBufProperties.PbProperty): AnyProperty = when {
     bin.hasBoolRange() -> BooleanProperty(bin.name, deserialize(bin.boolRange))
