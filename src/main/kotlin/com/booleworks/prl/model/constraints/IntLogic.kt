@@ -4,7 +4,6 @@
 package com.booleworks.prl.model.constraints
 
 import com.booleworks.prl.model.IntRange
-import com.booleworks.prl.model.PropertyRange
 import com.booleworks.prl.model.datastructures.FeatureAssignment
 import com.booleworks.prl.model.datastructures.FeatureRenaming
 import com.booleworks.prl.parser.PragmaticRuleLanguage
@@ -16,7 +15,7 @@ import com.booleworks.prl.parser.PragmaticRuleLanguage.SYMBOL_RSQB
 import com.booleworks.prl.parser.PragmaticRuleLanguage.range
 import java.util.Objects
 
-fun intFt(featureCode: String, domain: PropertyRange<Int>) = IntFeature(featureCode, domain)
+fun intFt(featureCode: String) = IntFeature(featureCode)
 fun intVal(value: Int) = IntValue(value)
 
 fun intMul(coefficient: Int, feature: IntFeature) = IntMul(coefficient, feature)
@@ -62,10 +61,7 @@ sealed interface IntTerm {
     fun features(): Set<IntFeature>
 }
 
-class IntFeature internal constructor(
-    override val featureCode: String,
-    internal val domain: PropertyRange<Int>
-) : Feature(featureCode), IntTerm {
+class IntFeature internal constructor(override val featureCode: String) : Feature(featureCode), IntTerm {
     override fun value(assignment: FeatureAssignment) = assignment.getInt(this)
         ?: throw IllegalArgumentException("Integer Feature $featureCode is not assigned to any value")
 
@@ -74,14 +70,13 @@ class IntFeature internal constructor(
     override fun features() = setOf(this)
     override fun restrict(assignment: FeatureAssignment) = assignment.getInt(this).let { it?.toIntValue() ?: this }
 
-    override fun hashCode() = Objects.hash(featureCode, domain)
+    override fun hashCode() = Objects.hash(featureCode)
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         if (!super.equals(other)) return false
         other as IntFeature
-        if (featureCode != other.featureCode) return false
-        return domain == other.domain
+        return featureCode == other.featureCode
     }
 
 }

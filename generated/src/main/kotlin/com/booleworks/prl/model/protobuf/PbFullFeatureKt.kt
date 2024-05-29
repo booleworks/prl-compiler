@@ -62,130 +62,31 @@ public object PbFullFeatureKt {
     }
 
     /**
-     * `optional bool versioned = 4;`
+     * `.boolerules.features.PbTheory theory = 3;`
      */
-    public var versioned: kotlin.Boolean
-      @JvmName("getVersioned")
-      get() = _builder.getVersioned()
-      @JvmName("setVersioned")
+    public var theory: com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbTheory
+      @JvmName("getTheory")
+      get() = _builder.getTheory()
+      @JvmName("setTheory")
       set(value) {
-        _builder.setVersioned(value)
+        _builder.setTheory(value)
+      }
+    public var theoryValue: kotlin.Int
+      @JvmName("getTheoryValue")
+      get() = _builder.getTheoryValue()
+      @JvmName("setTheoryValue")
+      set(value) {
+        _builder.setTheoryValue(value)
       }
     /**
-     * `optional bool versioned = 4;`
+     * `.boolerules.features.PbTheory theory = 3;`
      */
-    public fun clearVersioned() {
-      _builder.clearVersioned()
+    public fun clearTheory() {
+      _builder.clearTheory()
     }
-    /**
-     * `optional bool versioned = 4;`
-     * @return Whether the versioned field is set.
-     */
-    public fun hasVersioned(): kotlin.Boolean {
-      return _builder.hasVersioned()
-    }
-
-    /**
-     * An uninstantiable, behaviorless type to represent the field in
-     * generics.
-     */
-    @kotlin.OptIn(com.google.protobuf.kotlin.OnlyForUseByGeneratedProtoCode::class)
-    public class EnumValuesProxy private constructor() : com.google.protobuf.kotlin.DslProxy()
-    /**
-     * `repeated string enumValues = 5;`
-     * @return A list containing the enumValues.
-     */
-    public val enumValues: com.google.protobuf.kotlin.DslList<kotlin.String, EnumValuesProxy>
-      @kotlin.jvm.JvmSynthetic
-      get() = com.google.protobuf.kotlin.DslList(
-        _builder.getEnumValuesList()
-      )
-    /**
-     * `repeated string enumValues = 5;`
-     * @param value The enumValues to add.
-     */
-    @kotlin.jvm.JvmSynthetic
-    @kotlin.jvm.JvmName("addEnumValues")
-    public fun com.google.protobuf.kotlin.DslList<kotlin.String, EnumValuesProxy>.add(value: kotlin.String) {
-      _builder.addEnumValues(value)
-    }
-    /**
-     * `repeated string enumValues = 5;`
-     * @param value The enumValues to add.
-     */
-    @kotlin.jvm.JvmSynthetic
-    @kotlin.jvm.JvmName("plusAssignEnumValues")
-    @Suppress("NOTHING_TO_INLINE")
-    public inline operator fun com.google.protobuf.kotlin.DslList<kotlin.String, EnumValuesProxy>.plusAssign(value: kotlin.String) {
-      add(value)
-    }
-    /**
-     * `repeated string enumValues = 5;`
-     * @param values The enumValues to add.
-     */
-    @kotlin.jvm.JvmSynthetic
-    @kotlin.jvm.JvmName("addAllEnumValues")
-    public fun com.google.protobuf.kotlin.DslList<kotlin.String, EnumValuesProxy>.addAll(values: kotlin.collections.Iterable<kotlin.String>) {
-      _builder.addAllEnumValues(values)
-    }
-    /**
-     * `repeated string enumValues = 5;`
-     * @param values The enumValues to add.
-     */
-    @kotlin.jvm.JvmSynthetic
-    @kotlin.jvm.JvmName("plusAssignAllEnumValues")
-    @Suppress("NOTHING_TO_INLINE")
-    public inline operator fun com.google.protobuf.kotlin.DslList<kotlin.String, EnumValuesProxy>.plusAssign(values: kotlin.collections.Iterable<kotlin.String>) {
-      addAll(values)
-    }
-    /**
-     * `repeated string enumValues = 5;`
-     * @param index The index to set the value at.
-     * @param value The enumValues to set.
-     */
-    @kotlin.jvm.JvmSynthetic
-    @kotlin.jvm.JvmName("setEnumValues")
-    public operator fun com.google.protobuf.kotlin.DslList<kotlin.String, EnumValuesProxy>.set(index: kotlin.Int, value: kotlin.String) {
-      _builder.setEnumValues(index, value)
-    }/**
-     * `repeated string enumValues = 5;`
-     */
-    @kotlin.jvm.JvmSynthetic
-    @kotlin.jvm.JvmName("clearEnumValues")
-    public fun com.google.protobuf.kotlin.DslList<kotlin.String, EnumValuesProxy>.clear() {
-      _builder.clearEnumValues()
-    }
-    /**
-     * `optional .boolerules.primitives.PbIntRange intRange = 6;`
-     */
-    public var intRange: com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange
-      @JvmName("getIntRange")
-      get() = _builder.getIntRange()
-      @JvmName("setIntRange")
-      set(value) {
-        _builder.setIntRange(value)
-      }
-    /**
-     * `optional .boolerules.primitives.PbIntRange intRange = 6;`
-     */
-    public fun clearIntRange() {
-      _builder.clearIntRange()
-    }
-    /**
-     * `optional .boolerules.primitives.PbIntRange intRange = 6;`
-     * @return Whether the intRange field is set.
-     */
-    public fun hasIntRange(): kotlin.Boolean {
-      return _builder.hasIntRange()
-    }
-    public val PbFullFeatureKt.Dsl.intRangeOrNull: com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange?
-      get() = _builder.intRangeOrNull
   }
 }
 @kotlin.jvm.JvmSynthetic
 public inline fun com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFullFeature.copy(block: `com.booleworks.prl.model.protobuf`.PbFullFeatureKt.Dsl.() -> kotlin.Unit): com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFullFeature =
   `com.booleworks.prl.model.protobuf`.PbFullFeatureKt.Dsl._create(this.toBuilder()).apply { block() }._build()
-
-public val com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFullFeatureOrBuilder.intRangeOrNull: com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange?
-  get() = if (hasIntRange()) getIntRange() else null
 

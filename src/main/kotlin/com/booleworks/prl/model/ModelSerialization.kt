@@ -46,6 +46,7 @@ import com.booleworks.prl.model.protobuf.ProtoBufConstraints.PbIntTerm
 import com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFeatureDefinition
 import com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFeatureDefinitionList
 import com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFeatureStore
+import com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbTheory
 import com.booleworks.prl.model.protobuf.ProtoBufModel.PbHeader
 import com.booleworks.prl.model.protobuf.ProtoBufModel.PbModel
 import com.booleworks.prl.model.protobuf.ProtoBufPrimitives
@@ -101,10 +102,10 @@ fun serialize(model: PrlModel) = pbModel {
         feature.add(pbFullFeature {
             id = featureId
             featureCode = it.featureCode
-            when (it) {
-                is BooleanFeature -> versioned = it.versioned
-                is EnumFeature -> enumValues += it.values
-                is IntFeature -> intRange = range(it.domain)
+            theory = when (it) {
+                is BooleanFeature -> if (it.versioned) PbTheory.VERSIONED_BOOL else PbTheory.BOOL
+                is EnumFeature -> PbTheory.ENUM
+                is IntFeature -> PbTheory.INT
             }
         })
         featureMap[it] = featureId
@@ -215,10 +216,11 @@ fun deserialize(bin: PbModel): PrlModel {
     val featureMap = mutableMapOf<Int, Feature>()
     bin.featureList.forEach {
         val featureCode = it.featureCode
-        val feature: Feature = when {
-            it.hasVersioned() -> BooleanFeature(featureCode, it.versioned)
-            it.hasIntRange() -> IntFeature(featureCode, deserialize(it.intRange))
-            else -> EnumFeature(featureCode, it.enumValuesList.toSet())
+        val feature: Feature = when (it.theory) {
+            PbTheory.BOOL -> BooleanFeature(featureCode, false)
+            PbTheory.VERSIONED_BOOL -> BooleanFeature(featureCode, true)
+            PbTheory.ENUM -> EnumFeature(featureCode)
+            else -> IntFeature(featureCode)
         }
         featureMap[it.id] = feature
     }

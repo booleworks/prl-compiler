@@ -32,6 +32,8 @@ import java.util.Objects
 
 typealias AnyFeatureDef = FeatureDefinition<*, *>
 
+enum class Theory { BOOL, VERSIONED_BOOL, ENUM, INT }
+
 /**
  * Super class for features of different types.  A feature always has a code
  * (name) which has to be unique.  It can have the following optional
@@ -189,7 +191,7 @@ class EnumFeatureDefinition(
 
     override val headerLine = "$KEYWORD_ENUM $KEYWORD_FEATURE " + identifier(code) + " " +
             (if (values.isEmpty()) "e" else "") + quote(values)
-    override val feature = enumFt(code, values)
+    override val feature = enumFt(code)
 
     companion object {
         fun merge(definitions: Collection<EnumFeatureDefinition>): EnumFeatureDefinition {
@@ -239,7 +241,7 @@ class IntFeatureDefinition(
         )
 
     override val headerLine = "$KEYWORD_INT $KEYWORD_FEATURE " + identifier(code) + " " + domain
-    override val feature = intFt(code, domain)
+    override val feature = intFt(code)
 
     companion object {
         fun merge(definitions: Collection<IntFeatureDefinition>): IntFeatureDefinition {

@@ -70,10 +70,10 @@ data class FeatureStore internal constructor(
 
     fun allDefinitionMaps(): Map<String, List<AnyFeatureDef>> = booleanFeatures + enumFeatures + intFeatures
 
-    fun booleanFeatures() = booleanFeatures.flatMap { it.value }.map { it.feature as BooleanFeature }
-    fun enumFeatures() = enumFeatures.flatMap { it.value }.map { it.feature as EnumFeature }
-    fun intFeatures() = intFeatures.flatMap { it.value }.map { it.feature as IntFeature }
-    fun nonUniqueFeatures() = nonUniqueFeatures.toSet()
+    fun booleanFeatures() = booleanFeatures.flatMap { it.value }.map { it.feature as BooleanFeature }.toSortedSet()
+    fun enumFeatures() = enumFeatures.flatMap { it.value }.map { it.feature as EnumFeature }.toSortedSet()
+    fun intFeatures() = intFeatures.flatMap { it.value }.map { it.feature as IntFeature }.toSortedSet()
+    fun nonUniqueFeatures() = nonUniqueFeatures.toSortedSet()
     fun enumDefinitions() = enumFeatures.flatMap { it.value }.map { it as EnumFeatureDefinition }
     fun containsBooleanFeatures() = booleanFeatures.isNotEmpty()
     fun containsEnumFeatures() = enumFeatures.isNotEmpty()

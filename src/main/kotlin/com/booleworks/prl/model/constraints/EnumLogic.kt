@@ -13,7 +13,7 @@ import com.booleworks.prl.parser.PragmaticRuleLanguage.SYMBOL_RSQB
 import com.booleworks.prl.parser.PragmaticRuleLanguage.quote
 import java.util.Objects
 
-fun enumFt(featureCode: String, values: Set<String>) = EnumFeature(featureCode, values)
+fun enumFt(featureCode: String) = EnumFeature(featureCode)
 fun enumVal(value: String) = EnumValue(value)
 fun enumEq(feature: EnumFeature, value: EnumValue) = EnumComparisonPredicate(feature, value, EQ)
 fun enumEq(feature: EnumFeature, value: String) = EnumComparisonPredicate(feature, EnumValue(value), EQ)
@@ -35,24 +35,20 @@ sealed interface EnumTerm {
     fun rename(feature: EnumFeature, renaming: FeatureRenaming): EnumTerm
 }
 
-class EnumFeature internal constructor(
-    override val featureCode: String,
-    internal val values: Set<String>
-) : Feature(featureCode), EnumTerm {
+class EnumFeature internal constructor(override val featureCode: String) : Feature(featureCode), EnumTerm {
     override fun value(assignment: FeatureAssignment) = assignment.getEnum(this)
         ?: throw IllegalArgumentException("Enum Feature $featureCode is not assigned to any value")
 
     override fun rename(feature: EnumFeature, renaming: FeatureRenaming) = renaming.rename(this)
     override fun restrict(assignment: FeatureAssignment) = assignment.getEnum(this).let { it?.toEnumValue() ?: this }
 
-    override fun hashCode() = Objects.hash(featureCode, values)
+    override fun hashCode() = Objects.hash(featureCode)
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         if (!super.equals(other)) return false
         other as EnumFeature
-        if (featureCode != other.featureCode) return false
-        return values == other.values
+        return (featureCode == other.featureCode)
     }
 }
 

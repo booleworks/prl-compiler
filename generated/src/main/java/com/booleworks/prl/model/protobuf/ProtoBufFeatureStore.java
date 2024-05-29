@@ -24,6 +24,141 @@ public final class ProtoBufFeatureStore {
     registerAllExtensions(
         (com.google.protobuf.ExtensionRegistryLite) registry);
   }
+  /**
+   * Protobuf enum {@code boolerules.features.PbTheory}
+   */
+  public enum PbTheory
+      implements com.google.protobuf.ProtocolMessageEnum {
+    /**
+     * <code>BOOL = 0;</code>
+     */
+    BOOL(0),
+    /**
+     * <code>VERSIONED_BOOL = 1;</code>
+     */
+    VERSIONED_BOOL(1),
+    /**
+     * <code>ENUM = 2;</code>
+     */
+    ENUM(2),
+    /**
+     * <code>INT = 3;</code>
+     */
+    INT(3),
+    UNRECOGNIZED(-1),
+    ;
+
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 26,
+        /* patch= */ 1,
+        /* suffix= */ "",
+        PbTheory.class.getName());
+    }
+    /**
+     * <code>BOOL = 0;</code>
+     */
+    public static final int BOOL_VALUE = 0;
+    /**
+     * <code>VERSIONED_BOOL = 1;</code>
+     */
+    public static final int VERSIONED_BOOL_VALUE = 1;
+    /**
+     * <code>ENUM = 2;</code>
+     */
+    public static final int ENUM_VALUE = 2;
+    /**
+     * <code>INT = 3;</code>
+     */
+    public static final int INT_VALUE = 3;
+
+
+    public final int getNumber() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalArgumentException(
+            "Can't get the number of an unknown enum value.");
+      }
+      return value;
+    }
+
+    /**
+     * @param value The numeric wire value of the corresponding enum entry.
+     * @return The enum associated with the given numeric wire value.
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
+    public static PbTheory valueOf(int value) {
+      return forNumber(value);
+    }
+
+    /**
+     * @param value The numeric wire value of the corresponding enum entry.
+     * @return The enum associated with the given numeric wire value.
+     */
+    public static PbTheory forNumber(int value) {
+      switch (value) {
+        case 0: return BOOL;
+        case 1: return VERSIONED_BOOL;
+        case 2: return ENUM;
+        case 3: return INT;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<PbTheory>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        PbTheory> internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<PbTheory>() {
+            public PbTheory findValueByNumber(int number) {
+              return PbTheory.forNumber(number);
+            }
+          };
+
+    public final com.google.protobuf.Descriptors.EnumValueDescriptor
+        getValueDescriptor() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalStateException(
+            "Can't get the descriptor of an unrecognized enum value.");
+      }
+      return getDescriptor().getValues().get(ordinal());
+    }
+    public final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptorForType() {
+      return getDescriptor();
+    }
+    public static final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptor() {
+      return com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.getDescriptor().getEnumTypes().get(0);
+    }
+
+    private static final PbTheory[] VALUES = values();
+
+    public static PbTheory valueOf(
+        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+      if (desc.getType() != getDescriptor()) {
+        throw new java.lang.IllegalArgumentException(
+          "EnumValueDescriptor is not for this type.");
+      }
+      if (desc.getIndex() == -1) {
+        return UNRECOGNIZED;
+      }
+      return VALUES[desc.getIndex()];
+    }
+
+    private final int value;
+
+    private PbTheory(int value) {
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:boolerules.features.PbTheory)
+  }
+
   public interface PbFeatureOrBuilder extends
       // @@protoc_insertion_point(interface_extends:boolerules.features.PbFeature)
       com.google.protobuf.MessageOrBuilder {
@@ -481,55 +616,15 @@ public final class ProtoBufFeatureStore {
         getFeatureCodeBytes();
 
     /**
-     * <code>optional bool versioned = 4;</code>
-     * @return Whether the versioned field is set.
+     * <code>.boolerules.features.PbTheory theory = 3;</code>
+     * @return The enum numeric value on the wire for theory.
      */
-    boolean hasVersioned();
+    int getTheoryValue();
     /**
-     * <code>optional bool versioned = 4;</code>
-     * @return The versioned.
+     * <code>.boolerules.features.PbTheory theory = 3;</code>
+     * @return The theory.
      */
-    boolean getVersioned();
-
-    /**
-     * <code>repeated string enumValues = 5;</code>
-     * @return A list containing the enumValues.
-     */
-    java.util.List<java.lang.String>
-        getEnumValuesList();
-    /**
-     * <code>repeated string enumValues = 5;</code>
-     * @return The count of enumValues.
-     */
-    int getEnumValuesCount();
-    /**
-     * <code>repeated string enumValues = 5;</code>
-     * @param index The index of the element to return.
-     * @return The enumValues at the given index.
-     */
-    java.lang.String getEnumValues(int index);
-    /**
-     * <code>repeated string enumValues = 5;</code>
-     * @param index The index of the value to return.
-     * @return The bytes of the enumValues at the given index.
-     */
-    com.google.protobuf.ByteString
-        getEnumValuesBytes(int index);
-
-    /**
-     * <code>optional .boolerules.primitives.PbIntRange intRange = 6;</code>
-     * @return Whether the intRange field is set.
-     */
-    boolean hasIntRange();
-    /**
-     * <code>optional .boolerules.primitives.PbIntRange intRange = 6;</code>
-     * @return The intRange.
-     */
-    com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange getIntRange();
-    /**
-     * <code>optional .boolerules.primitives.PbIntRange intRange = 6;</code>
-     */
-    com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRangeOrBuilder getIntRangeOrBuilder();
+    com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbTheory getTheory();
   }
   /**
    * Protobuf type {@code boolerules.features.PbFullFeature}
@@ -554,8 +649,7 @@ public final class ProtoBufFeatureStore {
     }
     private PbFullFeature() {
       featureCode_ = "";
-      enumValues_ =
-          com.google.protobuf.LazyStringArrayList.emptyList();
+      theory_ = 0;
     }
 
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -571,7 +665,6 @@ public final class ProtoBufFeatureStore {
               com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFullFeature.class, com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFullFeature.Builder.class);
     }
 
-    private int bitField0_;
     public static final int ID_FIELD_NUMBER = 1;
     private int id_ = 0;
     /**
@@ -622,86 +715,22 @@ public final class ProtoBufFeatureStore {
       }
     }
 
-    public static final int VERSIONED_FIELD_NUMBER = 4;
-    private boolean versioned_ = false;
+    public static final int THEORY_FIELD_NUMBER = 3;
+    private int theory_ = 0;
     /**
-     * <code>optional bool versioned = 4;</code>
-     * @return Whether the versioned field is set.
+     * <code>.boolerules.features.PbTheory theory = 3;</code>
+     * @return The enum numeric value on the wire for theory.
      */
-    @java.lang.Override
-    public boolean hasVersioned() {
-      return ((bitField0_ & 0x00000001) != 0);
+    @java.lang.Override public int getTheoryValue() {
+      return theory_;
     }
     /**
-     * <code>optional bool versioned = 4;</code>
-     * @return The versioned.
+     * <code>.boolerules.features.PbTheory theory = 3;</code>
+     * @return The theory.
      */
-    @java.lang.Override
-    public boolean getVersioned() {
-      return versioned_;
-    }
-
-    public static final int ENUMVALUES_FIELD_NUMBER = 5;
-    @SuppressWarnings("serial")
-    private com.google.protobuf.LazyStringArrayList enumValues_ =
-        com.google.protobuf.LazyStringArrayList.emptyList();
-    /**
-     * <code>repeated string enumValues = 5;</code>
-     * @return A list containing the enumValues.
-     */
-    public com.google.protobuf.ProtocolStringList
-        getEnumValuesList() {
-      return enumValues_;
-    }
-    /**
-     * <code>repeated string enumValues = 5;</code>
-     * @return The count of enumValues.
-     */
-    public int getEnumValuesCount() {
-      return enumValues_.size();
-    }
-    /**
-     * <code>repeated string enumValues = 5;</code>
-     * @param index The index of the element to return.
-     * @return The enumValues at the given index.
-     */
-    public java.lang.String getEnumValues(int index) {
-      return enumValues_.get(index);
-    }
-    /**
-     * <code>repeated string enumValues = 5;</code>
-     * @param index The index of the value to return.
-     * @return The bytes of the enumValues at the given index.
-     */
-    public com.google.protobuf.ByteString
-        getEnumValuesBytes(int index) {
-      return enumValues_.getByteString(index);
-    }
-
-    public static final int INTRANGE_FIELD_NUMBER = 6;
-    private com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange intRange_;
-    /**
-     * <code>optional .boolerules.primitives.PbIntRange intRange = 6;</code>
-     * @return Whether the intRange field is set.
-     */
-    @java.lang.Override
-    public boolean hasIntRange() {
-      return ((bitField0_ & 0x00000002) != 0);
-    }
-    /**
-     * <code>optional .boolerules.primitives.PbIntRange intRange = 6;</code>
-     * @return The intRange.
-     */
-    @java.lang.Override
-    public com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange getIntRange() {
-      return intRange_ == null ? com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange.getDefaultInstance() : intRange_;
-    }
-    /**
-     * <code>optional .boolerules.primitives.PbIntRange intRange = 6;</code>
-     */
-    @java.lang.Override
-    public com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRangeOrBuilder getIntRangeOrBuilder() {
-      return intRange_ == null ? com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange.getDefaultInstance() : intRange_;
+    @java.lang.Override public com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbTheory getTheory() {
+      com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbTheory result = com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbTheory.forNumber(theory_);
+      return result == null ? com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbTheory.UNRECOGNIZED : result;
     }
 
     private byte memoizedIsInitialized = -1;
@@ -724,14 +753,8 @@ public final class ProtoBufFeatureStore {
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(featureCode_)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 2, featureCode_);
       }
-      if (((bitField0_ & 0x00000001) != 0)) {
-        output.writeBool(4, versioned_);
-      }
-      for (int i = 0; i < enumValues_.size(); i++) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 5, enumValues_.getRaw(i));
-      }
-      if (((bitField0_ & 0x00000002) != 0)) {
-        output.writeMessage(6, getIntRange());
+      if (theory_ != com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbTheory.BOOL.getNumber()) {
+        output.writeEnum(3, theory_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -749,21 +772,9 @@ public final class ProtoBufFeatureStore {
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(featureCode_)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(2, featureCode_);
       }
-      if (((bitField0_ & 0x00000001) != 0)) {
+      if (theory_ != com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbTheory.BOOL.getNumber()) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(4, versioned_);
-      }
-      {
-        int dataSize = 0;
-        for (int i = 0; i < enumValues_.size(); i++) {
-          dataSize += computeStringSizeNoTag(enumValues_.getRaw(i));
-        }
-        size += dataSize;
-        size += 1 * getEnumValuesList().size();
-      }
-      if (((bitField0_ & 0x00000002) != 0)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(6, getIntRange());
+          .computeEnumSize(3, theory_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -784,18 +795,7 @@ public final class ProtoBufFeatureStore {
           != other.getId()) return false;
       if (!getFeatureCode()
           .equals(other.getFeatureCode())) return false;
-      if (hasVersioned() != other.hasVersioned()) return false;
-      if (hasVersioned()) {
-        if (getVersioned()
-            != other.getVersioned()) return false;
-      }
-      if (!getEnumValuesList()
-          .equals(other.getEnumValuesList())) return false;
-      if (hasIntRange() != other.hasIntRange()) return false;
-      if (hasIntRange()) {
-        if (!getIntRange()
-            .equals(other.getIntRange())) return false;
-      }
+      if (theory_ != other.theory_) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -811,19 +811,8 @@ public final class ProtoBufFeatureStore {
       hash = (53 * hash) + getId();
       hash = (37 * hash) + FEATURECODE_FIELD_NUMBER;
       hash = (53 * hash) + getFeatureCode().hashCode();
-      if (hasVersioned()) {
-        hash = (37 * hash) + VERSIONED_FIELD_NUMBER;
-        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-            getVersioned());
-      }
-      if (getEnumValuesCount() > 0) {
-        hash = (37 * hash) + ENUMVALUES_FIELD_NUMBER;
-        hash = (53 * hash) + getEnumValuesList().hashCode();
-      }
-      if (hasIntRange()) {
-        hash = (37 * hash) + INTRANGE_FIELD_NUMBER;
-        hash = (53 * hash) + getIntRange().hashCode();
-      }
+      hash = (37 * hash) + THEORY_FIELD_NUMBER;
+      hash = (53 * hash) + theory_;
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -943,19 +932,13 @@ public final class ProtoBufFeatureStore {
 
       // Construct using com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFullFeature.newBuilder()
       private Builder() {
-        maybeForceBuilderInitialization();
+
       }
 
       private Builder(
           com.google.protobuf.GeneratedMessage.BuilderParent parent) {
         super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage
-                .alwaysUseFieldBuilders) {
-          getIntRangeFieldBuilder();
-        }
+
       }
       @java.lang.Override
       public Builder clear() {
@@ -963,14 +946,7 @@ public final class ProtoBufFeatureStore {
         bitField0_ = 0;
         id_ = 0;
         featureCode_ = "";
-        versioned_ = false;
-        enumValues_ =
-            com.google.protobuf.LazyStringArrayList.emptyList();
-        intRange_ = null;
-        if (intRangeBuilder_ != null) {
-          intRangeBuilder_.dispose();
-          intRangeBuilder_ = null;
-        }
+        theory_ = 0;
         return this;
       }
 
@@ -1010,22 +986,9 @@ public final class ProtoBufFeatureStore {
         if (((from_bitField0_ & 0x00000002) != 0)) {
           result.featureCode_ = featureCode_;
         }
-        int to_bitField0_ = 0;
         if (((from_bitField0_ & 0x00000004) != 0)) {
-          result.versioned_ = versioned_;
-          to_bitField0_ |= 0x00000001;
+          result.theory_ = theory_;
         }
-        if (((from_bitField0_ & 0x00000008) != 0)) {
-          enumValues_.makeImmutable();
-          result.enumValues_ = enumValues_;
-        }
-        if (((from_bitField0_ & 0x00000010) != 0)) {
-          result.intRange_ = intRangeBuilder_ == null
-              ? intRange_
-              : intRangeBuilder_.build();
-          to_bitField0_ |= 0x00000002;
-        }
-        result.bitField0_ |= to_bitField0_;
       }
 
       @java.lang.Override
@@ -1048,21 +1011,8 @@ public final class ProtoBufFeatureStore {
           bitField0_ |= 0x00000002;
           onChanged();
         }
-        if (other.hasVersioned()) {
-          setVersioned(other.getVersioned());
-        }
-        if (!other.enumValues_.isEmpty()) {
-          if (enumValues_.isEmpty()) {
-            enumValues_ = other.enumValues_;
-            bitField0_ |= 0x00000008;
-          } else {
-            ensureEnumValuesIsMutable();
-            enumValues_.addAll(other.enumValues_);
-          }
-          onChanged();
-        }
-        if (other.hasIntRange()) {
-          mergeIntRange(other.getIntRange());
+        if (other.theory_ != 0) {
+          setTheoryValue(other.getTheoryValue());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -1100,24 +1050,11 @@ public final class ProtoBufFeatureStore {
                 bitField0_ |= 0x00000002;
                 break;
               } // case 18
-              case 32: {
-                versioned_ = input.readBool();
+              case 24: {
+                theory_ = input.readEnum();
                 bitField0_ |= 0x00000004;
                 break;
-              } // case 32
-              case 42: {
-                java.lang.String s = input.readStringRequireUtf8();
-                ensureEnumValuesIsMutable();
-                enumValues_.add(s);
-                break;
-              } // case 42
-              case 50: {
-                input.readMessage(
-                    getIntRangeFieldBuilder().getBuilder(),
-                    extensionRegistry);
-                bitField0_ |= 0x00000010;
-                break;
-              } // case 50
+              } // case 24
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -1239,276 +1176,57 @@ public final class ProtoBufFeatureStore {
         return this;
       }
 
-      private boolean versioned_ ;
+      private int theory_ = 0;
       /**
-       * <code>optional bool versioned = 4;</code>
-       * @return Whether the versioned field is set.
+       * <code>.boolerules.features.PbTheory theory = 3;</code>
+       * @return The enum numeric value on the wire for theory.
        */
-      @java.lang.Override
-      public boolean hasVersioned() {
-        return ((bitField0_ & 0x00000004) != 0);
+      @java.lang.Override public int getTheoryValue() {
+        return theory_;
       }
       /**
-       * <code>optional bool versioned = 4;</code>
-       * @return The versioned.
-       */
-      @java.lang.Override
-      public boolean getVersioned() {
-        return versioned_;
-      }
-      /**
-       * <code>optional bool versioned = 4;</code>
-       * @param value The versioned to set.
+       * <code>.boolerules.features.PbTheory theory = 3;</code>
+       * @param value The enum numeric value on the wire for theory to set.
        * @return This builder for chaining.
        */
-      public Builder setVersioned(boolean value) {
-
-        versioned_ = value;
+      public Builder setTheoryValue(int value) {
+        theory_ = value;
         bitField0_ |= 0x00000004;
         onChanged();
         return this;
       }
       /**
-       * <code>optional bool versioned = 4;</code>
+       * <code>.boolerules.features.PbTheory theory = 3;</code>
+       * @return The theory.
+       */
+      @java.lang.Override
+      public com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbTheory getTheory() {
+        com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbTheory result = com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbTheory.forNumber(theory_);
+        return result == null ? com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbTheory.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>.boolerules.features.PbTheory theory = 3;</code>
+       * @param value The theory to set.
        * @return This builder for chaining.
        */
-      public Builder clearVersioned() {
+      public Builder setTheory(com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbTheory value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000004;
+        theory_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.boolerules.features.PbTheory theory = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTheory() {
         bitField0_ = (bitField0_ & ~0x00000004);
-        versioned_ = false;
+        theory_ = 0;
         onChanged();
         return this;
-      }
-
-      private com.google.protobuf.LazyStringArrayList enumValues_ =
-          com.google.protobuf.LazyStringArrayList.emptyList();
-      private void ensureEnumValuesIsMutable() {
-        if (!enumValues_.isModifiable()) {
-          enumValues_ = new com.google.protobuf.LazyStringArrayList(enumValues_);
-        }
-        bitField0_ |= 0x00000008;
-      }
-      /**
-       * <code>repeated string enumValues = 5;</code>
-       * @return A list containing the enumValues.
-       */
-      public com.google.protobuf.ProtocolStringList
-          getEnumValuesList() {
-        enumValues_.makeImmutable();
-        return enumValues_;
-      }
-      /**
-       * <code>repeated string enumValues = 5;</code>
-       * @return The count of enumValues.
-       */
-      public int getEnumValuesCount() {
-        return enumValues_.size();
-      }
-      /**
-       * <code>repeated string enumValues = 5;</code>
-       * @param index The index of the element to return.
-       * @return The enumValues at the given index.
-       */
-      public java.lang.String getEnumValues(int index) {
-        return enumValues_.get(index);
-      }
-      /**
-       * <code>repeated string enumValues = 5;</code>
-       * @param index The index of the value to return.
-       * @return The bytes of the enumValues at the given index.
-       */
-      public com.google.protobuf.ByteString
-          getEnumValuesBytes(int index) {
-        return enumValues_.getByteString(index);
-      }
-      /**
-       * <code>repeated string enumValues = 5;</code>
-       * @param index The index to set the value at.
-       * @param value The enumValues to set.
-       * @return This builder for chaining.
-       */
-      public Builder setEnumValues(
-          int index, java.lang.String value) {
-        if (value == null) { throw new NullPointerException(); }
-        ensureEnumValuesIsMutable();
-        enumValues_.set(index, value);
-        bitField0_ |= 0x00000008;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated string enumValues = 5;</code>
-       * @param value The enumValues to add.
-       * @return This builder for chaining.
-       */
-      public Builder addEnumValues(
-          java.lang.String value) {
-        if (value == null) { throw new NullPointerException(); }
-        ensureEnumValuesIsMutable();
-        enumValues_.add(value);
-        bitField0_ |= 0x00000008;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated string enumValues = 5;</code>
-       * @param values The enumValues to add.
-       * @return This builder for chaining.
-       */
-      public Builder addAllEnumValues(
-          java.lang.Iterable<java.lang.String> values) {
-        ensureEnumValuesIsMutable();
-        com.google.protobuf.AbstractMessageLite.Builder.addAll(
-            values, enumValues_);
-        bitField0_ |= 0x00000008;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated string enumValues = 5;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearEnumValues() {
-        enumValues_ =
-          com.google.protobuf.LazyStringArrayList.emptyList();
-        bitField0_ = (bitField0_ & ~0x00000008);;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated string enumValues = 5;</code>
-       * @param value The bytes of the enumValues to add.
-       * @return This builder for chaining.
-       */
-      public Builder addEnumValuesBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) { throw new NullPointerException(); }
-        checkByteStringIsUtf8(value);
-        ensureEnumValuesIsMutable();
-        enumValues_.add(value);
-        bitField0_ |= 0x00000008;
-        onChanged();
-        return this;
-      }
-
-      private com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange intRange_;
-      private com.google.protobuf.SingleFieldBuilder<
-          com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange, com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange.Builder, com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRangeOrBuilder> intRangeBuilder_;
-      /**
-       * <code>optional .boolerules.primitives.PbIntRange intRange = 6;</code>
-       * @return Whether the intRange field is set.
-       */
-      public boolean hasIntRange() {
-        return ((bitField0_ & 0x00000010) != 0);
-      }
-      /**
-       * <code>optional .boolerules.primitives.PbIntRange intRange = 6;</code>
-       * @return The intRange.
-       */
-      public com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange getIntRange() {
-        if (intRangeBuilder_ == null) {
-          return intRange_ == null ? com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange.getDefaultInstance() : intRange_;
-        } else {
-          return intRangeBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>optional .boolerules.primitives.PbIntRange intRange = 6;</code>
-       */
-      public Builder setIntRange(com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange value) {
-        if (intRangeBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          intRange_ = value;
-        } else {
-          intRangeBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000010;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional .boolerules.primitives.PbIntRange intRange = 6;</code>
-       */
-      public Builder setIntRange(
-          com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange.Builder builderForValue) {
-        if (intRangeBuilder_ == null) {
-          intRange_ = builderForValue.build();
-        } else {
-          intRangeBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000010;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional .boolerules.primitives.PbIntRange intRange = 6;</code>
-       */
-      public Builder mergeIntRange(com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange value) {
-        if (intRangeBuilder_ == null) {
-          if (((bitField0_ & 0x00000010) != 0) &&
-            intRange_ != null &&
-            intRange_ != com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange.getDefaultInstance()) {
-            getIntRangeBuilder().mergeFrom(value);
-          } else {
-            intRange_ = value;
-          }
-        } else {
-          intRangeBuilder_.mergeFrom(value);
-        }
-        if (intRange_ != null) {
-          bitField0_ |= 0x00000010;
-          onChanged();
-        }
-        return this;
-      }
-      /**
-       * <code>optional .boolerules.primitives.PbIntRange intRange = 6;</code>
-       */
-      public Builder clearIntRange() {
-        bitField0_ = (bitField0_ & ~0x00000010);
-        intRange_ = null;
-        if (intRangeBuilder_ != null) {
-          intRangeBuilder_.dispose();
-          intRangeBuilder_ = null;
-        }
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional .boolerules.primitives.PbIntRange intRange = 6;</code>
-       */
-      public com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange.Builder getIntRangeBuilder() {
-        bitField0_ |= 0x00000010;
-        onChanged();
-        return getIntRangeFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>optional .boolerules.primitives.PbIntRange intRange = 6;</code>
-       */
-      public com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRangeOrBuilder getIntRangeOrBuilder() {
-        if (intRangeBuilder_ != null) {
-          return intRangeBuilder_.getMessageOrBuilder();
-        } else {
-          return intRange_ == null ?
-              com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange.getDefaultInstance() : intRange_;
-        }
-      }
-      /**
-       * <code>optional .boolerules.primitives.PbIntRange intRange = 6;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange, com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange.Builder, com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRangeOrBuilder> 
-          getIntRangeFieldBuilder() {
-        if (intRangeBuilder_ == null) {
-          intRangeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange, com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRange.Builder, com.booleworks.prl.model.protobuf.ProtoBufPrimitives.PbIntRangeOrBuilder>(
-                  getIntRange(),
-                  getParentForChildren(),
-                  isClean());
-          intRange_ = null;
-        }
-        return intRangeBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:boolerules.features.PbFullFeature)
@@ -6934,40 +6652,40 @@ com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFeatureDefinitionList d
       "\n\030model_featurestore.proto\022\023boolerules.f" +
       "eatures\032\026model_properties.proto\032\026model_p" +
       "rimitives.proto\"\027\n\tPbFeature\022\n\n\002id\030\001 \001(\005" +
-      "\"\261\001\n\rPbFullFeature\022\n\n\002id\030\001 \001(\005\022\023\n\013featur" +
-      "eCode\030\002 \001(\t\022\026\n\tversioned\030\004 \001(\010H\000\210\001\001\022\022\n\ne" +
-      "numValues\030\005 \003(\t\0228\n\010intRange\030\006 \001(\0132!.bool" +
-      "erules.primitives.PbIntRangeH\001\210\001\001B\014\n\n_ve" +
-      "rsionedB\013\n\t_intRange\"D\n\rPbAllFeatures\0223\n" +
-      "\007feature\030\001 \003(\0132\".boolerules.features.PbF" +
-      "ullFeature\"\275\002\n\023PbFeatureDefinition\022\014\n\004co" +
-      "de\030\002 \001(\t\022\030\n\013description\030\004 \001(\tH\000\210\001\001\0225\n\npr" +
-      "operties\030\005 \003(\0132!.boolerules.properties.P" +
-      "bProperty\022\027\n\nlineNumber\030\006 \001(\005H\001\210\001\001\022\014\n\004us" +
-      "ed\030\007 \001(\010\022\026\n\tversioned\030\010 \001(\010H\002\210\001\001\0229\n\tintD" +
-      "omain\030\t \001(\0132!.boolerules.primitives.PbIn" +
-      "tRangeH\003\210\001\001\022\022\n\nenumValues\030\n \003(\tB\016\n\014_desc" +
-      "riptionB\r\n\013_lineNumberB\014\n\n_versionedB\014\n\n" +
-      "_intDomain\"Q\n\027PbFeatureDefinitionList\0226\n" +
-      "\004list\030\001 \003(\0132(.boolerules.features.PbFeat" +
-      "ureDefinition\"\360\004\n\016PbFeatureStore\022Q\n\017bool" +
-      "eanFeatures\030\001 \003(\01328.boolerules.features." +
-      "PbFeatureStore.BooleanFeaturesEntry\022I\n\013i" +
-      "ntFeatures\030\002 \003(\01324.boolerules.features.P" +
-      "bFeatureStore.IntFeaturesEntry\022K\n\014enumFe" +
-      "atures\030\003 \003(\01325.boolerules.features.PbFea" +
-      "tureStore.EnumFeaturesEntry\022-\n\005group\030\004 \003" +
-      "(\0132\036.boolerules.features.PbFeature\022\031\n\021no" +
-      "nUniqueFeatures\030\005 \003(\t\032d\n\024BooleanFeatures" +
-      "Entry\022\013\n\003key\030\001 \001(\t\022;\n\005value\030\002 \001(\0132,.bool" +
-      "erules.features.PbFeatureDefinitionList:" +
-      "\0028\001\032`\n\020IntFeaturesEntry\022\013\n\003key\030\001 \001(\t\022;\n\005" +
-      "value\030\002 \001(\0132,.boolerules.features.PbFeat" +
-      "ureDefinitionList:\0028\001\032a\n\021EnumFeaturesEnt" +
+      "\"_\n\rPbFullFeature\022\n\n\002id\030\001 \001(\005\022\023\n\013feature" +
+      "Code\030\002 \001(\t\022-\n\006theory\030\003 \001(\0162\035.boolerules." +
+      "features.PbTheory\"D\n\rPbAllFeatures\0223\n\007fe" +
+      "ature\030\001 \003(\0132\".boolerules.features.PbFull" +
+      "Feature\"\275\002\n\023PbFeatureDefinition\022\014\n\004code\030" +
+      "\002 \001(\t\022\030\n\013description\030\004 \001(\tH\000\210\001\001\0225\n\nprope" +
+      "rties\030\005 \003(\0132!.boolerules.properties.PbPr" +
+      "operty\022\027\n\nlineNumber\030\006 \001(\005H\001\210\001\001\022\014\n\004used\030" +
+      "\007 \001(\010\022\026\n\tversioned\030\010 \001(\010H\002\210\001\001\0229\n\tintDoma" +
+      "in\030\t \001(\0132!.boolerules.primitives.PbIntRa" +
+      "ngeH\003\210\001\001\022\022\n\nenumValues\030\n \003(\tB\016\n\014_descrip" +
+      "tionB\r\n\013_lineNumberB\014\n\n_versionedB\014\n\n_in" +
+      "tDomain\"Q\n\027PbFeatureDefinitionList\0226\n\004li" +
+      "st\030\001 \003(\0132(.boolerules.features.PbFeature" +
+      "Definition\"\360\004\n\016PbFeatureStore\022Q\n\017boolean" +
+      "Features\030\001 \003(\01328.boolerules.features.PbF" +
+      "eatureStore.BooleanFeaturesEntry\022I\n\013intF" +
+      "eatures\030\002 \003(\01324.boolerules.features.PbFe" +
+      "atureStore.IntFeaturesEntry\022K\n\014enumFeatu" +
+      "res\030\003 \003(\01325.boolerules.features.PbFeatur" +
+      "eStore.EnumFeaturesEntry\022-\n\005group\030\004 \003(\0132" +
+      "\036.boolerules.features.PbFeature\022\031\n\021nonUn" +
+      "iqueFeatures\030\005 \003(\t\032d\n\024BooleanFeaturesEnt" +
       "ry\022\013\n\003key\030\001 \001(\t\022;\n\005value\030\002 \001(\0132,.booleru" +
       "les.features.PbFeatureDefinitionList:\0028\001" +
-      "B9\n!com.booleworks.prl.model.protobufB\024P" +
-      "rotoBufFeatureStoreb\006proto3"
+      "\032`\n\020IntFeaturesEntry\022\013\n\003key\030\001 \001(\t\022;\n\005val" +
+      "ue\030\002 \001(\0132,.boolerules.features.PbFeature" +
+      "DefinitionList:\0028\001\032a\n\021EnumFeaturesEntry\022" +
+      "\013\n\003key\030\001 \001(\t\022;\n\005value\030\002 \001(\0132,.boolerules" +
+      ".features.PbFeatureDefinitionList:\0028\001*;\n" +
+      "\010PbTheory\022\010\n\004BOOL\020\000\022\022\n\016VERSIONED_BOOL\020\001\022" +
+      "\010\n\004ENUM\020\002\022\007\n\003INT\020\003B9\n!com.booleworks.prl" +
+      ".model.protobufB\024ProtoBufFeatureStoreb\006p" +
+      "roto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -6986,7 +6704,7 @@ com.booleworks.prl.model.protobuf.ProtoBufFeatureStore.PbFeatureDefinitionList d
     internal_static_boolerules_features_PbFullFeature_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_boolerules_features_PbFullFeature_descriptor,
-        new java.lang.String[] { "Id", "FeatureCode", "Versioned", "EnumValues", "IntRange", });
+        new java.lang.String[] { "Id", "FeatureCode", "Theory", });
     internal_static_boolerules_features_PbAllFeatures_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_boolerules_features_PbAllFeatures_fieldAccessorTable = new

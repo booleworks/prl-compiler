@@ -102,7 +102,7 @@ fun encodeIntFeatures(
                 def.feature.featureCode,
                 cf.variable(
                     "$FEATURE_DEF_PREFIX$index$S${def.feature.featureCode}",
-                    transpileDomain(def.feature.domain)
+                    transpileDomain(def.domain)
                 )
             )
         )
