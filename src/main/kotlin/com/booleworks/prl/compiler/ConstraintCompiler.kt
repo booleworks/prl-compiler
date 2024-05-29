@@ -271,7 +271,7 @@ class ConstraintCompiler {
             }
         }
         return when {
-            type != null -> type!!
+            type != null -> type
             isInt(predicate.left) && isInt(predicate.right) -> INT
             isEnum(predicate.left) && isEnum(predicate.right) -> ENUM
             else -> throw CoCoException("Cannot determine type of predicate")

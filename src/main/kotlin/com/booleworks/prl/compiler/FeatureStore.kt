@@ -50,7 +50,6 @@ data class FeatureStore internal constructor(
             val definitions = findMatchingDefinitions(feature.featureCode)
             when {
                 definitions.isEmpty() -> state.addError("No feature definition found for ${feature.featureCode}")
-                definitions.size > 1 -> state.addError("Feature definition is not unique: ${feature.featureCode}")
                 else -> map[feature] = definitions.first()
             }
         }
