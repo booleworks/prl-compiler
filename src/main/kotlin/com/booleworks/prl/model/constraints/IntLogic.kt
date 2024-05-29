@@ -57,6 +57,7 @@ sealed interface IntPredicate : Predicate {
 
 sealed interface IntTerm {
     fun value(assignment: FeatureAssignment): Int
+    fun normalize(): IntTerm
     fun restrict(assignment: FeatureAssignment): IntTerm
     fun rename(renaming: FeatureRenaming): IntTerm
     fun features(): Set<IntFeature>
@@ -71,6 +72,7 @@ class IntFeature internal constructor(
     override fun value(assignment: FeatureAssignment) = assignment.getInt(this)
         ?: throw IllegalArgumentException("Integer Feature $featureCode is not assigned to any value")
 
+    override fun normalize() = this
     override fun rename(renaming: FeatureRenaming) = renaming.rename(this)
     override fun features() = setOf(this)
     override fun restrict(assignment: FeatureAssignment) = assignment.getInt(this).let { it?.toIntValue() ?: this }
@@ -85,10 +87,12 @@ class IntFeature internal constructor(
         if (module != other.module) return false
         return domain == other.domain
     }
+
 }
 
 data class IntValue internal constructor(val value: Int) : IntTerm {
     override fun value(assignment: FeatureAssignment) = value
+    override fun normalize() = this
     override fun restrict(assignment: FeatureAssignment) = this
     override fun rename(renaming: FeatureRenaming) = this
     override fun features() = setOf<IntFeature>()
@@ -99,6 +103,7 @@ fun Int.toIntValue() = IntValue(this)
 
 data class IntMul internal constructor(val coefficient: Int, val feature: IntFeature) : IntTerm {
     override fun value(assignment: FeatureAssignment) = coefficient * feature.value(assignment)
+    override fun normalize() = if (coefficient == 1) feature else this
     override fun restrict(assignment: FeatureAssignment) = simplifiedTerm(feature.restrict(assignment))
     override fun rename(renaming: FeatureRenaming) = IntMul(coefficient, feature.rename(renaming))
     override fun features() = setOf(feature)
@@ -122,6 +127,7 @@ data class IntMul internal constructor(val coefficient: Int, val feature: IntFea
 
 data class IntSum internal constructor(val operands: List<IntMul>, val offset: Int) : IntTerm {
     override fun value(assignment: FeatureAssignment) = operands.sumOf { it.value(assignment) } + offset
+    override fun normalize() = if (offset == 0 && operands.size == 1) operands[0].normalize() else this
     override fun restrict(assignment: FeatureAssignment) = simplifyTerm(operands.map { it.restrict(assignment) })
     override fun rename(renaming: FeatureRenaming) = IntSum(operands.map { it.rename(renaming) }, offset)
     override fun features() = operands.map { it.feature }.toSet()

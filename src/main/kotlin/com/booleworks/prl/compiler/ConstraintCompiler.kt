@@ -56,7 +56,7 @@ import com.booleworks.prl.parser.PrlTerm
 class CoCoException(message: String) : Exception(message)
 
 class ConstraintCompiler {
-    fun compileConstraint(constraint: PrlConstraint, featureMap: Map<PrlFeature, AnyFeatureDef>): Constraint =
+    fun compileConstraint(constraint: PrlConstraint, featureMap: Fmap): Constraint =
         when (constraint) {
             is PrlConstant -> constant(constraint.value)
             is PrlAmo -> amo(compileBooleanFeatures(constraint.features, featureMap))
@@ -73,17 +73,17 @@ class ConstraintCompiler {
                 compileConstraint(constraint.right, featureMap)
             )
             is PrlInEnumsPredicate -> compileEnumInPredicate(constraint, featureMap)
-            is PrlInIntRangePredicate -> intIn(compileIntTerm(constraint.term, featureMap), constraint.range)
+            is PrlInIntRangePredicate -> compileIntInPredicate(constraint, featureMap)
             is PrlNot -> not(compileConstraint(constraint.operand, featureMap))
             is PrlOr -> or(constraint.operands.map { compileConstraint(it, featureMap) })
         }
 
-    internal fun compileUnversionedBooleanFeature(feature: PrlFeature, featureMap: Map<PrlFeature, AnyFeatureDef>) =
+    internal fun compileUnversionedBooleanFeature(feature: PrlFeature, featureMap: Fmap) =
         compileBooleanFeature(feature, featureMap).also {
             if (it.versioned) throw CoCoException("Feature '${feature.featureCode}' is a versioned feature")
         }
 
-    private fun compileBooleanFeature(feature: PrlFeature, featureMap: Map<PrlFeature, AnyFeatureDef>) =
+    private fun compileBooleanFeature(feature: PrlFeature, featureMap: Fmap) =
         when (val def = featureMap[feature]) {
             null -> unknownFeature(feature)
             is BooleanFeatureDefinition -> def.feature
@@ -92,7 +92,7 @@ class ConstraintCompiler {
 
     internal fun compileBooleanFeatures(
         features: Collection<PrlFeature>,
-        featuresMap: Map<PrlFeature, AnyFeatureDef>
+        featuresMap: Fmap
     ): Collection<BooleanFeature> =
         mutableListOf<BooleanFeature>().apply {
             features.forEach {
@@ -109,14 +109,14 @@ class ConstraintCompiler {
             }
         }
 
-    private fun compileIntFeature(feature: PrlFeature, featureMap: Map<PrlFeature, AnyFeatureDef>): IntFeature =
+    private fun compileIntFeature(feature: PrlFeature, featureMap: Fmap): IntFeature =
         when (val def = featureMap[feature]) {
             null -> unknownFeature(feature)
             is IntFeatureDefinition -> def.feature
             else -> wrongFeatureType(feature, def, "int")
         }
 
-    private fun compileEnumFeature(feature: PrlFeature, featureMap: Map<PrlFeature, AnyFeatureDef>): EnumFeature =
+    private fun compileEnumFeature(feature: PrlFeature, featureMap: Fmap): EnumFeature =
         when (val def = featureMap[feature]) {
             null -> unknownFeature(feature)
             is EnumFeatureDefinition -> def.feature
@@ -125,7 +125,7 @@ class ConstraintCompiler {
 
     private fun compileEnumInPredicate(
         predicate: PrlInEnumsPredicate,
-        featureMap: Map<PrlFeature, AnyFeatureDef>
+        featureMap: Fmap
     ): Constraint {
         if (predicate.term !is PrlFeature) {
             throw CoCoException("Left-hand side of an enum 'in' predicate must be an enum feature")
@@ -133,7 +133,11 @@ class ConstraintCompiler {
         return enumIn(compileEnumFeature(predicate.term, featureMap), predicate.values)
     }
 
-    internal fun compileIntTerm(term: PrlTerm, featureMap: Map<PrlFeature, AnyFeatureDef>): IntTerm = when (term) {
+    private fun compileIntInPredicate(predicate: PrlInIntRangePredicate, featureMap: Fmap): Constraint {
+        return intIn(compileIntTerm(predicate.term, featureMap), predicate.range)
+    }
+
+    internal fun compileIntTerm(term: PrlTerm, featureMap: Fmap): IntTerm = when (term) {
         is PrlFeature -> compileIntFeature(term, featureMap)
         is PrlIntValue -> intVal(term.value)
         is PrlIntMulFunction -> compileIntMulFunction(term, featureMap)
@@ -141,7 +145,7 @@ class ConstraintCompiler {
         else -> throw CoCoException("Unknown integer term type: ${term.javaClass.simpleName}")
     }
 
-    private fun compileIntMulFunction(term: PrlIntMulFunction, featureMap: Map<PrlFeature, AnyFeatureDef>): IntMul {
+    private fun compileIntMulFunction(term: PrlIntMulFunction, featureMap: Fmap): IntMul {
         if (term.left is PrlIntMulFunction || term.left is PrlIntAddFunction ||
             term.right is PrlIntMulFunction || term.right is PrlIntAddFunction ||
             term.left is PrlIntValue && term.right is PrlIntValue
@@ -155,7 +159,7 @@ class ConstraintCompiler {
         return intMul(coefficient, compileIntFeature(feature, featureMap))
     }
 
-    private fun compileIntAddFunction(term: PrlIntAddFunction, featureMap: Map<PrlFeature, AnyFeatureDef>): IntTerm {
+    private fun compileIntAddFunction(term: PrlIntAddFunction, featureMap: Fmap): IntTerm {
         var coefficient = 0
         val condensed = mutableListOf<PrlTerm>().apply {
             term.operands.forEach { if (it is PrlIntAddFunction) addAll(it.operands) else add(it) }
@@ -174,21 +178,23 @@ class ConstraintCompiler {
 
     private fun compileComparison(
         predicate: PrlComparisonPredicate,
-        featureMap: Map<PrlFeature, AnyFeatureDef>
+        featureMap: Fmap,
     ): Constraint =
         when (determineType(predicate, featureMap)) {
             BOOLEAN -> compileVersionPredicate(predicate, featureMap)
             ENUM -> compileEnumComparison(predicate, featureMap)
-            INT -> intComparison(
-                compileIntTerm(predicate.left, featureMap),
-                compileIntTerm(predicate.right, featureMap),
-                predicate.comparison
-            )
+            INT -> {
+                intComparison(
+                    compileIntTerm(predicate.left, featureMap),
+                    compileIntTerm(predicate.right, featureMap),
+                    predicate.comparison
+                )
+            }
         }
 
     private fun compileEnumComparison(
         predicate: PrlComparisonPredicate,
-        featureMap: Map<PrlFeature, AnyFeatureDef>
+        featureMap: Fmap
     ): Constraint {
         val value =
             if (predicate.left is PrlEnumValue) {
@@ -217,7 +223,7 @@ class ConstraintCompiler {
 
     private fun compileVersionPredicate(
         predicate: PrlComparisonPredicate,
-        featureMap: Map<PrlFeature, AnyFeatureDef>
+        featureMap: Fmap
     ): Constraint {
         val version =
             if (predicate.left is PrlIntValue) {
@@ -250,7 +256,7 @@ class ConstraintCompiler {
 
     private fun determineType(
         predicate: PrlComparisonPredicate,
-        featureMap: Map<PrlFeature, AnyFeatureDef>
+        featureMap: Fmap
     ): PredicateType {
         var type: PredicateType? = null
         predicate.features().forEach { feature ->

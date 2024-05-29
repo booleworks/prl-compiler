@@ -1,8 +1,6 @@
 package com.booleworks.prl.transpiler
 
-import com.booleworks.logicng.csp.CspFactory
 import com.booleworks.logicng.csp.encodings.CspEncodingContext
-import com.booleworks.logicng.formulas.FormulaFactory
 import com.booleworks.prl.model.BooleanProperty
 import com.booleworks.prl.model.DateProperty
 import com.booleworks.prl.model.EnumProperty
@@ -15,9 +13,6 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class ModelTranslationTest {
-    private val f = FormulaFactory.caching()
-    private val cf = CspFactory(f)
-
     private val s1 = Slice.of(
         mapOf(
             Pair(BooleanProperty("b1", true), SliceType.SPLIT),
@@ -66,19 +61,19 @@ class ModelTranslationTest {
     private val st1 = SliceTranslation(
         SliceSet(mutableListOf(s1), listOf(), listOf()), TranslationInfo(
             listOf(), setOf(), IntFeatureEncodingStore.empty(), FeatureInstantiation.empty(),
-            setOf(), setOf(), mapOf(), setOf(), mapOf(), CspEncodingContext()
+            setOf(), setOf(), mapOf(), setOf(), mapOf(), CspEncodingContext(), mapOf()
         )
     )
     private val st2 = SliceTranslation(
         SliceSet(mutableListOf(s2, s3), listOf(), listOf()), TranslationInfo(
             listOf(), setOf(), IntFeatureEncodingStore.empty(), FeatureInstantiation.empty(),
-            setOf(), setOf(), mapOf(), setOf(), mapOf(), CspEncodingContext()
+            setOf(), setOf(), mapOf(), setOf(), mapOf(), CspEncodingContext(), mapOf()
         )
     )
     private val st3 = SliceTranslation(
         SliceSet(mutableListOf(s4), listOf(), listOf()), TranslationInfo(
             listOf(), setOf(), IntFeatureEncodingStore.empty(), FeatureInstantiation.empty(),
-            setOf(), setOf(), mapOf(), setOf(), mapOf(), CspEncodingContext()
+            setOf(), setOf(), mapOf(), setOf(), mapOf(), CspEncodingContext(), mapOf()
         )
     )
 

@@ -39,9 +39,12 @@ enum class RuleType(val description: String) {
     UNKNOWN_FEATURE_IN_SLICE("Unknown feature in this slice"),
     FEATURE_EQUIVALENCE_OVER_SLICES("Feature equivalence for slice"),
     ENUM_FEATURE_CONSTRAINT("EXO constraint for enum feature values"),
-    ADDITIONAL_RESTRICTION("Additional user-provided restriction"),
     INTEGER_VARIABLE("Definition of a int feature"),
-    PREDICATE_DEFINITION("Definition of predicate auxiliary variable")
+    PREDICATE_DEFINITION("Definition of predicate auxiliary variable"),
+    VERSION_INTERVAL_VARIABLE("Interval variable for versioned feature"),
+    VERSION_AMO_CONSTRAINT("AMO constraint for versioned feature"),
+    VERSION_EQUIVALENCE("Equivalence constraint for versioned feature"),
+    ADDITIONAL_RESTRICTION("Additional user-provided restriction")
 }
 
 data class RuleInformation(val ruleType: RuleType, val rule: AnyRule?, val sliceSet: SliceSet?) : PropositionBackpack {
@@ -64,6 +67,8 @@ data class SliceTranslation(val sliceSet: SliceSet, val info: TranslationInfo) {
     val booleanVariables = info.booleanVariables
     val enumVariables = info.enumVariables
     val integerVariables = info.integerVariables
+
+    //TODO version variables
     val enumMapping = info.enumMapping
     val unknownFeatures = info.unknownFeatures
 }
@@ -125,6 +130,7 @@ interface TranspilerCoreInfo {
     val enumMapping: Map<String, Map<String, Variable>>
     val intPredicateMapping: Map<IntPredicate, Variable>
     val encodingContext: CspEncodingContext
+    val versionMapping: Map<String, Map<Int, Variable>>
 
     fun translateEnumIn(f: FormulaFactory, constraint: EnumInPredicate): Formula =
         enumMapping[constraint.feature.fullName].let { enumMap ->
@@ -152,10 +158,12 @@ data class TranslationInfo(
     override val enumMapping: Map<String, Map<String, Variable>>,
     override val unknownFeatures: Set<Feature>,
     override val intPredicateMapping: Map<IntPredicate, Variable>,
-    override val encodingContext: CspEncodingContext
+    override val encodingContext: CspEncodingContext,
+    override val versionMapping: Map<String, Map<Int, Variable>>,
 ) : TranspilerCoreInfo {
     val enumVariables: Set<Variable> = enumMapping.values.flatMap { it.values }.toSet()
     private val var2enum = mutableMapOf<Variable, Pair<String, String>>()
+    private val var2version = mutableMapOf<Variable, Pair<String, Int>>()
 
     init {
         enumMapping.forEach { (feature, vs) ->
@@ -163,7 +171,13 @@ data class TranslationInfo(
                 var2enum[variable] = Pair(feature, value)
             }
         }
+        versionMapping.forEach { (feature, vs) ->
+            vs.forEach { (value, variable) ->
+                var2version[variable] = Pair(feature, value)
+            }
+        }
     }
 
     fun getFeatureAndValue(v: Variable) = var2enum[v]
+    fun getFeatureAndVersion(v: Variable) = var2version[v]
 }

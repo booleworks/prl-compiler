@@ -85,7 +85,13 @@ class CompilerRulesTest {
             assertThat(it.errors()).containsExactly("Cannot assign an unversioned boolean feature to an int or enum value")
         }
         PrlCompiler().let {
-            assertThat(it.compileRule(parseRule("""rule forbidden feature b1 = "text" """), module, featureMap)).isNull()
+            assertThat(
+                it.compileRule(
+                    parseRule("""rule forbidden feature b1 = "text" """),
+                    module,
+                    featureMap
+                )
+            ).isNull()
             assertThat(it.errors()).containsExactly("Cannot assign an unversioned boolean feature to an int or enum value")
         }
         PrlCompiler().let {
@@ -101,7 +107,13 @@ class CompilerRulesTest {
             assertThat(it.errors()).containsExactly("Cannot assign an enum feature to anything else than an enum value")
         }
         PrlCompiler().let {
-            assertThat(it.compileRule(parseRule("""rule forbidden feature i1 = "text" """), module, featureMap)).isNull()
+            assertThat(
+                it.compileRule(
+                    parseRule("""rule forbidden feature i1 = "text" """),
+                    module,
+                    featureMap
+                )
+            ).isNull()
             assertThat(it.errors()).containsExactly("Cannot assign an int feature to anything else than an int value")
         }
         PrlCompiler().let {
@@ -114,7 +126,11 @@ class CompilerRulesTest {
     fun testGroupRule() {
         val rule1 = PrlCompiler().compileRule(parseRule("""optional group b1 contains [b2, b3]"""), module, featureMap)
         assertThat(rule1).isEqualTo(GroupRule(GroupType.OPTIONAL, b1, setOf(b2, b3), Visibility.PUBLIC, module))
-        val rule2 = PrlCompiler().compileRule(parseRule("""mandatory internal group b1 contains [b2, b3]"""), module, featureMap)
+        val rule2 = PrlCompiler().compileRule(
+            parseRule("""mandatory internal group b1 contains [b2, b3]"""),
+            module,
+            featureMap
+        )
         assertThat(rule2).isEqualTo(GroupRule(GroupType.MANDATORY, b1, setOf(b2, b3), Visibility.INTERNAL, module))
 
         PrlCompiler().let {
@@ -122,7 +138,13 @@ class CompilerRulesTest {
             assertThat(it.errors()).containsExactly("Feature 'v' is a versioned feature")
         }
         PrlCompiler().let {
-            assertThat(it.compileRule(parseRule("""optional group b1 contains [b2, b3, e1]"""), module, featureMap)).isNull()
+            assertThat(
+                it.compileRule(
+                    parseRule("""optional group b1 contains [b2, b3, e1]"""),
+                    module,
+                    featureMap
+                )
+            ).isNull()
             assertThat(it.errors()).containsExactly("Enum feature 'e1' is used as boolean feature")
         }
     }
@@ -141,7 +163,13 @@ class CompilerRulesTest {
             assertThat(it.errors()).containsExactly("Unknown feature: 'y'")
         }
         PrlCompiler().let {
-            assertThat(it.compileRule(parseRule("""rule if b1 then b2 else [e1 <= -10]"""), module, featureMap)).isNull()
+            assertThat(
+                it.compileRule(
+                    parseRule("""rule if b1 then b2 else [e1 <= -10]"""),
+                    module,
+                    featureMap
+                )
+            ).isNull()
             assertThat(it.errors()).containsExactly("Enum comparison must compare an enum feature with an enum value")
         }
     }
@@ -177,7 +205,13 @@ class CompilerRulesTest {
             assertThat(it.errors()).containsExactly("Cannot assign an unversioned boolean feature to an int or enum value")
         }
         PrlCompiler().let {
-            assertThat(it.compileRule(parseRule("""rule mandatory feature b1 = "text" """), module, featureMap)).isNull()
+            assertThat(
+                it.compileRule(
+                    parseRule("""rule mandatory feature b1 = "text" """),
+                    module,
+                    featureMap
+                )
+            ).isNull()
             assertThat(it.errors()).containsExactly("Cannot assign an unversioned boolean feature to an int or enum value")
         }
         PrlCompiler().let {
@@ -193,7 +227,13 @@ class CompilerRulesTest {
             assertThat(it.errors()).containsExactly("Cannot assign an enum feature to anything else than an enum value")
         }
         PrlCompiler().let {
-            assertThat(it.compileRule(parseRule("""rule mandatory feature i1 = "text" """), module, featureMap)).isNull()
+            assertThat(
+                it.compileRule(
+                    parseRule("""rule mandatory feature i1 = "text" """),
+                    module,
+                    featureMap
+                )
+            ).isNull()
             assertThat(it.errors()).containsExactly("Cannot assign an int feature to anything else than an int value")
         }
         PrlCompiler().let {
