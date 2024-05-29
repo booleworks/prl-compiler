@@ -15,7 +15,6 @@ import com.booleworks.prl.model.constraints.Constraint
 import com.booleworks.prl.model.constraints.EnumComparisonPredicate
 import com.booleworks.prl.model.constraints.EnumInPredicate
 import com.booleworks.prl.model.constraints.Feature
-import com.booleworks.prl.model.constraints.VersionPredicate
 import com.booleworks.prl.model.rules.AnyRule
 import com.booleworks.prl.model.rules.ConstraintRule
 import com.booleworks.prl.model.slices.Slice
@@ -31,7 +30,9 @@ enum class RuleType(val description: String) {
     UNKNOWN_FEATURE_IN_SLICE("Unknown feature in this slice"),
     FEATURE_EQUIVALENCE_OVER_SLICES("Feature equivalence for slice"),
     ENUM_FEATURE_CONSTRAINT("EXO constraint for enum feature values"),
-    VERSION_FEATURE_CONSTRAINT("EXO constraint for version feature values"),
+    VERSION_INTERVAL_VARIABLE("Interval variable for versioned feature"),
+    VERSION_AMO_CONSTRAINT("AMO constraint for versioned feature"),
+    VERSION_EQUIVALENCE("Equivalence constraint for versioned feature"),
     ADDITIONAL_RESTRICTION("Additional user-provided restriction")
 }
 
@@ -54,9 +55,11 @@ data class SliceTranslation(val sliceSet: SliceSet, val info: TranslationInfo) {
     val knownVariables = info.knownVariables
     val booleanVariables = info.booleanVariables
     val enumVariables = info.enumVariables
-    val versionVariables = info.versionVariables
+
+    //    val versionVariables = info.versionVariables // TODO
     val enumMapping = info.enumMapping
-    val versionMapping = info.versionMapping
+
+    //    val versionMapping = info.versionMapping // TODO
     val unknownFeatures = info.unknownFeatures
 }
 
@@ -108,14 +111,6 @@ interface TranspilerCoreInfo {
                 )
             }
         }
-
-    fun translateVersionComparison(f: FormulaFactory, constraint: VersionPredicate): Formula {
-        val feature = constraint.feature
-        val relevantValues = versionMapping[feature.fullName]!!
-            .filter { constraint.comparison.evaluate(it.key, constraint.version) }
-            .map { it.value }
-        return f.or(relevantValues)
-    }
 }
 
 data class TranslationInfo(
@@ -127,7 +122,7 @@ data class TranslationInfo(
     override val unknownFeatures: Set<Feature>,
 ) : TranspilerCoreInfo {
     val enumVariables: Set<Variable> = enumMapping.values.flatMap { it.values }.toSet()
-    val versionVariables: Set<Variable> = versionMapping.values.flatMap { it.values }.toSet()
+
     private val var2enum = mutableMapOf<Variable, Pair<String, String>>()
     private val var2version = mutableMapOf<Variable, Pair<String, Int>>()
 

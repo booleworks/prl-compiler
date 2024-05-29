@@ -4,7 +4,6 @@ import com.booleworks.logicng.formulas.FormulaFactory
 import com.booleworks.prl.compiler.PrlCompiler
 import com.booleworks.prl.parser.parseRuleFile
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.Test
 
 class LogicNGTranspilerVersionNoSlicesTest {
@@ -18,31 +17,31 @@ class LogicNGTranspilerVersionNoSlicesTest {
         assertThat(modelTranslation.numberOfComputations).isEqualTo(1)
     }
 
-    @Test
-    fun testIntMapping() {
-        val trans = modelTranslation[0]
-        assertThat(trans.versionMapping).hasSize(3)
-        assertThat(trans.versionMapping["versions.i1"]).containsExactly(
-            entry(0, f.variable("@VER_versions#i1_0")),
-            entry(1, f.variable("@VER_versions#i1_1")),
-            entry(2, f.variable("@VER_versions#i1_2")),
-            entry(3, f.variable("@VER_versions#i1_3")),
-            entry(4, f.variable("@VER_versions#i1_4")),
-            entry(5, f.variable("@VER_versions#i1_5")),
-        )
-        assertThat(trans.versionMapping["versions.i2"]).containsExactly(
-            entry(0, f.variable("@VER_versions#i2_0")),
-            entry(1, f.variable("@VER_versions#i2_1")),
-            entry(2, f.variable("@VER_versions#i2_2")),
-            entry(3, f.variable("@VER_versions#i2_3")),
-        )
-        assertThat(trans.versionMapping["versions.i3"]).containsExactly(
-            entry(0, f.variable("@VER_versions#i3_0")),
-            entry(1, f.variable("@VER_versions#i3_1")),
-            entry(2, f.variable("@VER_versions#i3_2")),
-        )
-        assertThat(trans.versionVariables).hasSize(13)
-    }
+//    @Test
+//    fun testIntMapping() {
+//        val trans = modelTranslation[0]
+//        assertThat(trans.versionMapping).hasSize(3)
+//        assertThat(trans.versionMapping["versions.i1"]).containsExactly(
+//            entry(0, f.variable("@VER_versions#i1_0")),
+//            entry(1, f.variable("@VER_versions#i1_1")),
+//            entry(2, f.variable("@VER_versions#i1_2")),
+//            entry(3, f.variable("@VER_versions#i1_3")),
+//            entry(4, f.variable("@VER_versions#i1_4")),
+//            entry(5, f.variable("@VER_versions#i1_5")),
+//        )
+//        assertThat(trans.versionMapping["versions.i2"]).containsExactly(
+//            entry(0, f.variable("@VER_versions#i2_0")),
+//            entry(1, f.variable("@VER_versions#i2_1")),
+//            entry(2, f.variable("@VER_versions#i2_2")),
+//            entry(3, f.variable("@VER_versions#i2_3")),
+//        )
+//        assertThat(trans.versionMapping["versions.i3"]).containsExactly(
+//            entry(0, f.variable("@VER_versions#i3_0")),
+//            entry(1, f.variable("@VER_versions#i3_1")),
+//            entry(2, f.variable("@VER_versions#i3_2")),
+//        )
+//        assertThat(trans.versionVariables).hasSize(13)
+//    }
 
 //    @Test
 //    fun testIntConstraints() {
