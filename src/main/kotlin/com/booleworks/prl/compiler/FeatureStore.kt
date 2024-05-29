@@ -6,11 +6,15 @@ package com.booleworks.prl.compiler
 import com.booleworks.prl.compiler.PropertyStore.Companion.uniqueSlices
 import com.booleworks.prl.model.AnyFeatureDef
 import com.booleworks.prl.model.AnySlicingPropertyDefinition
+import com.booleworks.prl.model.BooleanFeatureDefinition
 import com.booleworks.prl.model.EnumFeatureDefinition
 import com.booleworks.prl.model.FeatureDefinition
+import com.booleworks.prl.model.IntFeatureDefinition
+import com.booleworks.prl.model.Theory
 import com.booleworks.prl.model.constraints.BooleanFeature
 import com.booleworks.prl.model.constraints.EnumFeature
 import com.booleworks.prl.model.constraints.IntFeature
+import com.booleworks.prl.model.constraints.VersionedBooleanFeature
 import com.booleworks.prl.parser.PrlBooleanFeatureDefinition
 import com.booleworks.prl.parser.PrlEnumFeatureDefinition
 import com.booleworks.prl.parser.PrlFeature
@@ -41,16 +45,21 @@ data class FeatureStore internal constructor(
         addDefinitionToMap(definition, slicingProperties, map, isGroup, state)
     }
 
-    internal fun generateDefinitionMap(
+    internal fun generateTheoryMap(
         features: Collection<PrlFeature>,
         state: CompilerState
-    ): Map<PrlFeature, AnyFeatureDef> {
-        val map = mutableMapOf<PrlFeature, AnyFeatureDef>()
+    ): Map<PrlFeature, Theory> {
+        val map = mutableMapOf<PrlFeature, Theory>()
         for (feature in features) {
             val definitions = findMatchingDefinitions(feature.featureCode)
-            when {
-                definitions.isEmpty() -> state.addError("No feature definition found for ${feature.featureCode}")
-                else -> map[feature] = definitions.first()
+            if (definitions.isEmpty()) {
+                state.addError("No feature definition found for ${feature.featureCode}")
+            } else {
+                map[feature] = when (val def = definitions.first()) {
+                    is BooleanFeatureDefinition -> if (def.versioned) Theory.VERSIONED_BOOL else Theory.BOOL
+                    is EnumFeatureDefinition -> Theory.ENUM
+                    is IntFeatureDefinition -> Theory.INT
+                }
             }
         }
         return map
@@ -78,7 +87,7 @@ data class FeatureStore internal constructor(
     fun containsBooleanFeatures() = booleanFeatures.isNotEmpty()
     fun containsEnumFeatures() = enumFeatures.isNotEmpty()
     fun containsIntFeatures() = intFeatures.isNotEmpty()
-    fun containsVersionedBooleanFeatures() = booleanFeatures().any { it.versioned }
+    fun containsVersionedBooleanFeatures() = booleanFeatures().any { it is VersionedBooleanFeature }
 
     private fun addDefinitionToMap(
         definition: PrlFeatureDefinition,

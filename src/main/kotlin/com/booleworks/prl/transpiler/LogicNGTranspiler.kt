@@ -47,6 +47,7 @@ import com.booleworks.prl.model.constraints.IntValue
 import com.booleworks.prl.model.constraints.Not
 import com.booleworks.prl.model.constraints.Or
 import com.booleworks.prl.model.constraints.VersionPredicate
+import com.booleworks.prl.model.constraints.VersionedBooleanFeature
 import com.booleworks.prl.model.rules.AnyRule
 import com.booleworks.prl.model.rules.ConstraintRule
 import com.booleworks.prl.model.rules.DefinitionRule
@@ -123,6 +124,12 @@ fun transpileConstraint(
     when (constraint) {
         is Constant -> cf.formulaFactory().constant(constraint.value)
         is BooleanFeature ->
+            if (info.booleanVariables.contains(cf.formulaFactory().variable(constraint.featureCode))) {
+                cf.formulaFactory().variable(constraint.featureCode)
+            } else {
+                cf.formulaFactory().falsum()
+            }
+        is VersionedBooleanFeature ->
             if (info.booleanVariables.contains(cf.formulaFactory().variable(constraint.featureCode))) {
                 cf.formulaFactory().variable(constraint.featureCode)
             } else {
@@ -412,6 +419,7 @@ fun getAllIntPredicates(f: FormulaFactory, map: MutableMap<IntPredicate, Variabl
     when (constraint) {
         is Constant -> {}
         is BooleanFeature -> {}
+        is VersionedBooleanFeature -> {}
         is Not -> getAllIntPredicates(f, map, constraint.operand)
         is Implication -> {
             getAllIntPredicates(f, map, constraint.left)

@@ -8,6 +8,7 @@ import com.booleworks.prl.model.constraints.BooleanFeature
 import com.booleworks.prl.model.constraints.Constraint
 import com.booleworks.prl.model.constraints.ConstraintType
 import com.booleworks.prl.model.constraints.TRUE
+import com.booleworks.prl.model.constraints.VersionedBooleanFeature
 import com.booleworks.prl.model.constraints.not
 import com.booleworks.prl.model.datastructures.FeatureAssignment
 import com.booleworks.prl.model.datastructures.FeatureRenaming
@@ -24,7 +25,7 @@ class DefinitionRule(
 ) : Rule<DefinitionRule>(id, description, properties, lineNumber) {
 
     init {
-        require(!feature.versioned) { "A versioned feature cannot be defined" }
+        require(feature !is VersionedBooleanFeature) { "A versioned feature cannot be defined" }
     }
 
     private constructor(rule: AnyRule, feature: BooleanFeature, definition: Constraint) : this(

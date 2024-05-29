@@ -6,6 +6,7 @@ package com.booleworks.prl.model.datastructures
 import com.booleworks.prl.model.constraints.BooleanFeature
 import com.booleworks.prl.model.constraints.EnumFeature
 import com.booleworks.prl.model.constraints.IntFeature
+import com.booleworks.prl.model.constraints.VersionedBooleanFeature
 import com.booleworks.prl.model.constraints.boolFt
 import com.booleworks.prl.model.constraints.enumFt
 import com.booleworks.prl.model.constraints.intFt
@@ -17,22 +18,18 @@ data class FeatureRenaming(
     private val enumValues: MutableMap<EnumFeature, MutableMap<String, String>> = HashMap(),
     private val intFeatures: MutableMap<IntFeature, IntFeature> = HashMap()
 ) {
-    fun add(feature: BooleanFeature, newName: String) = apply {
-        booleanFeatures[feature] = if (feature.versioned) {
-            versionFt(newName)
-        } else {
-            boolFt(newName)
-        }
-    }
-
+    fun add(feature: BooleanFeature, newName: String) = apply { booleanFeatures[feature] = boolFt(newName) }
+    fun add(feature: VersionedBooleanFeature, newName: String) = apply { booleanFeatures[feature] = versionFt(newName) }
     fun add(feature: EnumFeature, newName: String) = apply { enumFeatures[feature] = enumFt(newName) }
-
     fun add(feature: EnumFeature, oldValue: String, newValues: String) =
         apply { enumValues.computeIfAbsent(feature) { mutableMapOf() }[oldValue] = newValues }
 
     fun add(feature: IntFeature, newName: String) = apply { intFeatures[feature] = intFt(newName) }
 
     fun rename(feature: BooleanFeature) = booleanFeatures.getOrDefault(feature, feature)
+    fun rename(feature: VersionedBooleanFeature) =
+        booleanFeatures.getOrDefault(feature, feature) as VersionedBooleanFeature
+
     fun rename(feature: EnumFeature) = enumFeatures.getOrDefault(feature, feature)
     fun rename(feature: EnumFeature, value: String) = enumValues[feature]?.get(value) ?: value
     fun rename(feature: IntFeature) = intFeatures.getOrDefault(feature, feature)

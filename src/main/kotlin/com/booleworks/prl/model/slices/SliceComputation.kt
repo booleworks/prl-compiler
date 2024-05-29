@@ -19,8 +19,8 @@ import com.booleworks.prl.model.SlicingDatePropertyDefinition
 import com.booleworks.prl.model.SlicingEnumPropertyDefinition
 import com.booleworks.prl.model.SlicingIntPropertyDefinition
 import com.booleworks.prl.model.SlicingPropertyDefinition
-import com.booleworks.prl.model.constraints.BooleanFeature
 import com.booleworks.prl.model.constraints.IntFeature
+import com.booleworks.prl.model.constraints.VersionedBooleanFeature
 import com.booleworks.prl.model.rules.AnyRule
 import java.time.LocalDate
 import java.util.IdentityHashMap
@@ -31,8 +31,7 @@ class MaxNumberOfSlicesExceededException(override val message: String) : Excepti
 
 data class SliceSet(val slices: MutableList<Slice>, val definitions: List<AnyFeatureDef>, val rules: List<AnyRule>) {
     fun hasIntFeatures() = definitions.any { it.feature is IntFeature }
-    fun hasVersionFeatures() =
-        definitions.any { it.feature is BooleanFeature && (it.feature as BooleanFeature).versioned }
+    fun hasVersionFeatures() = definitions.any { it.feature is VersionedBooleanFeature }
 
     override fun hashCode() = slices.hashCode()
     override fun equals(other: Any?): Boolean {

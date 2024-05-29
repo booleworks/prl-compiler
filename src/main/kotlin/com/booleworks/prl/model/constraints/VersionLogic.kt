@@ -14,25 +14,30 @@ import com.booleworks.prl.model.datastructures.FeatureRenaming
 import com.booleworks.prl.parser.PragmaticRuleLanguage.SYMBOL_LSQB
 import com.booleworks.prl.parser.PragmaticRuleLanguage.SYMBOL_RSQB
 
-fun versionFt(featureCode: String) = BooleanFeature(featureCode, true)
-fun versionEq(feature: BooleanFeature, version: Int) = VersionPredicate(feature, EQ, version)
-fun versionNe(feature: BooleanFeature, version: Int) = VersionPredicate(feature, NE, version)
-fun versionGt(feature: BooleanFeature, version: Int) = VersionPredicate(feature, GT, version)
-fun versionGe(feature: BooleanFeature, version: Int) = VersionPredicate(feature, GE, version)
-fun versionLt(feature: BooleanFeature, version: Int) = VersionPredicate(feature, LT, version)
-fun versionLe(feature: BooleanFeature, version: Int) = VersionPredicate(feature, LE, version)
-fun versionComparison(feature: BooleanFeature, comparison: ComparisonOperator, version: Int) =
+fun versionFt(featureCode: String) = VersionedBooleanFeature(featureCode)
+fun versionEq(feature: VersionedBooleanFeature, version: Int) = VersionPredicate(feature, EQ, version)
+fun versionNe(feature: VersionedBooleanFeature, version: Int) = VersionPredicate(feature, NE, version)
+fun versionGt(feature: VersionedBooleanFeature, version: Int) = VersionPredicate(feature, GT, version)
+fun versionGe(feature: VersionedBooleanFeature, version: Int) = VersionPredicate(feature, GE, version)
+fun versionLt(feature: VersionedBooleanFeature, version: Int) = VersionPredicate(feature, LT, version)
+fun versionLe(feature: VersionedBooleanFeature, version: Int) = VersionPredicate(feature, LE, version)
+fun versionComparison(feature: VersionedBooleanFeature, comparison: ComparisonOperator, version: Int) =
     VersionPredicate(feature, comparison, version)
 
+class VersionedBooleanFeature(override val featureCode: String) : BooleanFeature(featureCode), AtomicConstraint {
+    override fun evaluate(assignment: FeatureAssignment) =
+        assignment.getVersionWithoutDefault(this).let { it != null && it }
+
+    override fun restrict(assignment: FeatureAssignment) =
+        assignment.getVersionWithoutDefault(this).let { if (it == null) this else Constant(it) }
+}
+
 data class VersionPredicate internal constructor(
-    val feature: BooleanFeature,
+    val feature: VersionedBooleanFeature,
     val comparison: ComparisonOperator,
     val version: Int
 ) :
     AtomicConstraint, Predicate {
-    init {
-        require(feature.versioned) { "Cannot generate a version predicate with an unversioned feature" }
-    }
 
     override val type = ConstraintType.ATOM
     override fun features() = setOf(feature)

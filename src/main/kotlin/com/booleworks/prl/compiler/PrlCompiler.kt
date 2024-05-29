@@ -3,14 +3,16 @@
 
 package com.booleworks.prl.compiler
 
-import com.booleworks.prl.model.AnyFeatureDef
-import com.booleworks.prl.model.BooleanFeatureDefinition
-import com.booleworks.prl.model.EnumFeatureDefinition
-import com.booleworks.prl.model.IntFeatureDefinition
 import com.booleworks.prl.model.PrlModel
 import com.booleworks.prl.model.PrlModelHeader
+import com.booleworks.prl.model.Theory
 import com.booleworks.prl.model.compileProperties
 import com.booleworks.prl.model.compilePropertiesToMap
+import com.booleworks.prl.model.constraints.Feature
+import com.booleworks.prl.model.constraints.boolFt
+import com.booleworks.prl.model.constraints.enumFt
+import com.booleworks.prl.model.constraints.intFt
+import com.booleworks.prl.model.constraints.versionFt
 import com.booleworks.prl.model.rules.AnyRule
 import com.booleworks.prl.model.rules.ConstraintRule
 import com.booleworks.prl.model.rules.DefinitionRule
@@ -157,7 +159,7 @@ class PrlCompiler {
         propertyStore: PropertyStore,
         featureStore: FeatureStore,
     ): List<AnyRule> {
-        val featureMap = featureStore.generateDefinitionMap(ruleSet.features(), state)
+        val theoryMap = featureStore.generateTheoryMap(ruleSet.features(), state)
         if (state.hasErrors()) return listOf()
         return ruleSet.rules.mapNotNull {
             state.context.ruleId = it.id.ifEmpty { randomUUID().toString() }
@@ -166,12 +168,12 @@ class PrlCompiler {
                 null
             } else {
                 state.context.lineNumber = it.lineNumber
-                compileRule(it, featureMap)
+                compileRule(it, theoryMap)
             }
         }
     }
 
-    internal fun compileRule(prlRule: PrlRule, map: Fmap): AnyRule? {
+    internal fun compileRule(prlRule: PrlRule, map: Tmap): AnyRule? {
         return try {
             when (prlRule) {
                 is PrlConstraintRule -> rule(prlRule, map)
@@ -190,7 +192,7 @@ class PrlCompiler {
         }
     }
 
-    private fun rule(prl: PrlConstraintRule, map: Fmap) =
+    private fun rule(prl: PrlConstraintRule, map: Tmap) =
         ConstraintRule(
             cc.compileConstraint(prl.constraint, map),
             prl.id,
@@ -199,7 +201,7 @@ class PrlCompiler {
             prl.lineNumber
         )
 
-    private fun rule(prl: PrlInclusionRule, map: Fmap) = InclusionRule(
+    private fun rule(prl: PrlInclusionRule, map: Tmap) = InclusionRule(
         cc.compileConstraint(prl.ifPart, map),
         cc.compileConstraint(prl.thenPart, map),
         prl.id,
@@ -208,7 +210,7 @@ class PrlCompiler {
         prl.lineNumber
     )
 
-    private fun rule(prl: PrlExclusionRule, map: Fmap) = ExclusionRule(
+    private fun rule(prl: PrlExclusionRule, map: Tmap) = ExclusionRule(
         cc.compileConstraint(prl.ifPart, map),
         cc.compileConstraint(prl.thenNotPart, map),
         prl.id,
@@ -217,7 +219,7 @@ class PrlCompiler {
         prl.lineNumber
     )
 
-    private fun rule(prl: PrlDefinitionRule, map: Fmap) = DefinitionRule(
+    private fun rule(prl: PrlDefinitionRule, map: Tmap) = DefinitionRule(
         cc.compileUnversionedBooleanFeature(prl.feature, map),
         cc.compileConstraint(prl.definition, map),
         prl.id,
@@ -226,7 +228,7 @@ class PrlCompiler {
         prl.lineNumber
     )
 
-    private fun rule(prl: PrlIfThenElseRule, map: Fmap) = IfThenElseRule(
+    private fun rule(prl: PrlIfThenElseRule, map: Tmap) = IfThenElseRule(
         cc.compileConstraint(prl.ifPart, map),
         cc.compileConstraint(prl.thenPart, map),
         cc.compileConstraint(prl.elsePart, map),
@@ -236,7 +238,7 @@ class PrlCompiler {
         prl.lineNumber
     )
 
-    private fun rule(prl: PrlGroupRule, map: Fmap) = GroupRule(
+    private fun rule(prl: PrlGroupRule, map: Tmap) = GroupRule(
         prl.type,
         cc.compileUnversionedBooleanFeature(prl.group, map),
         cc.compileBooleanFeatures(prl.content, map).toSet(),
@@ -246,7 +248,7 @@ class PrlCompiler {
         prl.lineNumber
     )
 
-    private fun rule(prl: PrlFeatureRule, map: Fmap): AnyRule {
+    private fun rule(prl: PrlFeatureRule, map: Tmap): AnyRule {
         val feature = validateFeature(prl, map)
         return if (prl is PrlForbiddenFeatureRule) {
             ForbiddenFeatureRule(
@@ -271,21 +273,22 @@ class PrlCompiler {
         }
     }
 
-    private fun validateFeature(prl: PrlFeatureRule, map: Fmap) =
-        when (val def = map[prl.feature]) {
-            is BooleanFeatureDefinition ->
-                if (!def.versioned && (prl.enumValue != null || prl.intValueOrVersion != null)) {
-                    invalidBoolean()
-                } else if (def.versioned && prl.intValueOrVersion == null) {
-                    invalidVersioned()
-                } else {
-                    def.feature
-                }
-
-            is EnumFeatureDefinition -> if (prl.enumValue == null) invalidEnum() else def.feature
-            is IntFeatureDefinition -> if (prl.intValueOrVersion == null) invalidInt() else def.feature
+    private fun validateFeature(prl: PrlFeatureRule, map: Tmap): Feature {
+        val theory = map[prl.feature]
+        if (theory == Theory.BOOL && (prl.enumValue != null || prl.intValueOrVersion != null)) {
+            return invalidBoolean()
+        } else if (theory == Theory.VERSIONED_BOOL && prl.intValueOrVersion == null) {
+            return invalidVersioned()
+        }
+        val featureCode = prl.feature.featureCode
+        return when (theory) {
+            Theory.VERSIONED_BOOL -> versionFt(featureCode)
+            Theory.BOOL -> boolFt(featureCode)
+            Theory.ENUM -> if (prl.enumValue == null) invalidEnum() else enumFt(featureCode)
+            Theory.INT -> if (prl.intValueOrVersion == null) invalidInt() else intFt(featureCode)
             null -> cc.unknownFeature(prl.feature)
         }
+    }
 
     private fun invalidBoolean(): Nothing =
         throw CoCoException("Cannot assign an unversioned boolean feature to an int or enum value")
@@ -334,5 +337,5 @@ internal class CompilerContext(
     }
 }
 
-typealias Fmap = Map<PrlFeature, AnyFeatureDef>
+typealias Tmap = Map<PrlFeature, Theory>
 

@@ -10,6 +10,7 @@ import com.booleworks.prl.model.constraints.Constraint
 import com.booleworks.prl.model.constraints.EnumFeature
 import com.booleworks.prl.model.constraints.Feature
 import com.booleworks.prl.model.constraints.IntFeature
+import com.booleworks.prl.model.constraints.VersionedBooleanFeature
 import com.booleworks.prl.model.constraints.versionEq
 import com.booleworks.prl.model.datastructures.FeatureAssignment
 import com.booleworks.prl.model.datastructures.FeatureRenaming
@@ -34,7 +35,7 @@ sealed class FeatureRule<F : FeatureRule<F>>(
     }
 
     val version by lazy {
-        if (feature is BooleanFeature && (feature as BooleanFeature).versioned) intValueOrVersion else null
+        if (feature is VersionedBooleanFeature) intValueOrVersion else null
     }
 
     val intValue by lazy {
@@ -70,8 +71,8 @@ sealed class FeatureRule<F : FeatureRule<F>>(
     override fun headerLine(): String {
         val keyword: String = if (this is ForbiddenFeatureRule) KEYWORD_FORBIDDEN else KEYWORD_MANDATORY
         val constraintString: String = when (feature) {
-            is BooleanFeature -> if (!(feature as BooleanFeature).versioned) feature.toString() else
-                versionEq(feature as BooleanFeature, intValueOrVersion!!).toString()
+            is VersionedBooleanFeature -> versionEq(feature as VersionedBooleanFeature, intValueOrVersion!!).toString()
+            is BooleanFeature -> feature.toString()
             is EnumFeature -> feature.toString() + " " + SYMBOL_EQ + " " + quote(enumValue!!)
             is IntFeature -> "$feature $SYMBOL_EQ $intValueOrVersion"
         }

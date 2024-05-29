@@ -16,7 +16,7 @@ import com.booleworks.prl.parser.PragmaticRuleLanguage.constantString
 val TRUE = Constant(true)
 val FALSE = Constant(false)
 
-fun boolFt(featureCode: String) = BooleanFeature(featureCode, false)
+fun boolFt(featureCode: String) = BooleanFeature(featureCode)
 
 fun constant(value: Boolean) = Constant(value)
 
@@ -88,8 +88,7 @@ sealed interface Constraint {
     fun isAtom(): Boolean
 }
 
-class BooleanFeature(override val featureCode: String, val versioned: Boolean) :
-    Feature(featureCode), AtomicConstraint {
+open class BooleanFeature(override val featureCode: String) : Feature(featureCode), AtomicConstraint {
     override val type = ConstraintType.ATOM
     override fun features() = setOf(this)
     override fun booleanFeatures() = setOf(this)
@@ -97,23 +96,13 @@ class BooleanFeature(override val featureCode: String, val versioned: Boolean) :
     override fun enumValues() = mapOf<EnumFeature, Set<String>>()
     override fun intFeatures() = setOf<IntFeature>()
     override fun containsBooleanFeatures() = true
-    override fun evaluate(assignment: FeatureAssignment) =
-        if (!versioned) {
-            assignment.getBool(this)
-        } else {
-            assignment.getVersionWithoutDefault(this).let { it != null && it }
-        }
-
+    override fun evaluate(assignment: FeatureAssignment) = assignment.getBool(this)
     override fun rename(renaming: FeatureRenaming) = renaming.rename(this)
     override fun syntacticSimplify() = this
-    override fun restrict(assignment: FeatureAssignment) = if (!versioned) {
-        when (assignment.getBoolWithoutDefault(this)) {
-            null -> this
-            true -> TRUE
-            else -> FALSE
-        }
-    } else {
-        assignment.getVersionWithoutDefault(this).let { if (it == null) this else Constant(it) }
+    override fun restrict(assignment: FeatureAssignment) = when (assignment.getBoolWithoutDefault(this)) {
+        null -> this
+        true -> TRUE
+        else -> FALSE
     }
 }
 

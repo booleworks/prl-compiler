@@ -13,7 +13,7 @@ fun enumFt(featureCode: String, values: Collection<String>): EnumFeature =
 fun intFt(featureCode: String) =
     IntFeatureDefinition(featureCode, IntRange.interval(Int.MIN_VALUE, Int.MAX_VALUE)).feature
 
-fun versionFt(featureCode: String) = BooleanFeatureDefinition(featureCode, true).feature
+fun versionFt(featureCode: String) = BooleanFeatureDefinition(featureCode, true).feature as VersionedBooleanFeature
 
 fun ftMap(vararg constraints: Constraint): Pair<Map<Feature, Int>, Map<Int, Feature>> {
     val map1 = mutableMapOf<Feature, Int>()

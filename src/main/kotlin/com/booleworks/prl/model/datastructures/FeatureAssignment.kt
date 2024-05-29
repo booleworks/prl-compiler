@@ -6,6 +6,7 @@ package com.booleworks.prl.model.datastructures
 import com.booleworks.prl.model.constraints.BooleanFeature
 import com.booleworks.prl.model.constraints.EnumFeature
 import com.booleworks.prl.model.constraints.IntFeature
+import com.booleworks.prl.model.constraints.VersionedBooleanFeature
 
 class FeatureAssignment(
     private val booleanFeatures: MutableMap<BooleanFeature, Boolean> = mutableMapOf(),
@@ -14,18 +15,17 @@ class FeatureAssignment(
     private val intFeatures: MutableMap<IntFeature, Int> = mutableMapOf()
 ) {
     fun assign(feature: BooleanFeature, value: Boolean) = apply {
-        require(!(value && feature.versioned)) {
-            "Versioned features can't be assigned to true directly. Please assign a concrete version instead."
-        }
-        if (feature.versioned) {
-            versionedBooleanFeatures[feature] = -1
-        } else {
-            booleanFeatures[feature] = value
-        }
+        booleanFeatures[feature] = value
     }
 
-    fun assign(feature: BooleanFeature, version: Int) = apply {
-        require(feature.versioned) { "Only a versioned feature can be assigned to a concrete version." }
+    fun assign(feature: VersionedBooleanFeature, value: Boolean) = apply {
+        require(!value) {
+            "Versioned features can't be assigned to true directly. Please assign a concrete version instead."
+        }
+        versionedBooleanFeatures[feature] = -1
+    }
+
+    fun assign(feature: VersionedBooleanFeature, version: Int) = apply {
         versionedBooleanFeatures[feature] = version
     }
 
@@ -33,22 +33,20 @@ class FeatureAssignment(
     fun assign(feature: IntFeature, value: Int) = apply { intFeatures[feature] = value }
 
     fun getBool(feature: BooleanFeature): Boolean {
-        require(!feature.versioned) { "Cannot get boolean for a versioned feature" }
+        require(feature !is VersionedBooleanFeature) { "Cannot get boolean for a versioned feature" }
         return booleanFeatures.getOrDefault(feature, false)
     }
 
     fun getBoolWithoutDefault(feature: BooleanFeature): Boolean? {
-        require(!feature.versioned) { "Cannot get boolean for a versioned feature" }
+        require(feature !is VersionedBooleanFeature) { "Cannot get boolean for a versioned feature" }
         return booleanFeatures[feature]
     }
 
-    fun getVersion(feature: BooleanFeature): Int? = versionedBooleanFeatures[feature].let {
-        require(feature.versioned) { "Cannot get version for an unversioned feature" }
+    fun getVersion(feature: VersionedBooleanFeature): Int? = versionedBooleanFeatures[feature].let {
         if (it == null || it > -1) it else null
     }
 
-    fun getVersionWithoutDefault(feature: BooleanFeature): Boolean? = versionedBooleanFeatures[feature].let {
-        require(feature.versioned) { "Cannot get version for an unversioned feature" }
+    fun getVersionWithoutDefault(feature: VersionedBooleanFeature): Boolean? = versionedBooleanFeatures[feature].let {
         if (it == null) null else it != -1
     }
 

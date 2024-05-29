@@ -31,6 +31,7 @@ import com.booleworks.prl.model.constraints.Not
 import com.booleworks.prl.model.constraints.Or
 import com.booleworks.prl.model.constraints.Predicate
 import com.booleworks.prl.model.constraints.VersionPredicate
+import com.booleworks.prl.model.constraints.VersionedBooleanFeature
 import com.booleworks.prl.model.protobuf.ProtoBufConstraints.PbConstraint
 import com.booleworks.prl.model.protobuf.ProtoBufConstraints.PbConstraintType.AMO
 import com.booleworks.prl.model.protobuf.ProtoBufConstraints.PbConstraintType.AND
@@ -103,7 +104,8 @@ fun serialize(model: PrlModel) = pbModel {
             id = featureId
             featureCode = it.featureCode
             theory = when (it) {
-                is BooleanFeature -> if (it.versioned) PbTheory.VERSIONED_BOOL else PbTheory.BOOL
+                is VersionedBooleanFeature -> PbTheory.VERSIONED_BOOL
+                is BooleanFeature -> PbTheory.BOOL
                 is EnumFeature -> PbTheory.ENUM
                 is IntFeature -> PbTheory.INT
             }
@@ -137,6 +139,7 @@ fun serialize(ps: PropertyStore) = pbPropertyStore {
 fun serialize(c: Constraint, fm: Map<Feature, Int>): PbConstraint = when (c) {
     is Constant -> pbConstraint { value = c.value }
     is BooleanFeature -> pbConstraint { boolFeature = fm[c]!! }
+    is VersionedBooleanFeature -> pbConstraint { boolFeature = fm[c]!! }
     is Amo -> pbConstraint { type = AMO; operands += c.features.map { pbConstraint { boolFeature = fm[it]!! } } }
     is Exo -> pbConstraint { type = EXO; operands += c.features.map { pbConstraint { boolFeature = fm[it]!! } } }
     is Not -> pbConstraint { type = NOT; operands += serialize(c.operand, fm) }
@@ -217,8 +220,8 @@ fun deserialize(bin: PbModel): PrlModel {
     bin.featureList.forEach {
         val featureCode = it.featureCode
         val feature: Feature = when (it.theory) {
-            PbTheory.BOOL -> BooleanFeature(featureCode, false)
-            PbTheory.VERSIONED_BOOL -> BooleanFeature(featureCode, true)
+            PbTheory.BOOL -> BooleanFeature(featureCode)
+            PbTheory.VERSIONED_BOOL -> VersionedBooleanFeature(featureCode)
             PbTheory.ENUM -> EnumFeature(featureCode)
             else -> IntFeature(featureCode)
         }
@@ -400,7 +403,9 @@ private fun deserialize(bin: PbEnumPredicate, fm: Map<Int, Feature>): EnumPredic
 }
 
 private fun deserialize(bin: PbIntPredicate, fm: Map<Int, Feature>): Predicate = when {
-    bin.hasVersion() -> VersionPredicate(fm[bin.feature]!! as BooleanFeature, deserialize(bin.comp), bin.version)
+    bin.hasVersion() -> VersionPredicate(
+        fm[bin.feature]!! as VersionedBooleanFeature, deserialize(bin.comp), bin.version
+    )
     bin.hasComp() -> IntComparisonPredicate(
         deserialize(bin.term1, fm),
         deserialize(bin.term2, fm),

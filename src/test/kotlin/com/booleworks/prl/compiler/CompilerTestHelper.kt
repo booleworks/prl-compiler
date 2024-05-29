@@ -1,10 +1,11 @@
 package com.booleworks.prl.compiler
 
-import com.booleworks.prl.model.AnyFeatureDef
 import com.booleworks.prl.model.BooleanFeatureDefinition
 import com.booleworks.prl.model.EnumFeatureDefinition
 import com.booleworks.prl.model.IntFeatureDefinition
 import com.booleworks.prl.model.IntRange
+import com.booleworks.prl.model.Theory
+import com.booleworks.prl.model.constraints.VersionedBooleanFeature
 import com.booleworks.prl.parser.PrlFeature
 
 val b1Definition = BooleanFeatureDefinition("b1")
@@ -25,16 +26,16 @@ val e2 = e2Definition.feature
 val i1 = i1Definition.feature
 val i2 = i2Definition.feature
 val i3 = i3Definition.feature
-val v = vDefinition.feature
+val v = vDefinition.feature as VersionedBooleanFeature
 
-val featureMap: Map<PrlFeature, AnyFeatureDef> = mapOf(
-    Pair(PrlFeature("b1"), b1Definition),
-    Pair(PrlFeature("b2"), b2Definition),
-    Pair(PrlFeature("b3"), b3Definition),
-    Pair(PrlFeature("v"), vDefinition),
-    Pair(PrlFeature("e1"), e1Definition),
-    Pair(PrlFeature("e2"), e2Definition),
-    Pair(PrlFeature("i1"), i1Definition),
-    Pair(PrlFeature("i2"), i2Definition),
-    Pair(PrlFeature("i3"), i3Definition),
+val theoryMap: Map<PrlFeature, Theory> = mapOf(
+    Pair(PrlFeature("b1"), Theory.BOOL),
+    Pair(PrlFeature("b2"), Theory.BOOL),
+    Pair(PrlFeature("b3"), Theory.BOOL),
+    Pair(PrlFeature("v"), Theory.VERSIONED_BOOL),
+    Pair(PrlFeature("e1"), Theory.ENUM),
+    Pair(PrlFeature("e2"), Theory.ENUM),
+    Pair(PrlFeature("i1"), Theory.INT),
+    Pair(PrlFeature("i2"), Theory.INT),
+    Pair(PrlFeature("i3"), Theory.INT),
 )

@@ -15,7 +15,7 @@ class VersionPredicateTest {
     @Test
     fun testCreation() {
         val f1Def = BooleanFeatureDefinition("f1", true)
-        val vp1 = versionComparison(f1Def.feature, ComparisonOperator.EQ, 3)
+        val vp1 = versionComparison(f1Def.feature as VersionedBooleanFeature, ComparisonOperator.EQ, 3)
         val vp2 = versionEq(versionFt("f1"), 3)
         assertThat(vp1 == vp2).isTrue
         assertThat(vp1.type).isEqualTo(ConstraintType.ATOM)

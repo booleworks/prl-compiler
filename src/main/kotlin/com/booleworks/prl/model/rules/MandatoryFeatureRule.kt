@@ -8,6 +8,7 @@ import com.booleworks.prl.model.constraints.BooleanFeature
 import com.booleworks.prl.model.constraints.EnumFeature
 import com.booleworks.prl.model.constraints.Feature
 import com.booleworks.prl.model.constraints.IntFeature
+import com.booleworks.prl.model.constraints.VersionedBooleanFeature
 import com.booleworks.prl.model.constraints.enumEq
 import com.booleworks.prl.model.constraints.enumVal
 import com.booleworks.prl.model.constraints.intEq
@@ -98,7 +99,8 @@ class MandatoryFeatureRule internal constructor(
                 intValueOrVersion == other.intValueOrVersion
 
     override fun generateConstraint(feature: Feature, enumValue: String?, intValueOrVersion: Int?) = when (feature) {
-        is BooleanFeature -> if (!feature.versioned) feature else versionEq(feature, intValueOrVersion!!)
+        is VersionedBooleanFeature -> versionEq(feature, intValueOrVersion!!)
+        is BooleanFeature -> feature
         is EnumFeature -> enumEq(feature, enumVal(enumValue!!))
         is IntFeature -> intEq(feature, intValueOrVersion!!)
     }
