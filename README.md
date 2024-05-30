@@ -29,7 +29,7 @@ The language has four types of features:
 
 ```
 bool feature cupholder
-versioned bool feature navigation_module
+versioned bool feature navigation_system
 int feature front_camera_mp [1, 2, 4, 8]
 int feature tire_size [16 - 21]
 enum feature steering ["LL", "RL"]
@@ -48,7 +48,7 @@ and predicates on the extended features. These predicates are:
 
 ```
 cupholder
-navigation_module[>3]
+navigation_system[>3]
 [front_camera_mp <= 4]
 [front_camera_mp in [1, 2, 4]]
 [front_camera_mp <= rear_camera_mp]
@@ -85,40 +85,9 @@ rule [front_camera_mp >= 4] / front_radar
 ```
 
 
-### Modules and Visibility
-
-Features and rules are defined in modules.  Modules can inherit from one another and can be imported.  There are three
-different visibilities for a feature in a module:
-1. `public` features are visible and usable everywhere.
-2. `internal` features can only be used in their defining module and all modules which inherit from this module
-   (transitively).
-3. `private` features can only be used in their defining module
-
-The PRL compiler checks all feature definitions at compile time if there are illegal situations like non-unique
-definitions.
-
-```
-module hlc {
-  …
-}
-
-module hlc.legislation {
-  … # inherits all rules from hlc and can use all public and internal features
-}
-
-module hlc.sales {
-  … # inherits all rules from hlc and can use all public and internal features
-}
-
-module bom {
-  import hlc # imports all rules from hlc and can use all public features
-}
-```
-
-
 ### Properties and Slicing
 
-In addition to features, rules, and modules, the last important component of PRL is the concept of *properties and
+In addition to features and rules, the last important component of PRL is the concept of *properties and
 slicing*.  This language concept also differentiates PRL from most of the existing mathematical constraint satisfaction
 modeling languages, such as the SMT-Lib format or Mini-Zinc.
 
